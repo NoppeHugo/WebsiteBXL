@@ -1,0 +1,34 @@
+name: Contrôle et build
+
+# Premier des deux garde-fous du monorepo (README §6) : rien ne peut partir en
+# production si le contrôle des données ou le build d'un client échoue. Le
+# second garde-fou est le déploiement par releases + lien symbolique, qui ne
+# bascule le site en ligne qu'une fois la copie terminée.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Validation de tous les clients : format, photos référencées,
+      # traductions manquantes dans les langues vendues.
+      - run: pnpm check
+
+      # Build de tous les sites. Un template cassé fait échouer ici, avant
+      # d'atteindre le moindre client.
+      - run: pnpm build:all

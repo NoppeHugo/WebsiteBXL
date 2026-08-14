@@ -1,0 +1,27 @@
+---
+import type { Language } from "@bxl/schema";
+import { ui } from "../lib/i18n.ts";
+import { bookingTarget, telHref } from "../lib/booking.ts";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const booking = bookingTarget();
+---
+
+<nav class="actionbar" aria-label={ui(lang, "book_short")}>
+  <a href={telHref()}>{ui(lang, "call")}</a>
+  {
+    booking.enabled && (
+      <a
+        class="is-primary"
+        href={booking.href}
+        {...(booking.external ? { target: "_blank", rel: "noopener" } : {})}
+      >
+        {ui(lang, "book_short")}
+      </a>
+    )
+  }
+</nav>

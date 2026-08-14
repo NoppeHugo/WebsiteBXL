@@ -486,13 +486,19 @@ demi-journée de travail effectif**, photos comprises.
 
 ## 7. Feuille de route
 
-### Phase 0 — Fondations *(objectif : avoir quelque chose à montrer)*
+### Phase 0 — Fondations ✅ *(objectif : avoir quelque chose à montrer)*
 
-- Monorepo, template Astro, composants orientés coiffeur.
-- `site.json` / `theme.json` avec schéma validé.
-- Scripts `new-client`, `build`, `deploy`.
-- VPS : Caddy, arborescence, déploiement par releases.
-- Un site de démonstration complet, présentable sur téléphone.
+- [x] Monorepo, template Astro, composants orientés coiffeur.
+- [x] `site.json` / `theme.json` avec schéma validé (`packages/schema`).
+- [x] Scripts `new`, `dev`, `build`, `check`, `caddy`, `deploy`.
+- [x] VPS : Caddy, arborescence, déploiement par releases + lien symbolique.
+- [x] Intégration continue : contrôle et build de tous les clients.
+- [x] Site de démonstration (`clients/demo-barbier`), trilingue, présentable
+      sur téléphone.
+
+Reste à faire avant la prospection : remplacer les visuels de remplacement du
+site de démonstration par de vraies photos, et renseigner `STUDIO` dans
+`apps/template/src/lib/studio.ts` pour la signature en pied de page.
 
 ### Phase 1 — Clients pilotes *(objectif : valider la vente)*
 
@@ -530,7 +536,69 @@ demi-journée de travail effectif**, photos comprises.
 
 ---
 
-## 8. Indicateurs à suivre
+## 8. Prise en main
+
+### Installation
+
+```bash
+pnpm install
+cp .env.example .env      # renseigner DEPLOY_HOST une fois le VPS prêt
+```
+
+### Commandes
+
+| Commande | Effet |
+|---|---|
+| `pnpm new <slug> --name "Nom" --plan pro` | Crée un client : `site.json`, `theme.json` et des visuels de remplacement. |
+| `pnpm dev <slug>` | Serveur de développement sur un client. |
+| `pnpm build <slug>` | Construit un site dans `dist/<slug>/`. |
+| `pnpm build:all` | Construit tous les clients (ce que fait l'intégration continue). |
+| `pnpm check` | Valide tous les clients sans construire : format, photos manquantes, traductions absentes. |
+| `pnpm caddy <slug>` | Génère le bloc Caddy du client depuis son domaine et ses alias. |
+| `pnpm placeholders <slug>` | Régénère les visuels de remplacement. |
+| `./scripts/deploy.sh <slug>` | Déploie sur le VPS (nouvelle release + bascule du lien). |
+
+### Livrer un nouveau client
+
+```bash
+pnpm new salon-marie --name "Salon Marie" --domain salon-marie.be
+# remplir clients/salon-marie/site.json
+# déposer les photos de la séance dans clients/salon-marie/media/
+pnpm dev salon-marie                       # prévisualiser
+# passer "status" à "live" dans site.json
+pnpm check && pnpm build salon-marie
+pnpm caddy salon-marie --out ./out         # bloc à déposer dans /etc/caddy/sites/
+./scripts/deploy.sh salon-marie
+```
+
+Le déploiement refuse tout site qui n'est pas en statut `live` : impossible de
+mettre en ligne un brouillon par inadvertance.
+
+### Mise en place du VPS
+
+```bash
+scp infra/setup-vps.sh root@vps:/tmp/
+ssh root@vps 'ACME_EMAIL=ton@adresse.be bash /tmp/setup-vps.sh'
+scp infra/Caddyfile root@vps:/etc/caddy/Caddyfile
+ssh root@vps 'systemctl daemon-reload && systemctl reload caddy'
+```
+
+Les certificats HTTPS sont obtenus et renouvelés automatiquement par Caddy dès
+que le DNS du client pointe vers le serveur. Aucune intervention ensuite.
+
+### Où se trouve quoi
+
+- **Le contenu d'un client** : `clients/<slug>/site.json` — textes, horaires,
+  prestations, statut. C'est le fichier que la console d'administration éditera
+  en phase 2.
+- **L'apparence d'un client** : `clients/<slug>/theme.json` — couleurs, polices,
+  variantes de mise en page.
+- **Le format de ces fichiers** : `packages/schema/src/index.ts`. Toute
+  évolution commence là.
+- **Le site lui-même** : `apps/template/src/`. Une modification ici touche tous
+  les clients au prochain build — c'est voulu.
+
+## 9. Indicateurs à suivre
 
 | Indicateur | Pourquoi |
 |---|---|

@@ -1,0 +1,47 @@
+---
+import type { Language } from "@bxl/schema";
+import { site } from "../lib/client.ts";
+import Base from "../layouts/Base.astro";
+import Nav from "./Nav.astro";
+import Hero from "./Hero.astro";
+import Services from "./Services.astro";
+import Gallery from "./Gallery.astro";
+import Team from "./Team.astro";
+import Reviews from "./Reviews.astro";
+import Info from "./Info.astro";
+import BookingCta from "./BookingCta.astro";
+import Footer from "./Footer.astro";
+import ActionBar from "./ActionBar.astro";
+import Suspended from "./Suspended.astro";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+// Chaque section ne s'affiche que si le client a fourni le contenu
+// correspondant : c'est ce qui permet à un palier Essentiel (une page, peu de
+// contenu) et à un palier Signature de partager exactement le même template.
+const suspended = site.status === "suspended";
+---
+
+{
+  suspended ? (
+    <Suspended lang={lang} />
+  ) : (
+    <Base lang={lang}>
+      <Nav lang={lang} />
+      <main id="content">
+        <Hero lang={lang} />
+        {site.services.length > 0 && <Services lang={lang} />}
+        {site.gallery.length > 0 && <Gallery lang={lang} />}
+        {site.team.length > 0 && <Team lang={lang} />}
+        {site.reviews.length > 0 && <Reviews lang={lang} />}
+        <BookingCta lang={lang} />
+        <Info lang={lang} />
+      </main>
+      <Footer lang={lang} />
+      <ActionBar lang={lang} />
+    </Base>
+  )
+}

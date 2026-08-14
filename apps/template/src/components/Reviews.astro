@@ -1,0 +1,37 @@
+---
+import type { Language } from "@bxl/schema";
+import { site, t } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+---
+
+<section class="section section--tight" id="avis">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="section__title">{ui(lang, "reviews_title")}</h2>
+    </div>
+
+    <ul class="reviews">
+      {
+        site.reviews.map((review) => (
+          <li class="review">
+            <p class="review__stars" aria-label={`${review.rating}/5`}>
+              <span aria-hidden="true">
+                {"★".repeat(review.rating)}
+                {"☆".repeat(5 - review.rating)}
+              </span>
+            </p>
+            <blockquote class="review__text">
+              <p>{t(review.text, lang)}</p>
+            </blockquote>
+            <p class="review__author">— {review.author}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>

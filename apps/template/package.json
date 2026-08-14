@@ -1,0 +1,16 @@
+{
+  "name": "@bxl/template",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@bxl/schema": "workspace:*",
+    "astro": "^5.1.1",
+    "sharp": "^0.33.5"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "websitebxl",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "new": "node --experimental-strip-types scripts/new-client.ts",
+    "dev": "node --experimental-strip-types scripts/dev.ts",
+    "build": "node --experimental-strip-types scripts/build.ts",
+    "build:all": "node --experimental-strip-types scripts/build.ts --all",
+    "check": "node --experimental-strip-types scripts/check.ts",
+    "caddy": "node --experimental-strip-types scripts/caddy-config.ts",
+    "deploy": "./scripts/deploy.sh",
+    "placeholders": "node --experimental-strip-types scripts/gen-placeholders.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "sharp": "^0.33.5",
+    "typescript": "^5.7.2",
+    "zod": "^3.24.1"
+  }
+}

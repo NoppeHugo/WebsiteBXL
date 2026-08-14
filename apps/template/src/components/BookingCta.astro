@@ -1,0 +1,69 @@
+---
+import type { Language } from "@bxl/schema";
+import { site } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+import { bookingTarget, telHref } from "../lib/booking.ts";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const booking = bookingTarget();
+
+// Tant que le widget maison n'est pas branché, le téléphone reste l'action
+// principale : un bandeau de réservation sans bouton actif ne convertit rien.
+const externalBooking = booking.enabled && !booking.widget;
+---
+
+<section class="section cta" id="reservation">
+  <div class="wrap">
+    <h2 class="cta__title">{ui(lang, "cta_title")}</h2>
+
+    <div class="cta__actions">
+      {
+        externalBooking && (
+          <a
+            class="btn btn--primary"
+            href={booking.href}
+            target="_blank"
+            rel="noopener"
+          >
+            {ui(lang, "book")}
+          </a>
+        )
+      }
+      <a
+        class={`btn ${externalBooking ? "btn--ghost" : "btn--primary"}`}
+        href={telHref()}
+      >
+        {ui(lang, "call")} · {site.business.phone}
+      </a>
+    </div>
+
+    {
+      /*
+        Point de montage du widget de réservation maison (phases 3 et 4 du
+        README). Le template est prêt : le script à venir lit `data-tenant` et
+        remplit ce conteneur. Tant qu'il n'est pas chargé, le téléphone reste
+        visible — un visiteur n'est jamais bloqué par une réservation en panne.
+      */
+      booking.widget && "tenantId" in site.booking && (
+        <div
+          class="booking-widget"
+          data-booking-widget
+          data-tenant={site.booking.tenantId}
+          data-mode={site.booking.mode}
+          data-lang={lang}
+        />
+      )
+    }
+  </div>
+</section>
+
+<style>
+  .booking-widget {
+    margin-top: 2.5rem;
+    min-height: 1px;
+  }
+</style>

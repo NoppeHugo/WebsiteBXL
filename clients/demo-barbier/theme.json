@@ -1,0 +1,25 @@
+{
+  "palette": {
+    "bg": "#0c0c0d",
+    "surface": "#141416",
+    "text": "#f4f1eb",
+    "muted": "#9c968d",
+    "accent": "#c19a52",
+    "accentText": "#0c0c0d",
+    "border": "#26262a"
+  },
+  "fonts": {
+    "display": "Georgia, 'Iowan Old Style', 'Times New Roman', serif",
+    "body": "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif",
+    "displayWeight": 400,
+    "displayTracking": "0.01em",
+    "displayTransform": "none"
+  },
+  "layout": {
+    "hero": "fullbleed",
+    "gallery": "mosaic",
+    "nav": "overlay"
+  },
+  "radius": "none",
+  "grain": true
+}

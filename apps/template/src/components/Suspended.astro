@@ -1,0 +1,32 @@
+---
+import type { Language } from "@bxl/schema";
+import { site } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+import { telHref } from "../lib/booking.ts";
+import Base from "../layouts/Base.astro";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+---
+
+{
+  /*
+    Page servie à la place du site quand `status: "suspended"` (impayé).
+    Elle reste sobre et courtoise : le visiteur n'a pas à subir le litige, et le
+    commerçant reste joignable. Prévue dès la première ligne de code plutôt
+    qu'improvisée dans l'urgence (README §3.11).
+  */
+}
+<Base lang={lang} noindex>
+  <main class="suspended" id="content">
+    <h1>{ui(lang, "suspended_title")}</h1>
+    <p>{ui(lang, "suspended_body")}</p>
+    <p>
+      <a class="btn btn--primary" href={telHref()}>
+        {ui(lang, "call")} · {site.business.phone}
+      </a>
+    </p>
+  </main>
+</Base>

@@ -1,0 +1,52 @@
+---
+import type { Language } from "@bxl/schema";
+import { site } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+import { STUDIO } from "../lib/studio.ts";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const socials = Object.entries(site.business.social).filter(([, url]) => url) as
+  Array<[string, string]>;
+
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <p>© {year} {site.business.name}</p>
+
+    {
+      socials.length > 0 && (
+        <ul class="footer__social">
+          {socials.map(([network, url]) => (
+            <li>
+              <a href={url} target="_blank" rel="noopener me">
+                {network}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    {
+      /*
+        Signature discrète sur chaque site livré. C'est la publicité la moins
+        chère du projet : un commerçant voisin qui aime le site trouve
+        directement à qui s'adresser.
+      */
+      STUDIO.url && (
+        <p>
+          {ui(lang, "made_by")} ·{" "}
+          <a href={STUDIO.url} target="_blank" rel="noopener">
+            {STUDIO.name}
+          </a>
+        </p>
+      )
+    }
+  </div>
+</footer>

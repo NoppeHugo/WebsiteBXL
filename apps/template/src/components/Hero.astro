@@ -1,0 +1,64 @@
+---
+import { Image } from "astro:assets";
+import type { Language } from "@bxl/schema";
+import { site, theme, t } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+import { media } from "../lib/media.ts";
+import { bookingTarget, telHref } from "../lib/booking.ts";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const booking = bookingTarget();
+const image = media(site.hero.image);
+const variant = theme.layout.hero;
+---
+
+<section class={`hero hero--${variant}`}>
+  <div class="hero__media">
+    <Image
+      src={image}
+      alt={t(site.business.tagline, lang) || site.business.name}
+      widths={[640, 1024, 1600, 2000]}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+      quality={78}
+    />
+  </div>
+
+  <div class="wrap hero__content">
+    {
+      site.business.tagline && (
+        <p class="eyebrow">{t(site.business.tagline, lang)}</p>
+      )
+    }
+    <h1 class="hero__title">{t(site.hero.headline, lang)}</h1>
+    {
+      site.hero.subline && (
+        <p class="hero__sub">{t(site.hero.subline, lang)}</p>
+      )
+    }
+
+    <div class="hero__actions">
+      {
+        booking.enabled && (
+          <a
+            class="btn btn--primary"
+            href={booking.href}
+            {...(booking.external
+              ? { target: "_blank", rel: "noopener" }
+              : {})}
+          >
+            {ui(lang, "book")}
+          </a>
+        )
+      }
+      <a class="btn btn--ghost" href={telHref()}>
+        {ui(lang, "call")} · {site.business.phone}
+      </a>
+    </div>
+  </div>
+</section>

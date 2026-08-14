@@ -1,0 +1,58 @@
+---
+import type { Language } from "@bxl/schema";
+import { formatPrice } from "@bxl/schema";
+import { site, t } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+// Regroupement par catégorie, dans l'ordre d'apparition du fichier : le
+// commerçant maîtrise ainsi la présentation de sa carte de tarifs.
+const groups = new Map<string, typeof site.services>();
+for (const service of site.services) {
+  const key = t(service.category, lang) || "";
+  const bucket = groups.get(key);
+  if (bucket) bucket.push(service);
+  else groups.set(key, [service]);
+}
+
+const grouped = [...groups.entries()];
+const isSplit = grouped.length > 1;
+---
+
+<section class="section" id="services">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="section__title">{ui(lang, "services_title")}</h2>
+    </div>
+
+    <div class={`services${isSplit ? " services--split" : ""}`}>
+      {
+        grouped.map(([category, services]) => (
+          <div class="service-group">
+            {category && <h3 class="service-group__title">{category}</h3>}
+            {services.map((service) => (
+              <article class="service">
+                <h4 class="service__name">{t(service.name, lang)}</h4>
+                <p class="service__price">{formatPrice(service, lang)}</p>
+                <p class="service__meta">
+                  <span class="service__duration">
+                    {service.durationMin} {ui(lang, "minutes")}
+                  </span>
+                  {service.description && (
+                    <span class="service__desc">
+                      {t(service.description, lang)}
+                    </span>
+                  )}
+                </p>
+              </article>
+            ))}
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

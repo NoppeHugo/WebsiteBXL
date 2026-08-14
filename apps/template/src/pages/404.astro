@@ -1,0 +1,19 @@
+---
+import { defaultLang, site, path } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+import Base from "../layouts/Base.astro";
+
+const lang = defaultLang;
+---
+
+<Base lang={lang} noindex>
+  <main class="suspended" id="content">
+    <h1>404</h1>
+    <p>{site.business.name}</p>
+    <p>
+      <a class="btn btn--primary" href={path(lang)}>
+        {ui(lang, "nav_contact")}
+      </a>
+    </p>
+  </main>
+</Base>

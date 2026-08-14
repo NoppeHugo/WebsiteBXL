@@ -1,0 +1,44 @@
+---
+import { Image } from "astro:assets";
+import type { Language } from "@bxl/schema";
+import { site, t } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+import { tryMedia } from "../lib/media.ts";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+---
+
+<section class="section" id="equipe">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="section__title">{ui(lang, "team_title")}</h2>
+    </div>
+
+    <ul class="team">
+      {
+        site.team.map((member) => {
+          const photo = tryMedia(member.photo);
+          return (
+            <li>
+              {photo && (
+                <Image
+                  src={photo}
+                  alt={member.name}
+                  widths={[300, 600]}
+                  sizes="(max-width: 700px) 50vw, 240px"
+                  loading="lazy"
+                  quality={76}
+                />
+              )}
+              <p class="team__name">{member.name}</p>
+              {member.role && <p class="team__role">{t(member.role, lang)}</p>}
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
+</section>

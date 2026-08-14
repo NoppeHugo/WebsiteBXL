@@ -1,0 +1,98 @@
+---
+import type { Language } from "@bxl/schema";
+import { WEEKDAYS } from "@bxl/schema";
+import { site, t } from "../lib/client.ts";
+import { ui, weekday } from "../lib/i18n.ts";
+import { telHref, directionsHref } from "../lib/booking.ts";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const { address } = site.business;
+---
+
+<section class="section" id="infos">
+  <div class="wrap info">
+    <div>
+      <div class="section__head">
+        <h2 class="section__title">{ui(lang, "hours_title")}</h2>
+      </div>
+
+      <ul class="hours">
+        {
+          WEEKDAYS.map((day) => {
+            const slots = site.hours[day];
+            return (
+              <li data-day={day}>
+                <span class="hours__day">{weekday(lang, day)}</span>
+                <span class="hours__slots">
+                  {slots.length === 0
+                    ? ui(lang, "closed")
+                    : slots
+                        .map((s) => `${s.open} – ${s.close}`)
+                        .join(" · ")}
+                </span>
+              </li>
+            );
+          })
+        }
+      </ul>
+
+      {site.hoursNote && <p class="hours__note">{t(site.hoursNote, lang)}</p>}
+    </div>
+
+    <div>
+      <div class="section__head">
+        <h2 class="section__title">{ui(lang, "contact_title")}</h2>
+      </div>
+
+      <ul class="contact__list">
+        <li>
+          <address class="address">
+            {address.street}<br />
+            {address.postalCode} {address.city}
+          </address>
+        </li>
+        <li><a href={telHref()}>{site.business.phone}</a></li>
+        {
+          site.business.email && (
+            <li>
+              <a href={`mailto:${site.business.email}`}>
+                {site.business.email}
+              </a>
+            </li>
+          )
+        }
+      </ul>
+
+      <a
+        class="btn btn--ghost"
+        href={directionsHref()}
+        target="_blank"
+        rel="noopener"
+      >
+        {ui(lang, "itinerary")}
+      </a>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Mise en évidence du jour courant. Volontairement côté client : le site est
+  // statique, il ne peut pas connaître le jour au moment du build.
+  const days = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+  ];
+  const today = days[new Date().getDay()];
+  document
+    .querySelector(`.hours li[data-day="${today}"]`)
+    ?.setAttribute("data-today", "true");
+</script>

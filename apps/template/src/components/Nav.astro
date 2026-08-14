@@ -1,0 +1,82 @@
+---
+import type { Language } from "@bxl/schema";
+import { site, theme, languages, path } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+import { bookingTarget } from "../lib/booking.ts";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const booking = bookingTarget();
+
+const links = [
+  site.services.length > 0 && { href: "#services", label: ui(lang, "nav_services") },
+  site.gallery.length > 0 && { href: "#galerie", label: ui(lang, "nav_gallery") },
+  site.team.length > 0 && { href: "#equipe", label: ui(lang, "nav_team") },
+  { href: "#infos", label: ui(lang, "nav_hours") },
+].filter(Boolean) as Array<{ href: string; label: string }>;
+---
+
+<header class="nav" data-variant={theme.layout.nav} data-scrolled="false">
+  <div class="wrap nav__inner">
+    <a class="nav__brand" href={path(lang)}>{site.business.name}</a>
+
+    <nav aria-label={ui(lang, "menu")}>
+      <ul class="nav__links">
+        {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <div class="nav__actions">
+      {
+        languages.length > 1 && (
+          <ul class="langs" aria-label={ui(lang, "lang_label")}>
+            {languages.map((l) => (
+              <li>
+                <a href={path(l)} aria-current={l === lang ? "true" : undefined}>
+                  {l}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+      {
+        booking.enabled && (
+          <a
+            class="btn btn--primary nav__cta"
+            href={booking.href}
+            {...(booking.external
+              ? { target: "_blank", rel: "noopener" }
+              : {})}
+          >
+            {ui(lang, "book_short")}
+          </a>
+        )
+      }
+    </div>
+  </div>
+</header>
+
+<style>
+  @media (max-width: 620px) {
+    .nav__cta {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  // La barre devient opaque dès qu'on quitte le haut de page, pour rester
+  // lisible par-dessus la photo du hero.
+  const nav = document.querySelector<HTMLElement>(".nav");
+  if (nav) {
+    const update = () => {
+      nav.dataset.scrolled = String(window.scrollY > 40);
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+  }
+</script>

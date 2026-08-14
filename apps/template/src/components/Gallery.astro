@@ -1,0 +1,39 @@
+---
+import { Image } from "astro:assets";
+import type { Language } from "@bxl/schema";
+import { site, theme, t } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+import { media } from "../lib/media.ts";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const variant = theme.layout.gallery;
+---
+
+<section class="section" id="galerie">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="section__title">{ui(lang, "gallery_title")}</h2>
+    </div>
+
+    <div class={`gallery gallery--${variant}`}>
+      {
+        site.gallery.map((photo, index) => (
+          <figure>
+            <Image
+              src={media(photo.src)}
+              alt={t(photo.alt, lang)}
+              widths={[400, 800, 1200]}
+              sizes="(max-width: 700px) 100vw, 40vw"
+              loading={index < 2 ? "eager" : "lazy"}
+              quality={76}
+            />
+          </figure>
+        ))
+      }
+    </div>
+  </div>
+</section>

@@ -1,0 +1,10 @@
+---
+import { defaultLang } from "../lib/client.ts";
+import Home from "../components/Home.astro";
+
+// La langue par défaut du client occupe la racine du site. Les autres langues
+// vivent sous leur préfixe (`/nl/`), ce qui évite une redirection à l'entrée —
+// meilleur pour le référencement comme pour la vitesse perçue.
+---
+
+<Home lang={defaultLang} />

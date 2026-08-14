@@ -1,0 +1,48 @@
+# Configuration Caddy principale du VPS.
+#
+# Elle ne contient aucun client : chaque site apporte son propre fichier dans
+# /etc/caddy/sites/, généré par `pnpm caddy <slug>`. Ajouter un client ne
+# demande donc jamais de modifier ce fichier.
+#
+# Caddy obtient et renouvelle seul les certificats Let's Encrypt de chaque
+# domaine — c'est la raison du choix face à nginx : avec trente domaines
+# clients, c'est l'automatisation qui compte.
+
+{
+	# Adresse de contact pour Let's Encrypt (expiration, incidents).
+	email {$ACME_EMAIL}
+
+	# Journaux d'accès exploités par personne : on garde l'essentiel.
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 20MiB
+			roll_keep 5
+		}
+		level ERROR
+	}
+}
+
+# En-têtes appliqués à tous les sites.
+(commun) {
+	encode zstd gzip
+
+	header {
+		# Les sites sont statiques : pas de scripts tiers, pas de cookies.
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	# Les fichiers versionnés par empreinte sont immuables ; le HTML, non.
+	header /_assets/* Cache-Control "public, max-age=31536000, immutable"
+	header /*.html Cache-Control "public, max-age=0, must-revalidate"
+
+	handle_errors {
+		rewrite * /404.html
+		file_server
+	}
+}
+
+import /etc/caddy/sites/*.caddy

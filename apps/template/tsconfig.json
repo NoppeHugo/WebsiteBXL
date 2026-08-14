@@ -1,0 +1,9 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist", "src/media"],
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "strictNullChecks": true
+  }
+}

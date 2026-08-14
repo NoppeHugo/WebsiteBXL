@@ -1,0 +1,120 @@
+---
+import { getImage } from "astro:assets";
+import type { Language } from "@bxl/schema";
+import { site, theme, languages, defaultLang, t, path } from "../lib/client.ts";
+import { htmlLang, ui } from "../lib/i18n.ts";
+import { localBusinessJsonLd } from "../lib/seo.ts";
+import { media } from "../lib/media.ts";
+import "../styles/global.css";
+
+interface Props {
+  lang: Language;
+  /** Une page d'état (suspendu, 404) ne doit jamais être indexée. */
+  noindex?: boolean;
+}
+
+const { lang, noindex = false } = Astro.props;
+
+const title =
+  t(site.seo.title, lang) ||
+  `${site.business.name} — ${t(site.business.tagline, lang) || site.business.address.city}`;
+
+const description =
+  t(site.seo.description, lang) || t(site.business.description, lang);
+
+const canonical = new URL(path(lang), Astro.site).href;
+
+const radiusValue = { none: "0", soft: "8px", round: "18px" }[theme.radius];
+
+const themeVars = [
+  `--c-bg:${theme.palette.bg}`,
+  `--c-surface:${theme.palette.surface}`,
+  `--c-text:${theme.palette.text}`,
+  `--c-muted:${theme.palette.muted}`,
+  `--c-accent:${theme.palette.accent}`,
+  `--c-accent-text:${theme.palette.accentText}`,
+  `--c-border:${theme.palette.border}`,
+  `--font-display:${theme.fonts.display}`,
+  `--font-body:${theme.fonts.body}`,
+  `--display-weight:${theme.fonts.displayWeight}`,
+  `--display-tracking:${theme.fonts.displayTracking}`,
+  `--display-transform:${theme.fonts.displayTransform}`,
+  `--radius:${radiusValue}`,
+].join(";");
+
+// Image de partage : c'est elle qui s'affiche quand le commerçant envoie son
+// lien sur WhatsApp ou l'épingle sur Facebook. Elle compte autant que le site.
+const shareImage = await getImage({
+  src: media(site.hero.image),
+  width: 1200,
+  height: 630,
+  fit: "cover",
+  format: "jpg",
+});
+const shareImageUrl = Astro.site
+  ? new URL(shareImage.src, Astro.site).href
+  : shareImage.src;
+
+const jsonLd = localBusinessJsonLd(lang, Astro.site, shareImageUrl);
+---
+
+<!doctype html>
+<html lang={htmlLang(lang)} style={themeVars}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content={theme.palette.bg} />
+
+    {
+      /* Un site de démonstration ou une page d'état ne doit pas polluer
+         l'index de Google — ni concurrencer le vrai site d'un client. */
+      (noindex || site.demo || site.status !== "live") && (
+        <meta name="robots" content="noindex,nofollow" />
+      )
+    }
+
+    {
+      languages.map((l) => (
+        <link
+          rel="alternate"
+          hreflang={htmlLang(l)}
+          href={new URL(path(l), Astro.site).href}
+        />
+      ))
+    }
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href={new URL(path(defaultLang), Astro.site).href}
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={htmlLang(lang).replace("-", "_")} />
+    <meta property="og:image" content={shareImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    {
+      !noindex && (
+        <script
+          type="application/ld+json"
+          set:html={JSON.stringify(jsonLd)}
+          is:inline
+        />
+      )
+    }
+  </head>
+
+  <body data-grain={String(theme.grain)} data-notice={String(site.demo)}>
+    <a class="skip" href="#content">{ui(lang, "skip_to_content")}</a>
+    {site.demo && <p class="notice">{ui(lang, "demo_notice")}</p>}
+    <slot />
+  </body>
+</html>
