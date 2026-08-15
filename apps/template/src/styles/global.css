@@ -996,6 +996,41 @@ body[data-glass="true"] .service-group__title {
  * rendez-vous. Communs plutôt que dupliqués dans chaque composant : deux
  * formulaires qui divergent visuellement sur la même page font amateur.
  */
+.booking-form {
+  margin-top: clamp(2rem, 5vw, 3rem);
+  /* Le bandeau de réservation est centré ; un formulaire, non. */
+  text-align: left;
+  max-width: 40rem;
+  margin-inline: auto;
+}
+
+.booking-form h3 {
+  font-size: var(--step-1);
+  margin-bottom: 0.6rem;
+}
+
+.booking-form form {
+  display: grid;
+  gap: 1rem;
+}
+
+.booking-form__row {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 620px) {
+  .booking-form__row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.booking-form__note {
+  color: var(--c-muted);
+  font-size: var(--step--1);
+  margin-bottom: 1.5rem;
+}
+
 .booking-form label,
 .contact-form label {
   display: grid;

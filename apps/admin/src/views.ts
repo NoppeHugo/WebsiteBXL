@@ -116,6 +116,7 @@ ${
   <strong>WebsiteBXL</strong>
   <nav>
     <a href="/">Clients</a>
+    <a href="/agenda">Agenda</a>
     <a href="/requests">Demandes</a>
     <a href="/reports">Rapports</a>
     <a href="/billing">Abonnements</a>

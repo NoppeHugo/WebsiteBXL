@@ -7,6 +7,7 @@ import { migrate, purgeExpired, listOrigins, sql } from "./db.ts";
 import { bookingRoutes } from "./routes/booking.ts";
 import { contactRoutes } from "./routes/contact.ts";
 import { collectRoutes } from "./routes/collect.ts";
+import { agendaRoutes } from "./routes/agenda.ts";
 import { sendMonthlyReports, shouldRunToday } from "./reports.ts";
 import { sendMail } from "./mail.ts";
 import { stripeRoutes } from "./routes/stripe.ts";
@@ -63,7 +64,7 @@ async function allowedOrigins(): Promise<Set<string>> {
 }
 
 await app.register(cors, {
-  methods: ["POST"],
+  methods: ["GET", "POST"],
   /*
    * Fonction asynchrone à un seul argument : @fastify/cors attend alors une
    * valeur de retour. Utiliser en plus le callback ferait résoudre l'origine
@@ -94,6 +95,7 @@ app.get("/health", async () => {
 bookingRoutes(app);
 contactRoutes(app);
 collectRoutes(app);
+agendaRoutes(app);
 stripeRoutes(app);
 
 await migrate();

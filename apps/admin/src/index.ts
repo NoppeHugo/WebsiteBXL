@@ -11,6 +11,7 @@ import { clientRoutes } from "./routes/clients.ts";
 import { requestRoutes } from "./routes/requests.ts";
 import { reportRoutes } from "./routes/reports.ts";
 import { billingRoutes } from "./routes/billing.ts";
+import { agendaRoutes } from "./routes/agenda.ts";
 
 const app = Fastify({
   logger: { level: isProduction ? "info" : "debug" },
@@ -66,6 +67,7 @@ clientRoutes(app);
 requestRoutes(app);
 reportRoutes(app);
 billingRoutes(app);
+agendaRoutes(app);
 
 await app.listen({ port: config.PORT, host: config.HOST });
 

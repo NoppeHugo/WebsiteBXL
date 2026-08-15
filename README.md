@@ -319,9 +319,27 @@ verrou, pas par une vérification applicative. À traiter dès la v2, pas après
   **fonctionne sans JavaScript** : le navigateur poste normalement et l'API
   renvoie vers la page. Une demande qui se perd parce qu'un script n'a pas
   chargé coûte bien plus cher qu'une page de confirmation moins élégante.
-- **v2 — agenda temps réel.** Disponibilités calculées en direct (durée du
-  service, ressource, horaires, congés, temps tampon), confirmation
-  automatique, gestion de la concurrence.
+- **v2 — agenda temps réel ✅ livrée.** Le client voit les créneaux réellement
+  libres et réserve fermement. Aucun prestataire externe : un service comme
+  Salonkee coûterait 50-150 €/mois **au salon**, hébergerait son agenda chez un
+  tiers, et ferait disparaître ce qui nous rend difficiles à remplacer.
+
+  **La règle qui gouverne tout : le calcul propose, la base dispose.** Deux
+  personnes peuvent voir le même créneau libre au même instant — c'est une
+  contrainte d'exclusion Postgres (`exclude using gist`) qui tranche à
+  l'écriture, et la seconde reçoit un refus propre au lieu d'un doublon.
+  Vérifié : dix réservations simultanées sur un créneau à trois fauteuils
+  donnent exactement trois succès, sur trois personnes distinctes.
+
+  Un créneau n'est proposé que si la prestation tient **entièrement** avant la
+  fermeture, et un délai de prévenance empêche de réserver pour dans dix
+  minutes. Les horaires, prestations et congés sont projetés depuis git vers la
+  base par `pnpm tenant` : git reste la source de vérité, la base n'en garde
+  qu'une copie de travail que l'agenda peut lire à l'exécution.
+
+  Cette partie exige JavaScript — des disponibilités qui changent d'une minute
+  à l'autre ne se rendent pas en HTML statique. Le téléphone reste donc affiché
+  et `<noscript>` le rappelle.
 - **v3 — rappels et anti no-show.** Rappel SMS 24 h avant, annulation en ligne,
   historique client. Le SMS a un coût réel (~0,05 €/envoi) : à répercuter ou à
   plafonner dans le mensuel.

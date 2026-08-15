@@ -202,23 +202,51 @@ const formScript = `(function(){
         button.textContent = form.getAttribute("data-label-sending");
         if (status) { status.textContent = ""; status.removeAttribute("data-state"); }
 
+        /*
+         * URLSearchParams et non FormData : ce dernier part en
+         * multipart/form-data, que l'API n'accepte pas — elle recevrait un
+         * 415 et le visiteur verrait un échec sans raison apparente. Aucun de
+         * ces formulaires n'envoie de fichier, donc l'encodage classique
+         * suffit, et c'est aussi celui qu'utilise le navigateur sans
+         * JavaScript : les deux chemins deviennent identiques.
+         */
         fetch(form.action, {
           method: "POST",
-          body: new FormData(form),
+          body: new URLSearchParams(new FormData(form)),
           headers: { Accept: "application/json" }
         })
           .then(function (response) {
+            /*
+             * 409 veut dire « quelqu'un a réservé pendant que vous
+             * remplissiez » : ce n'est pas une panne, et le message doit
+             * inviter à choisir un autre créneau. Toute autre erreur reçoit
+             * le message générique — annoncer un créneau pris alors que le
+             * formulaire est incomplet enverrait le visiteur sur une fausse
+             * piste.
+             */
+            if (response.status === 409) {
+              var e = new Error("conflict");
+              e.name = "Conflict";
+              throw e;
+            }
             if (!response.ok) throw new Error(String(response.status));
             form.reset();
             if (status) {
               status.setAttribute("data-state", "ok");
               status.textContent = form.getAttribute("data-label-ok");
             }
+            if (form.hasAttribute("data-reload-on-success")) {
+              form.dispatchEvent(new CustomEvent("bxl:booked", { bubbles: true }));
+            }
           })
-          .catch(function () {
+          .catch(function (error) {
             if (status) {
               status.setAttribute("data-state", "error");
-              status.textContent = form.getAttribute("data-label-error");
+              status.textContent =
+                error && error.name === "Conflict"
+                  ? form.getAttribute("data-label-conflict") ||
+                    form.getAttribute("data-label-error")
+                  : form.getAttribute("data-label-error");
             }
           })
           .finally(function () {

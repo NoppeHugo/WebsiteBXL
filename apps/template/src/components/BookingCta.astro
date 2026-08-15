@@ -4,6 +4,7 @@ import { site } from "../lib/client.ts";
 import { ui } from "../lib/i18n.ts";
 import { bookingTarget, telHref } from "../lib/booking.ts";
 import BookingRequestForm from "./BookingRequestForm.astro";
+import BookingLiveForm from "./BookingLiveForm.astro";
 
 interface Props {
   lang: Language;
@@ -47,7 +48,13 @@ const externalBooking = booking.enabled && !booking.widget;
         Formulaire de demande de rendez-vous (v1). Le téléphone reste affiché
         au-dessus : un visiteur n'est jamais bloqué si la réservation tombe.
       */
-      booking.widget && site.tenantId && <BookingRequestForm lang={lang} />
+      booking.widget &&
+      site.tenantId &&
+      (site.booking.mode === "live" ? (
+        <BookingLiveForm lang={lang} />
+      ) : (
+        <BookingRequestForm lang={lang} />
+      ))
     }
   </div>
 </section>
