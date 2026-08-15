@@ -124,7 +124,12 @@ sites. Garde-fous obligatoires, décrits en §6.
 - i18n natif, indispensable pour l'argument FR/NL.
 - Optimisation d'images automatique — critique quand on livre ses propres
   photos : c'est le métier, elles doivent être belles **et** rapides.
-- Score Lighthouse quasi parfait par défaut, qu'on peut montrer au prospect.
+- Site rapide par défaut, ce qui se montre au prospect. Mesuré sur le site de
+  démonstration, en local et sur un vrai navigateur : premier affichage à
+  ~100 ms, aucun décalage de mise en page (CLS 0), 600 Ko pour le site entier
+  dont 200 Ko de photos, une seule feuille de style de 22 Ko et 6 Ko de
+  JavaScript. Aucun débordement horizontal ni défaut de contraste sur mobile
+  comme sur bureau.
 
 **Écarté :** WordPress (maintenance et sécurité ingérables ×30), Next.js
 (aucun besoin de rendu serveur pour une vitrine).
@@ -514,6 +519,20 @@ le meilleur moyen de lui donner envie de résilier. L'interface permet aussi de
 consulter et de renvoyer un mois à la main. C'est **ça** qui empêche la
 résiliation au bout de huit mois — il voit ce qu'il achète. Un tableau de bord
 ne produit pas cet effet.
+
+**La balise part en `text/plain`, et c'est délibéré.** Écrite d'abord en
+`application/json`, elle n'a jamais rien enregistré : le navigateur exige pour
+ce type une requête préalable et une autorisation d'identifiants qu'une balise
+ne peut pas obtenir, dès lors que l'API vit sur un autre domaine que le site —
+c'est-à-dire en production, toujours. Le contenu reste du JSON, seule
+l'étiquette change, et l'API sait la lire.
+
+La panne était parfaitement muette : aucune erreur côté serveur, une page qui
+fonctionne, et une table `page_events` vide. Elle a survécu à plusieurs
+vérifications parce que celles-ci passaient par `curl`, qui ignore les règles
+d'origine du navigateur. **Une fonctionnalité qui ne vit que dans un navigateur
+doit être vérifiée dans un navigateur** — c'est la deuxième fois que cette
+leçon coûte cher, après l'envoi des formulaires en `multipart`.
 
 **Umami reste une option** si un vrai tableau de bord devient nécessaire : les
 deux peuvent coexister, le site n'aurait qu'un script de plus.

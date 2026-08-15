@@ -157,6 +157,17 @@ function plural(count: number, singular: string, plural = `${singular}s`): strin
   return `${count} ${count > 1 ? plural : singular}`;
 }
 
+/**
+ * Élision devant une voyelle : « le résumé d'août », jamais « de août ».
+ *
+ * Trois mois sur douze sont concernés — avril, août, octobre — soit un
+ * courriel sur quatre. C'est une faute qui se voit, dans un message envoyé
+ * chaque mois par quelqu'un qui vend du soin apporté aux détails.
+ */
+function of(label: string): string {
+  return /^[aeiouâàéèêëîïôöûü]/i.test(label) ? `d'${label}` : `de ${label}`;
+}
+
 export function reportText(
   businessName: string,
   monthLabel: string,
@@ -165,7 +176,7 @@ export function reportText(
   const lines = [
     `Bonjour,`,
     ``,
-    `Voici le résumé de ${monthLabel} pour le site de ${businessName} :`,
+    `Voici le résumé ${of(monthLabel)} pour le site de ${businessName} :`,
     ``,
     `• ${plural(s.visitors, "visiteur")}, ${plural(s.views, "page consultée", "pages consultées")}`,
     `• ${s.mobileShare} % des visites depuis un téléphone`,

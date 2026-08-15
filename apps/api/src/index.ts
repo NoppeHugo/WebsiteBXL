@@ -48,6 +48,36 @@ app.addContentTypeParser(
 );
 
 /*
+ * `text/plain` porte les balises d'audience.
+ *
+ * `navigator.sendBeacon` n'échappe au contrôle d'origine que si le type
+ * annoncé fait partie de ceux qu'un formulaire pourrait produire ; en
+ * `application/json`, le navigateur exige une requête préalable et une
+ * autorisation d'identifiants que la balise ne peut pas obtenir — la mesure
+ * n'était donc jamais enregistrée dès que l'API vivait sur un autre domaine
+ * que le site, c'est-à-dire en production.
+ *
+ * Le contenu reste du JSON ; seule l'étiquette change. Une charge illisible
+ * donne un corps vide, que la validation de la route rejettera d'elle-même.
+ *
+ * Cela n'élargit pas la surface d'attaque : les formulaires acceptent déjà
+ * `application/x-www-form-urlencoded`, tout aussi dispensé de requête
+ * préalable. Chaque route valide donc son corps et vérifie le commerce
+ * concerné, sans jamais se fier au type annoncé.
+ */
+app.addContentTypeParser(
+  "text/plain",
+  { parseAs: "string" },
+  (_request, body, done) => {
+    try {
+      done(null, JSON.parse(body as string));
+    } catch {
+      done(null, {});
+    }
+  },
+);
+
+/*
  * Origines autorisées : celles déclarées par les clients en base. Mises en
  * cache une minute pour ne pas interroger la base à chaque requête, tout en
  * prenant en compte un nouveau client sans redémarrage.

@@ -86,13 +86,18 @@ const collectScript = `(function(){
 
   function send(kind) {
     try {
+      // Type « text/plain » et non « application/json » : c'est un type
+      // autorisé d'office par le navigateur, donc la balise part sans
+      // requête préalable et sans contrôle d'origine. En JSON, la mesure
+      // ne partait pas du tout dès que l'API vivait sur un autre domaine —
+      // c'est-à-dire toujours, en production.
       navigator.sendBeacon(url, new Blob([JSON.stringify({
         tenantId: tenant,
         kind: kind,
         path: location.pathname,
         lang: ${JSON.stringify(lang)},
         referrer: document.referrer || undefined
-      })], { type: "application/json" }));
+      })], { type: "text/plain" }));
     } catch (e) {}
   }
 

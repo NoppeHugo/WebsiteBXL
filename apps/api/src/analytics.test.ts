@@ -96,6 +96,30 @@ describe("message mensuel", () => {
     expect(text).toContain("3 demandes de rendez-vous");
   });
 
+  it("élide devant une voyelle", () => {
+    // Trois mois sur douze commencent par une voyelle : « le résumé de août »
+    // partirait un courriel sur quatre, chez quelqu'un à qui l'on vend du
+    // soin apporté aux détails.
+    expect(reportText("Salon Marie", "août 2026", summary)).toContain(
+      "le résumé d'août 2026",
+    );
+    expect(reportText("Salon Marie", "avril 2026", summary)).toContain(
+      "le résumé d'avril 2026",
+    );
+    expect(reportText("Salon Marie", "octobre 2026", summary)).toContain(
+      "le résumé d'octobre 2026",
+    );
+  });
+
+  it("n'élide pas devant une consonne", () => {
+    expect(reportText("Salon Marie", "mars 2026", summary)).toContain(
+      "le résumé de mars 2026",
+    );
+    expect(reportText("Salon Marie", "juillet 2026", summary)).toContain(
+      "le résumé de juillet 2026",
+    );
+  });
+
   it("tait les lignes sans aucun événement", () => {
     const text = reportText("Salon Marie", "août 2026", {
       ...summary,

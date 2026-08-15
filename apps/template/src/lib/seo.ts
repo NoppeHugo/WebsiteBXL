@@ -49,9 +49,29 @@ export function localBusinessJsonLd(
 
   const sameAs = Object.values(site.business.social).filter(Boolean);
 
+  /*
+   * Fourchette de prix. Google l'affiche dans les résultats locaux, où elle
+   * fait partie de ce qui décide un passant à cliquer plutôt qu'à faire
+   * défiler. Les prestations sur devis sont ignorées : elles n'ont pas de
+   * montant à moyenner.
+   */
+  const prices = site.services
+    .map((s) => s.price)
+    .filter((p): p is number => p !== null);
+  const priceRange =
+    prices.length === 0
+      ? undefined
+      : `${Math.min(...prices)}–${Math.max(...prices)} €`;
+
   return {
     "@context": "https://schema.org",
     "@type": SCHEMA_TYPE[site.business.type] ?? "LocalBusiness",
+    /*
+     * Identifiant stable du commerce, le même dans les trois langues. Sans
+     * lui, Google voit trois fiches concurrentes là où il n'y a qu'un salon,
+     * et répartit entre elles la confiance qu'il devrait accorder à une seule.
+     */
+    ...(base && { "@id": `${base.origin}/#business` }),
     name: site.business.name,
     description: t(site.business.description, lang),
     url: base?.href,
@@ -72,6 +92,13 @@ export function localBusinessJsonLd(
       },
     }),
     ...(imageUrl && { image: imageUrl }),
+    ...(priceRange && { priceRange }),
+    /*
+     * Lien vers la fiche Google du commerce. C'est le rattachement explicite
+     * entre le site et la fiche — les deux moitiés de l'argument d'entrée du
+     * pack, qui ne servent à rien tant qu'elles s'ignorent.
+     */
+    ...(site.business.googleMapsUrl && { hasMap: site.business.googleMapsUrl }),
     ...(sameAs.length > 0 && { sameAs }),
     ...(openingHours.length > 0 && { openingHoursSpecification: openingHours }),
     ...(site.services.length > 0 && {
