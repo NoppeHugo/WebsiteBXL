@@ -7,7 +7,6 @@
 # Caddy obtient et renouvelle seul les certificats Let's Encrypt de chaque
 # domaine — c'est la raison du choix face à nginx : avec trente domaines
 # clients, c'est l'automatisation qui compte.
-
 {
 	# Adresse de contact pour Let's Encrypt (expiration, incidents).
 	email {$ACME_EMAIL}

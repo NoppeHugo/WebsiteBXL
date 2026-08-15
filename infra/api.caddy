@@ -7,7 +7,7 @@
 api.exemple.be {
 	import commun
 
-	reverse_proxy 127.0.0.1:3000 {
-		header_up X-Forwarded-For {remote_host}
-	}
+	# Caddy transmet déjà X-Forwarded-For : l'API s'en sert pour la
+	# limitation de débit par adresse, grâce à `trustProxy`.
+	reverse_proxy 127.0.0.1:3000
 }
