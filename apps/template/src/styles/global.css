@@ -126,6 +126,18 @@ p {
   padding-block: var(--section-y);
 }
 
+/*
+ * La barre de navigation est fixe : sans cette marge, suivre « Galerie » ou
+ * « Horaires » amène la section pile sous la barre, qui recouvre son titre.
+ * Le visiteur atterrit alors au milieu d'un contenu dont il ne voit plus le
+ * nom. Cela vaut pour tous les liens du menu — c'est-à-dire, sur téléphone,
+ * pour toute la navigation.
+ */
+section[id],
+main[id] {
+  scroll-margin-top: calc(var(--notice-h) + 5.5rem);
+}
+
 .section--tight {
   padding-block: calc(var(--section-y) * 0.6);
 }
@@ -731,6 +743,105 @@ body[data-glass="true"] .nav[data-menu="open"] {
   overflow: hidden;
   border-radius: var(--radius);
   background: var(--c-surface);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Ruban infini                                                               */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Défilement continu, sans fin ni commande : la galerie se regarde sans qu'on
+ * ait à la manipuler, y compris sur un téléphone tenu d'une main. C'est la
+ * signature visuelle des sites de coiffeurs et de barbiers.
+ *
+ * Deux copies identiques des photos glissent d'exactement une demi-piste,
+ * puis l'animation repart de zéro : la reprise tombe sur une image identique
+ * et ne se voit pas. Rien en JavaScript — le navigateur anime une seule
+ * transformation, sur le processeur graphique.
+ */
+.marquee {
+  overflow: hidden;
+  /* Les bords s'estompent : le ruban vient de hors-champ et y retourne,
+     au lieu de buter sur une arête. */
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 6%,
+    #000 94%,
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 6%,
+    #000 94%,
+    transparent
+  );
+}
+
+.marquee__track {
+  display: flex;
+  width: max-content;
+  animation: marquee var(--marquee-duration, 40s) linear infinite;
+}
+
+.marquee__set {
+  display: flex;
+  gap: clamp(0.6rem, 1.5vw, 1rem);
+  margin: 0;
+  padding: 0 clamp(0.3rem, 0.75vw, 0.5rem) 0 0;
+  list-style: none;
+}
+
+.marquee__set li {
+  flex: 0 0 auto;
+  width: min(62vw, 340px);
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--c-surface);
+}
+
+.marquee__set img {
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  width: 100%;
+}
+
+@keyframes marquee {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/* Le ruban s'arrête sous le curseur ou dès qu'un lien voisin reçoit le focus :
+   une image qui fuit au moment où on la regarde est une image perdue. */
+.marquee:hover .marquee__track,
+.marquee:focus-within .marquee__track {
+  animation-play-state: paused;
+}
+
+/*
+ * Mouvement réduit demandé : le défilement s'arrête tout à fait, et le ruban
+ * redevient une bande que l'on fait glisser soi-même. L'arrêter sans rendre la
+ * suite atteignable masquerait la moitié des photos.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+
+  .marquee__track {
+    animation: none;
+  }
+
+  .marquee__set[aria-hidden="true"] {
+    display: none;
+  }
+
+  .marquee__set li {
+    scroll-snap-align: start;
+  }
 }
 
 /* -------------------------------------------------------------------------- */

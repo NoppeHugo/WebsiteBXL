@@ -363,7 +363,13 @@ export const ThemeConfig = z.object({
     hero: z.enum(["fullbleed", "split", "minimal"]).default("fullbleed"),
     /** Texte du hero aligné à gauche, ou centré comme sur les pages Apple. */
     heroAlign: z.enum(["start", "center"]).default("start"),
-    gallery: z.enum(["grid", "mosaic", "strip"]).default("grid"),
+    /**
+     * `marquee` fait défiler les photos en continu, sans fin ni bouton. C'est
+     * la signature visuelle des sites de coiffeurs et de barbiers, et elle a
+     * un avantage concret : la galerie se regarde sans qu'on ait à la
+     * manipuler, y compris sur un téléphone tenu d'une main.
+     */
+    gallery: z.enum(["grid", "mosaic", "strip", "marquee"]).default("grid"),
     nav: z.enum(["overlay", "solid"]).default("overlay"),
   }),
   radius: z.enum(["none", "soft", "round"]).default("none"),

@@ -22,30 +22,94 @@ const sizes = {
   grid: "(max-width: 700px) 100vw, 33vw",
   mosaic: "(max-width: 700px) 50vw, 40vw",
   strip: "(max-width: 700px) 78vw, 420px",
+  marquee: "(max-width: 700px) 62vw, 340px",
 }[variant];
+
+/**
+ * Le ruban défile sans fin en faisant glisser la piste d'exactement sa
+ * moitié, puis en repartant : il faut donc deux copies identiques des photos
+ * pour que la reprise soit invisible. La copie est cachée aux lecteurs
+ * d'écran, qui n'ont pas à entendre la galerie deux fois.
+ *
+ * La durée dépend du nombre de photos, sinon vingt photos défileraient six
+ * fois plus vite que trois. Environ quatre secondes par photo : assez lent
+ * pour regarder, assez vivant pour ne pas paraître figé.
+ */
+const marquee = variant === "marquee";
+
+/**
+ * Une série doit être plus large que l'écran, sinon le glissement d'une
+ * demi-piste laisse un vide à droite. Avec peu de photos, la série les répète
+ * autant de fois qu'il faut pour atteindre six vignettes — soit environ
+ * 2 000 px, plus que tout écran courant.
+ */
+const perSet = Math.max(1, Math.ceil(6 / Math.max(1, site.gallery.length)));
+const set = Array.from({ length: perSet }, () => site.gallery).flat();
+
+const duration = `${Math.max(20, set.length * 4)}s`;
 ---
 
 <section class="section" id="galerie">
-  <div class="wrap">
-    <div class="section__head">
-      <h2 class="section__title">{ui(lang, "gallery_title")}</h2>
+  <div class={marquee ? "" : "wrap"}>
+    <div class={marquee ? "wrap" : ""}>
+      <div class="section__head">
+        <h2 class="section__title">{ui(lang, "gallery_title")}</h2>
+      </div>
     </div>
 
-    <div class={`gallery gallery--${variant}`}>
-      {
-        site.gallery.map((photo, index) => (
-          <figure>
-            <Image
-              src={media(photo.src)}
-              alt={t(photo.alt, lang)}
-              widths={[400, 800, 1200, 1600]}
-              sizes={sizes}
-              loading={index < 2 ? "eager" : "lazy"}
-              quality={76}
-            />
-          </figure>
-        ))
-      }
-    </div>
+    {
+      marquee ? (
+        <div class="marquee" style={`--marquee-duration:${duration}`}>
+          <div class="marquee__track">
+            {[0, 1].map((copy) => (
+              <ul class="marquee__set" aria-hidden={copy === 1 ? "true" : undefined}>
+                {set.map((photo, index) => (
+                  <li>
+                    <Image
+                      src={media(photo.src)}
+                      {...(copy === 0 && index < site.gallery.length
+                        ? /* Chaque photo n'est décrite qu'une fois : les
+                             répétitions sont décoratives, et un lecteur
+                             d'écran n'a pas à entendre la galerie deux fois. */
+                          { alt: t(photo.alt, lang) }
+                        : { alt: "" })}
+                      widths={[400, 700, 1000]}
+                      sizes={sizes}
+                      {...(copy === 0
+                        ? /*
+                           * Toute la première série est chargée d'emblée. Une
+                           * image différée sur un ruban qui avance apparaît en
+                           * blanc puis se remplit sous les yeux du visiteur,
+                           * au beau milieu de ce qui est censé être le plus
+                           * bel effet du site. La seconde série reprend les
+                           * mêmes adresses : elle ne coûte rien de plus.
+                           */
+                          { loading: "eager" as const }
+                        : { loading: "lazy" as const })}
+                      quality={76}
+                    />
+                  </li>
+                ))}
+              </ul>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div class={`gallery gallery--${variant}`}>
+          {site.gallery.map((photo, index) => (
+            <figure>
+              <Image
+                src={media(photo.src)}
+                alt={t(photo.alt, lang)}
+                widths={[400, 800, 1200, 1600]}
+                sizes={sizes}
+                loading={index < 2 ? "eager" : "lazy"}
+                quality={76}
+              />
+            </figure>
+          ))}
+        </div>
+      )
+    }
   </div>
 </section>

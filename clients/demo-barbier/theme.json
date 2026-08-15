@@ -20,7 +20,7 @@
   "layout": {
     "hero": "fullbleed",
     "heroAlign": "center",
-    "gallery": "mosaic",
+    "gallery": "marquee",
     "nav": "overlay"
   },
   "radius": "round",

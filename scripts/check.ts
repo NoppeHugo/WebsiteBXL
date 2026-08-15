@@ -34,7 +34,7 @@ for (const slug of slugs) {
   const report: Report = { slug, errors: [], warnings: [] };
 
   try {
-    const { site, mediaDir } = loadClient(repoRoot, slug);
+    const { site, theme, mediaDir } = loadClient(repoRoot, slug);
     const langs = site.languages.available;
 
     /** Signale les traductions manquantes dans les langues vendues au client. */
@@ -90,6 +90,14 @@ for (const slug of slugs) {
     if (site.plan !== "essentiel" && langs.length < 2) {
       report.warnings.push(
         `palier ${site.plan} vendu bilingue mais une seule langue activée`,
+      );
+    }
+    // Le ruban défilant se répète pour couvrir l'écran, mais trois photos qui
+    // repassent toutes les huit secondes se remarquent — et se remarquent mal.
+    if (theme.layout.gallery === "marquee" && site.gallery.length < 5) {
+      report.warnings.push(
+        `galerie en ruban défilant avec seulement ${site.gallery.length} photo(s) :` +
+          " la répétition sera visible, en prévoir au moins cinq",
       );
     }
     if (site.services.length === 0) {

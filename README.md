@@ -153,7 +153,7 @@ face ».
 | `fonts.uiTransform` / `.uiTracking` | — | Casse et interlettrage des boutons et de la navigation. |
 | `layout.hero` | `fullbleed` \| `split` \| `minimal` | Structure du hero. |
 | `layout.heroAlign` | `start` \| `center` | Texte du hero ancré à gauche, ou centré. |
-| `layout.gallery` | `grid` \| `mosaic` \| `strip` | Disposition des photos. |
+| `layout.gallery` | `grid` \| `mosaic` \| `strip` \| `marquee` | Disposition des photos. `marquee` fait défiler la galerie en continu (voir §3.3 quater). |
 | `layout.nav` | `overlay` \| `solid` | Navigation par-dessus la photo, ou opaque. |
 | `radius` | `none` \| `soft` \| `round` | `round` donne cartes arrondies et boutons en pilule. |
 | `grain` | booléen | Grain photographique léger. |
@@ -202,6 +202,44 @@ L'apparition au défilement (`effects.reveal`) masque du contenu par JavaScript.
 Trois garde-fous en découlent, tous en place : la classe qui masque est posée
 par le script (sans JavaScript, rien n'est caché), l'effet est désactivé à
 l'arrivée sur une ancre, et l'impression force l'affichage complet.
+
+### 3.3 quater Le ruban défilant
+
+**Décision :** `layout.gallery: "marquee"` fait défiler la galerie en continu,
+sans fin ni bouton.
+
+**Pourquoi :** c'est la signature visuelle des sites de coiffeurs et de
+barbiers, et elle a un avantage concret au-delà du style. Une galerie en grille
+demande de faire défiler la page ; une bande à faire glisser demande un geste
+que personne ne fait. Le ruban, lui, se regarde sans rien manipuler, y compris
+sur un téléphone tenu d'une main — et il montre le travail du salon, c'est-à-dire
+exactement ce qui le vend.
+
+**Comment, et pourquoi c'est fait ainsi :**
+
+- **Deux copies identiques des photos** glissent d'exactement une demi-piste,
+  puis l'animation repart de zéro. La reprise tombe sur une image identique et
+  ne se voit pas.
+- **Aucun JavaScript.** Le navigateur anime une seule transformation, sur le
+  processeur graphique. Rien à charger, rien qui puisse échouer.
+- **Toute la première série est chargée d'emblée.** Une image différée sur un
+  ruban qui avance apparaît en blanc et se remplit sous les yeux du visiteur,
+  au milieu du plus bel effet du site. La seconde série reprend les mêmes
+  adresses : elle ne coûte rien.
+- **Avec peu de photos, la série se répète** jusqu'à dépasser la largeur de
+  l'écran — sans quoi le glissement laisserait un vide. `pnpm check` avertit
+  en dessous de cinq photos : la répétition finit par se voir.
+- **Le ruban s'arrête sous le curseur** ou dès qu'un élément voisin reçoit le
+  focus. Une image qui fuit au moment où on la regarde est une image perdue.
+- **Mouvement réduit demandé : le défilement s'arrête tout à fait**, et le
+  ruban redevient une bande que l'on fait glisser soi-même. L'arrêter sans
+  rendre la suite atteignable masquerait la moitié des photos.
+- **Une photo n'est décrite qu'une fois** pour les lecteurs d'écran ; les
+  répétitions sont marquées décoratives.
+
+Les autres variantes restent disponibles : c'est un choix par client, pas une
+nouvelle norme. Trente salons avec le même ruban se ressembleraient — ce que
+§3.3 existe précisément pour éviter.
 
 ### 3.4 Caddy comme serveur web
 
