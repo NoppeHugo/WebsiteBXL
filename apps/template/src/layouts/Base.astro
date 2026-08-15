@@ -103,6 +103,78 @@ const revealScript = `(function(){
   window.addEventListener("beforeprint", revealAll);
   window.addEventListener("hashchange", revealAll);
 })();`;
+
+/**
+ * Amélioration des formulaires : envoi en arrière-plan quand `fetch` est
+ * disponible, sinon le navigateur poste normalement et l'API renvoie vers la
+ * page avec `?sent=1`. Les deux chemins mènent au même message de
+ * confirmation — le formulaire fonctionne sans JavaScript.
+ *
+ * Un seul script pour tous les formulaires de la page : les libellés
+ * traduits voyagent dans les attributs `data-label-*` du formulaire.
+ */
+const formScript = `(function(){
+  var forms = document.querySelectorAll("form[data-async-form]");
+  if (!forms.length) return;
+
+  // Retour d'un envoi sans JavaScript.
+  var sent = new URLSearchParams(location.search).get("sent");
+  if (sent !== null) {
+    var first = forms[0];
+    var box = first.querySelector(".form-status");
+    if (box) {
+      var okLabel = first.getAttribute("data-label-ok");
+      var koLabel = first.getAttribute("data-label-error");
+      box.setAttribute("data-state", sent === "1" ? "ok" : "error");
+      box.textContent = sent === "1" ? okLabel : koLabel;
+      if (sent === "1") first.reset();
+    }
+    history.replaceState(null, "", location.pathname + location.hash);
+  }
+
+  if (!window.fetch) return;
+
+  for (var i = 0; i < forms.length; i++) {
+    (function (form) {
+      var status = form.querySelector(".form-status");
+      var button = form.querySelector("button[type=submit]");
+      var trap = form.querySelector("[name=_company]");
+
+      form.addEventListener("submit", function (event) {
+        if (trap && trap.value) { event.preventDefault(); return; }
+        event.preventDefault();
+
+        button.disabled = true;
+        button.textContent = form.getAttribute("data-label-sending");
+        if (status) { status.textContent = ""; status.removeAttribute("data-state"); }
+
+        fetch(form.action, {
+          method: "POST",
+          body: new FormData(form),
+          headers: { Accept: "application/json" }
+        })
+          .then(function (response) {
+            if (!response.ok) throw new Error(String(response.status));
+            form.reset();
+            if (status) {
+              status.setAttribute("data-state", "ok");
+              status.textContent = form.getAttribute("data-label-ok");
+            }
+          })
+          .catch(function () {
+            if (status) {
+              status.setAttribute("data-state", "error");
+              status.textContent = form.getAttribute("data-label-error");
+            }
+          })
+          .finally(function () {
+            button.disabled = false;
+            button.textContent = form.getAttribute("data-label-send");
+          });
+      });
+    })(forms[i]);
+  }
+})();`;
 ---
 
 <!doctype html>
@@ -174,5 +246,6 @@ const revealScript = `(function(){
     <slot />
 
     {theme.effects.reveal && <script is:inline set:html={revealScript} />}
+    <script is:inline set:html={formScript} />
   </body>
 </html>

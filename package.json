@@ -14,7 +14,9 @@
     "check": "node --experimental-strip-types scripts/check.ts",
     "caddy": "node --experimental-strip-types scripts/caddy-config.ts",
     "deploy": "./scripts/deploy.sh",
-    "placeholders": "node --experimental-strip-types scripts/gen-placeholders.ts"
+    "placeholders": "node --experimental-strip-types scripts/gen-placeholders.ts",
+    "tenant": "node --experimental-strip-types apps/api/src/cli/upsert-tenant.ts",
+    "api": "pnpm --filter @bxl/api run dev"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

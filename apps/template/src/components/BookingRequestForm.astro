@@ -1,0 +1,196 @@
+---
+import type { Language } from "@bxl/schema";
+import { site, t, path } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+import { apiEndpoint } from "../lib/api.ts";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const endpoint = apiEndpoint("/v1/booking-requests");
+
+/**
+ * Formulaire de demande de rendez-vous (réservation v1).
+ *
+ * Rendu côté serveur avec les prestations du client : le navigateur n'a aucun
+ * appel à faire pour afficher la liste, et le formulaire fonctionne sans
+ * JavaScript. L'amélioration par `fetch` est branchée par `Base.astro`.
+ *
+ * Le créneau demandé reste volontairement approximatif — matin, après-midi ou
+ * soirée. Laisser choisir une heure précise ferait croire à une réservation
+ * ferme, alors que le salon confirme manuellement en v1.
+ */
+
+// Date minimale : aujourd'hui. Calculée au build, donc figée à la date de
+// publication ; le serveur revalide de toute façon la date reçue.
+const today = new Date().toISOString().slice(0, 10);
+
+const periods = [
+  ["morning", ui(lang, "period_morning")],
+  ["afternoon", ui(lang, "period_afternoon")],
+  ["evening", ui(lang, "period_evening")],
+] as const;
+
+const returnUrl = Astro.site
+  ? new URL(path(lang), Astro.site).href
+  : undefined;
+---
+
+{
+  endpoint && site.tenantId && site.services.length > 0 && (
+    <div class="booking-form">
+      <h3>{ui(lang, "booking_title")}</h3>
+      <p class="booking-form__note">{ui(lang, "booking_disclaimer")}</p>
+
+      <form
+        method="post"
+        action={endpoint}
+        data-async-form
+        data-label-sending={ui(lang, "form_sending")}
+        data-label-ok={ui(lang, "booking_ok")}
+        data-label-error={ui(lang, "form_error")}
+        data-label-send={ui(lang, "booking_send")}
+      >
+        <input type="hidden" name="tenantId" value={site.tenantId} />
+        <input type="hidden" name="locale" value={lang} />
+        {returnUrl && (
+          <input type="hidden" name="redirectTo" value={returnUrl} />
+        )}
+
+        <label>
+          <span>{ui(lang, "booking_service")}</span>
+          <select name="serviceId" required data-service-select>
+            {site.services.map((service) => (
+              <option value={service.id} data-name={t(service.name, lang)}>
+                {t(service.name, lang)} — {service.durationMin}{" "}
+                {ui(lang, "minutes")}
+              </option>
+            ))}
+          </select>
+        </label>
+        {/* Repris tel quel dans le courriel au salon, pour qu'il lise un
+            libellé et non un identifiant technique. */}
+        <input
+          type="hidden"
+          name="serviceName"
+          value={t(site.services[0]!.name, lang)}
+          data-service-name
+        />
+
+        <div class="booking-form__row">
+          <label>
+            <span>{ui(lang, "booking_date")}</span>
+            <input type="date" name="preferredDate" required min={today} />
+          </label>
+
+          <label>
+            <span>{ui(lang, "booking_period")}</span>
+            <select name="preferredPeriod" required>
+              {periods.map(([value, label]) => (
+                <option value={value}>{label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div class="booking-form__row">
+          <label>
+            <span>{ui(lang, "form_name")}</span>
+            <input type="text" name="name" required autocomplete="name" />
+          </label>
+
+          <label>
+            <span>{ui(lang, "form_email")}</span>
+            <input type="email" name="email" required autocomplete="email" />
+          </label>
+        </div>
+
+        <label>
+          <span>{ui(lang, "booking_phone")}</span>
+          <input type="tel" name="phone" autocomplete="tel" />
+        </label>
+
+        <label>
+          <span>{ui(lang, "booking_note")}</span>
+          <textarea name="note" rows="3" />
+        </label>
+
+        <input
+          type="text"
+          name="_company"
+          tabindex="-1"
+          autocomplete="off"
+          aria-hidden="true"
+          class="honeypot"
+        />
+
+        <label class="consent">
+          <input type="checkbox" name="consent" required />
+          <span>
+            {ui(lang, "form_consent")}{" "}
+            <a href={`${path(lang)}legal/`}>{ui(lang, "legal")}</a>
+          </span>
+        </label>
+
+        <button type="submit" class="btn btn--primary">
+          {ui(lang, "booking_send")}
+        </button>
+
+        <p class="form-status" role="status" aria-live="polite" />
+      </form>
+    </div>
+  )
+}
+
+<script>
+  // Le libellé de la prestation suit la sélection, pour que le courriel reçu
+  // par le salon soit lisible sans consulter la configuration du site.
+  const select = document.querySelector<HTMLSelectElement>("[data-service-select]");
+  const hidden = document.querySelector<HTMLInputElement>("[data-service-name]");
+  if (select && hidden) {
+    const sync = () => {
+      const option = select.selectedOptions[0];
+      hidden.value = option?.dataset.name ?? option?.value ?? "";
+    };
+    sync();
+    select.addEventListener("change", sync);
+  }
+</script>
+
+<style>
+  .booking-form {
+    margin-top: clamp(2rem, 5vw, 3rem);
+    text-align: left;
+    max-width: 40rem;
+    margin-inline: auto;
+  }
+
+  .booking-form h3 {
+    font-size: var(--step-1);
+    margin-bottom: 0.6rem;
+  }
+
+  .booking-form__note {
+    color: var(--c-muted);
+    font-size: var(--step--1);
+    margin-bottom: 1.5rem;
+  }
+
+  .booking-form form {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .booking-form__row {
+    display: grid;
+    gap: 1rem;
+  }
+
+  @media (min-width: 620px) {
+    .booking-form__row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

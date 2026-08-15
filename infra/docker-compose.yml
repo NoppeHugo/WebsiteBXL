@@ -1,0 +1,52 @@
+# Services dynamiques du VPS.
+#
+# Les sites vitrines ne sont pas ici : ils sont statiques, servis directement
+# par Caddy depuis le disque, sans aucun processus par client. Seule l'API a
+# besoin d'un service et d'une base.
+
+name: bxl
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bxl
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?mot de passe requis}
+      POSTGRES_DB: bxl
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # Sauvegardes déposées ici par la tâche planifiée du VPS.
+      - ./backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bxl -d bxl"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # La base n'est jamais exposée à l'extérieur : seule l'API l'atteint,
+    # par le réseau interne de Compose.
+    expose:
+      - "5432"
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://bxl:${POSTGRES_PASSWORD}@db:5432/bxl
+      NODE_ENV: production
+      EMAIL_DRIVER: resend
+      RESEND_API_KEY: ${RESEND_API_KEY:?clé Resend requise}
+      MAIL_FROM: ${MAIL_FROM:?expéditeur requis}
+      PORT: 3000
+    # Publié uniquement sur la boucle locale : c'est Caddy qui expose le
+    # service au monde, avec HTTPS et les en-têtes de sécurité.
+    ports:
+      - "127.0.0.1:3000:3000"
+
+volumes:
+  db-data:

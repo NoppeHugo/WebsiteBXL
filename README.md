@@ -277,10 +277,21 @@ verrou, pas par une vérification applicative. À traiter dès la v2, pas après
 
 **Phasage :**
 
-- **v1 — demande de rendez-vous.** Le client final choisit un service et un
-  créneau souhaité, le salon confirme manuellement par email. Quelques jours de
-  développement, aucun risque de double-réservation, et permet de **vendre le
-  Premium immédiatement**.
+- **v1 — demande de rendez-vous ✅ livrée.** Le client final choisit une
+  prestation, une date et un moment de la journée ; le salon reçoit un
+  courriel auquel il répond directement pour confirmer, et le client reçoit un
+  accusé de réception dans sa langue. Aucun risque de double-réservation, et
+  cela permet de **vendre le Premium immédiatement**.
+
+  Le créneau demandé reste volontairement approximatif — matin, après-midi ou
+  soirée. Laisser choisir une heure précise ferait croire à une réservation
+  ferme alors que la confirmation est manuelle : la déception se paierait en
+  appels et en avis négatifs.
+
+  Le formulaire est rendu côté serveur avec les prestations du client et
+  **fonctionne sans JavaScript** : le navigateur poste normalement et l'API
+  renvoie vers la page. Une demande qui se perd parce qu'un script n'a pas
+  chargé coûte bien plus cher qu'une page de confirmation moins élégante.
 - **v2 — agenda temps réel.** Disponibilités calculées en direct (durée du
   service, ressource, horaires, congés, temps tampon), confirmation
   automatique, gestion de la concurrence.
@@ -607,11 +618,36 @@ Reste, sur le terrain :
 - Mollie : mandats SEPA et prélèvements automatiques.
 - Drapeau de suspension opérationnel.
 
-### Phase 3 — Réservation v1 *(débloque la vente du Premium)*
+### Phase 3 — Réservation v1 ✅ *(débloque la vente du Premium)*
 
-- Demande de rendez-vous : choix du service, créneau souhaité, email au salon.
-- Widget embarqué dans le template.
-- DPA et registre RGPD en place.
+- [x] `apps/api` : Fastify + Postgres, migrations appliquées au démarrage.
+- [x] Demande de rendez-vous : prestation, date, moment de la journée.
+      Courriel au salon (réponse directe au client) et accusé de réception
+      traduit au client final.
+- [x] Formulaire de contact servi par la même API.
+- [x] Formulaires rendus côté serveur, fonctionnels sans JavaScript.
+- [x] Protections : limitation de débit par IP, piège à robots, CORS limité aux
+      domaines des clients, redirection de retour vérifiée contre l'origine
+      déclarée.
+- [x] Purge automatique des données au-delà de la durée de conservation.
+- [x] `docker-compose.yml`, `Dockerfile` et bloc Caddy de l'API.
+
+Reste, hors code : **signer un DPA avec chaque commerçant** utilisant la
+réservation, et tenir le registre des traitements. L'API stocke des données
+personnelles de clients finaux dès la première demande.
+
+**Mise en service :**
+
+```bash
+# Sur le VPS
+cd infra && docker compose up -d          # api + postgres
+scp infra/api.caddy root@vps:/etc/caddy/sites/   # après avoir mis le domaine
+
+# En local, pour chaque client
+pnpm tenant salon-marie --email salon@exemple.be
+# puis passer booking.mode à "request" dans site.json
+PUBLIC_API_URL=https://api.exemple.be pnpm build salon-marie
+```
 
 ### Phase 4 — Réservation v2
 
@@ -647,6 +683,8 @@ cp .env.example .env      # renseigner DEPLOY_HOST une fois le VPS prêt
 | `pnpm check` | Valide tous les clients sans construire : format, photos manquantes, traductions absentes. |
 | `pnpm caddy <slug>` | Génère le bloc Caddy du client depuis son domaine et ses alias. |
 | `pnpm placeholders <slug>` | Régénère les visuels de remplacement. |
+| `pnpm tenant <slug> --email …` | Enregistre le commerce auprès de l'API et génère son `tenantId`. |
+| `pnpm api` | Lance l'API de réservation en local. |
 | `./scripts/deploy.sh <slug>` | Déploie sur le VPS (nouvelle release + bascule du lien). |
 
 ### Livrer un nouveau client

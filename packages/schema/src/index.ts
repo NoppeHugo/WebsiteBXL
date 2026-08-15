@@ -129,8 +129,8 @@ export const Booking = z
   .discriminatedUnion("mode", [
     z.object({ mode: z.literal("none") }),
     z.object({ mode: z.literal("external"), url: z.string().url() }),
-    z.object({ mode: z.literal("request"), tenantId: z.string().uuid() }),
-    z.object({ mode: z.literal("live"), tenantId: z.string().uuid() }),
+    z.object({ mode: z.literal("request") }),
+    z.object({ mode: z.literal("live") }),
   ])
   .default({ mode: "none" });
 
@@ -153,6 +153,13 @@ export const SiteConfig = z
 
     /** Signale un site de démonstration : `noindex` et bandeau de démo. */
     demo: z.boolean().default(false),
+
+    /**
+     * Identifiant du commerce auprès de l'API maison. Nécessaire dès qu'un
+     * formulaire renvoie vers nos serveurs — réservation comme contact.
+     * Créé par `pnpm tenant <slug>`.
+     */
+    tenantId: z.string().uuid().optional(),
 
     domain: Domain,
     /** Domaines additionnels servis par Caddy (www, ancien nom…). */
@@ -263,6 +270,17 @@ export const SiteConfig = z
       .default({}),
   })
   .superRefine((cfg, ctx) => {
+    if (
+      (cfg.booking.mode === "request" || cfg.booking.mode === "live") &&
+      !cfg.tenantId
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["tenantId"],
+        message: `le mode de réservation « ${cfg.booking.mode} » exige un tenantId (pnpm tenant <slug>)`,
+      });
+    }
+
     const ids = new Set<string>();
     for (const [i, s] of cfg.services.entries()) {
       if (ids.has(s.id)) {

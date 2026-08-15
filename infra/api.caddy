@@ -1,0 +1,13 @@
+# Bloc Caddy de l'API. À déposer dans /etc/caddy/sites/ après avoir remplacé
+# le domaine, puis : sudo systemctl reload caddy
+#
+# L'API n'est jamais appelée directement par une adresse IP : elle passe par
+# ce domaine, ce qui lui donne HTTPS et les en-têtes communs.
+
+api.exemple.be {
+	import commun
+
+	reverse_proxy 127.0.0.1:3000 {
+		header_up X-Forwarded-For {remote_host}
+	}
+}

@@ -3,6 +3,7 @@ import type { Language } from "@bxl/schema";
 import { site } from "../lib/client.ts";
 import { ui } from "../lib/i18n.ts";
 import { bookingTarget, telHref } from "../lib/booking.ts";
+import BookingRequestForm from "./BookingRequestForm.astro";
 
 interface Props {
   lang: Language;
@@ -43,27 +44,12 @@ const externalBooking = booking.enabled && !booking.widget;
 
     {
       /*
-        Point de montage du widget de réservation maison (phases 3 et 4 du
-        README). Le template est prêt : le script à venir lit `data-tenant` et
-        remplit ce conteneur. Tant qu'il n'est pas chargé, le téléphone reste
-        visible — un visiteur n'est jamais bloqué par une réservation en panne.
+        Formulaire de demande de rendez-vous (v1). Le téléphone reste affiché
+        au-dessus : un visiteur n'est jamais bloqué si la réservation tombe.
       */
-      booking.widget && "tenantId" in site.booking && (
-        <div
-          class="booking-widget"
-          data-booking-widget
-          data-tenant={site.booking.tenantId}
-          data-mode={site.booking.mode}
-          data-lang={lang}
-        />
-      )
+      booking.widget && site.tenantId && <BookingRequestForm lang={lang} />
     }
   </div>
 </section>
 
-<style>
-  .booking-widget {
-    margin-top: 2.5rem;
-    min-height: 1px;
-  }
-</style>
+

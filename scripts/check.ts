@@ -111,9 +111,17 @@ for (const slug of slugs) {
         "ni numéro d'entreprise ni numéro de TVA dans les mentions légales",
       );
     }
-    if (!site.contact.formEndpoint) {
+    // Le formulaire s'affiche soit via notre API (tenantId), soit via un
+    // prestataire externe déclaré. Sans l'un ni l'autre, il n'y en a pas.
+    if (!site.contact.formEndpoint && !site.tenantId) {
       report.warnings.push(
-        "aucun formulaire de contact : seuls le téléphone et l'e-mail sont proposés",
+        "aucun formulaire de contact : seuls le téléphone et l'e-mail sont proposés" +
+          " — enregistrer le commerce avec `pnpm tenant <slug>`",
+      );
+    }
+    if (site.booking.mode === "live") {
+      report.warnings.push(
+        "mode de réservation « live » : l'agenda temps réel n'est pas encore livré (phase 4)",
       );
     }
   } catch (error) {

@@ -3,6 +3,7 @@
   "status": "draft",
   "plan": "signature",
   "demo": true,
+  "tenantId": "3f1b7c2e-9d4a-4f8b-8c1e-0a2b6d5e7f30",
   "domain": "demo-barbier.local",
   "aliases": [],
   "languages": {
@@ -367,8 +368,7 @@
     }
   ],
   "booking": {
-    "mode": "request",
-    "tenantId": "3f1b7c2e-9d4a-4f8b-8c1e-0a2b6d5e7f30"
+    "mode": "request"
   },
   "seo": {
     "title": {
@@ -389,7 +389,5 @@
     "vatNumber": "BE0123.456.789",
     "publisher": "Lucas Verhaeren"
   },
-  "contact": {
-    "formEndpoint": "https://example.com/contact"
-  }
+  "contact": {}
 }

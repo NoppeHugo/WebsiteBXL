@@ -47,6 +47,20 @@ const strings = {
     legal_privacy_body:
       "Ce site ne dépose aucun cookie publicitaire et n'utilise aucun traceur tiers. La fréquentation est mesurée de façon anonyme, sans cookie. Les données transmises via le formulaire de contact servent uniquement à répondre à votre demande et ne sont ni revendues ni transmises à des tiers. Vous pouvez demander leur consultation ou leur suppression en écrivant à l'adresse ci-dessus.",
     form_title: "Écrire un message",
+    booking_title: "Demander un rendez-vous",
+    booking_service: "Prestation",
+    booking_date: "Date souhaitée",
+    booking_period: "Moment de la journée",
+    period_morning: "Matin",
+    period_afternoon: "Après-midi",
+    period_evening: "Soirée",
+    booking_phone: "Votre téléphone (facultatif)",
+    booking_note: "Précision (facultatif)",
+    booking_send: "Envoyer la demande",
+    booking_ok:
+      "Demande envoyée. Le salon vous recontacte pour confirmer l'horaire.",
+    booking_disclaimer:
+      "Il ne s'agit pas encore d'une réservation confirmée : le salon vous recontacte pour fixer l'horaire exact.",
     form_name: "Votre nom",
     form_email: "Votre e-mail",
     form_message: "Votre message",
@@ -104,6 +118,20 @@ const strings = {
     legal_privacy_body:
       "Deze site plaatst geen advertentiecookies en gebruikt geen trackers van derden. Het bezoek wordt anoniem gemeten, zonder cookies. Gegevens die via het contactformulier worden verzonden, dienen enkel om uw vraag te beantwoorden en worden niet verkocht of doorgegeven aan derden. U kunt inzage of verwijdering vragen via het bovenstaande adres.",
     form_title: "Een bericht sturen",
+    booking_title: "Een afspraak aanvragen",
+    booking_service: "Dienst",
+    booking_date: "Gewenste datum",
+    booking_period: "Moment van de dag",
+    period_morning: "Ochtend",
+    period_afternoon: "Namiddag",
+    period_evening: "Avond",
+    booking_phone: "Uw telefoonnummer (optioneel)",
+    booking_note: "Toelichting (optioneel)",
+    booking_send: "Aanvraag versturen",
+    booking_ok:
+      "Aanvraag verzonden. De zaak neemt contact op om het uur te bevestigen.",
+    booking_disclaimer:
+      "Dit is nog geen bevestigde afspraak: de zaak neemt contact met u op om het precieze uur vast te leggen.",
     form_name: "Uw naam",
     form_email: "Uw e-mailadres",
     form_message: "Uw bericht",
@@ -155,6 +183,20 @@ const strings = {
     legal_privacy_body:
       "This site sets no advertising cookies and uses no third-party trackers. Traffic is measured anonymously, without cookies. Data sent through the contact form is used solely to answer your enquiry and is never sold or passed to third parties. You may request access or deletion at the address above.",
     form_title: "Send a message",
+    booking_title: "Request an appointment",
+    booking_service: "Service",
+    booking_date: "Preferred date",
+    booking_period: "Time of day",
+    period_morning: "Morning",
+    period_afternoon: "Afternoon",
+    period_evening: "Evening",
+    booking_phone: "Your phone (optional)",
+    booking_note: "Anything to add (optional)",
+    booking_send: "Send request",
+    booking_ok:
+      "Request sent. The shop will get back to you to confirm the time.",
+    booking_disclaimer:
+      "This is not a confirmed booking yet — the shop will contact you to agree on the exact time.",
     form_name: "Your name",
     form_email: "Your email",
     form_message: "Your message",

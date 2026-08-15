@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./load": "./src/load.ts"
+    "./load": "./src/load.ts",
+    "./booking": "./src/booking.ts"
   },
   "dependencies": {
     "zod": "^3.24.1"
