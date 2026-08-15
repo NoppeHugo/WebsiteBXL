@@ -8,3 +8,4 @@ dist/
 !.env.example
 apps/template/src/media/
 .preview-*.png
+.admin-*.png
