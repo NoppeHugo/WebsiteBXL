@@ -23,6 +23,8 @@ const Env = z.object({
 
   /** Injecté dans les builds déclenchés depuis la console. */
   PUBLIC_API_URL: z.string().default(""),
+  STRIPE_SECRET_KEY: z.string().optional(),
+  PUBLIC_ADMIN_URL: z.string().default(""),
 });
 
 const parsed = Env.safeParse(process.env);

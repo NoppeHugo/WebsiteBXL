@@ -17,6 +17,7 @@
     "postgres": "^3.4.5",
     "sharp": "^0.33.5",
     "zod": "^3.24.1",
-    "@bxl/api": "workspace:*"
+    "@bxl/api": "workspace:*",
+    "stripe": "^17.5.0"
   }
 }

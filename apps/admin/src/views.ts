@@ -118,6 +118,7 @@ ${
     <a href="/">Clients</a>
     <a href="/requests">Demandes</a>
     <a href="/reports">Rapports</a>
+    <a href="/billing">Abonnements</a>
     <form method="post" action="/logout" style="display:inline">
       <button class="secondary" style="padding:0.3em 1em;font-size:0.85rem">Quitter</button>
     </form>

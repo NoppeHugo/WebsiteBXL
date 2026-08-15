@@ -22,6 +22,13 @@ const Env = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 
   /**
+   * Stripe. Absent, les abonnements sont simplement désactivés : le service
+   * doit pouvoir tourner avant qu'un compte de facturation existe.
+   */
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+
+  /**
    * Limitation de débit par adresse IP. Elle vise le remplissage automatisé,
    * pas le client : un salon reçoit rarement plus de quelques demandes par
    * heure depuis une même adresse.

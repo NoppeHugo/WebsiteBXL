@@ -211,6 +211,21 @@ l'automatisation qui compte le plus.
 Chaque déploiement écrit un nouveau dossier `releases/<horodatage>/` puis bascule
 le symlink `current`. Bascule atomique, aucune coupure, rollback instantané.
 
+### 3.5 bis Un module métier n'importe jamais la configuration du service
+
+**Règle :** les modules qui portent la logique (agrégats d'audience, rapports,
+abonnements, traitement des photos) reçoivent en argument ce dont ils ont
+besoin — client de base de données, fonction d'envoi, racine du dépôt — au lieu
+de l'importer.
+
+**Pourquoi cette règle existe :** elle a été apprise quatre fois. Importer la
+configuration du serveur dans un module de logique rendait la commande de
+création de compte impossible à lancer sans secret de session, faisait planter
+l'interface d'administration au démarrage parce qu'elle réclamait une clé
+d'envoi de courriels, et empêchait d'écrire le moindre test sans monter tout
+l'environnement. La contrainte est légère à respecter et coûteuse à réparer
+après coup.
+
 ### 3.6 Git comme source de vérité du contenu
 
 **Décision :** le contenu des sites (`site.json`, `theme.json`, médias) vit dans
@@ -370,26 +385,32 @@ Un drapeau `suspended: true` dans `site.json` déploie une page « site
 temporairement indisponible ». Deux lignes de code maintenant ; une improvisation
 dans l'urgence si on l'oublie.
 
-### 3.12 Encaissement — ordre permanent d'abord, Mollie plus tard
+### 3.12 Encaissement — abonnements Stripe
 
-**Décision révisée.** Pas d'intégration de paiement au démarrage.
+**Décision :** abonnements Stripe Billing, en prélèvement SEPA avec la carte en
+secours.
 
-**Pourquoi :** prélever sur le compte d'un tiers exige un contrat créancier
-avec sa banque et un identifiant créancier — frais d'ouverture, frais mensuels,
-souvent un volume minimum. Ce n'est pas accessible depuis une application
-bancaire ordinaire.
+**Pourquoi ça débloque tout :** prélever sur le compte d'un tiers exige
+normalement un contrat créancier auprès de sa banque et un identifiant
+créancier — frais d'ouverture, frais mensuels, souvent un volume minimum, et
+rien de tout cela ne se fait depuis une application bancaire. Avec Stripe,
+**c'est Stripe qui est le créancier du mandat** : ni contrat bancaire, ni
+identifiant, ni frais fixes. Le commerçant signe une fois en ligne, et le
+prélèvement tourne seul.
 
-**À la place :** le commerçant met en place un **ordre permanent** depuis sa
-propre banque, le jour de la signature. Zéro frais, zéro intégration,
-opérationnel immédiatement.
+**SEPA d'abord, carte en secours :** le prélèvement coûte moins cher et
+n'expire pas. Une carte qui expire au bout de trois ans casse la rente sans
+prévenir — exactement ce qu'on cherche à éviter.
 
-**La contrepartie, à ne pas ignorer :** c'est lui qui contrôle l'ordre, donc il
-peut l'arrêter sans prévenir. D'où le besoin d'un suivi des paiements dans
-l'interface d'administration — montant attendu, dernier paiement reçu,
-signalement des retards — pour savoir qui suspendre.
+**Les notifications Stripe sont la source de vérité.** On ne décide jamais
+qu'un client est à jour : Stripe le dit. Interroger l'API à la demande donnerait
+une photo, alors que l'important est d'être prévenu quand un prélèvement
+échoue.
 
-**Bascule vers Mollie vers 15-20 clients**, quand la réconciliation manuelle
-coûtera plus cher que les commissions.
+**Quand suspendre :** aux statuts `past_due` et `unpaid`, c'est-à-dire une fois
+que Stripe a épuisé ses propres relances. Suspendre au premier échec couperait
+le site d'un client dont la carte a simplement expiré. Un mandat encore non
+signé (`incomplete`) n'est pas non plus un impayé.
 
 ### 3.13 Mesure d'audience — collecte maison (arme anti-churn)
 
@@ -415,8 +436,14 @@ visiteurs uniques sur une journée et devient inexploitable le lendemain, y
 compris pour nous. Conséquence directe : **pas de bandeau de consentement**, ce
 qui préserve le design des sites et évite une friction à chaque visite.
 
-**Le livrable :** l'interface d'administration produit un texte prêt à
-copier-coller dans un courriel au commerçant. C'est **ça** qui empêche la
+**Le livrable :** le rapport part **automatiquement** par courriel au
+commerçant, dans sa langue, à partir du 2 de chaque mois. La date n'est pas le
+1er parce que les événements de la veille peuvent encore arriver, et un rapport
+amputé de son dernier jour se remarque. L'envoi est idempotent — un redémarrage
+du service ne peut pas expédier deux fois le même mois — et un mois sans la
+moindre visite n'envoie rien : annoncer « 0 visiteur » à quelqu'un qui paie est
+le meilleur moyen de lui donner envie de résilier. L'interface permet aussi de
+consulter et de renvoyer un mois à la main. C'est **ça** qui empêche la
 résiliation au bout de huit mois — il voit ce qu'il achète. Un tableau de bord
 ne produit pas cet effet.
 
@@ -666,8 +693,10 @@ Reste, sur le terrain :
 - [x] Drapeau de suspension opérationnel de bout en bout.
 - [x] Envoi et suppression de photos depuis l'interface, avec réduction et
       conversion automatiques à l'arrivée.
-- [x] Mesure d'audience sans cookie et rapport mensuel prêt à envoyer.
-- [ ] Suivi des abonnements et des paiements (voir §3.12).
+- [x] Mesure d'audience sans cookie, rapport mensuel prêt à envoyer **et
+      envoyé automatiquement** au commerçant.
+- [x] Abonnements Stripe : création du mandat, suivi des impayés, page
+      Abonnements dans l'interface.
 
 **Mise en service :**
 

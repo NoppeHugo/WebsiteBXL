@@ -42,6 +42,8 @@ services:
       EMAIL_DRIVER: resend
       RESEND_API_KEY: ${RESEND_API_KEY:?clé Resend requise}
       MAIL_FROM: ${MAIL_FROM:?expéditeur requis}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       PORT: 3000
     # Publié uniquement sur la boucle locale : c'est Caddy qui expose le
     # service au monde, avec HTTPS et les en-têtes de sécurité.
@@ -63,6 +65,8 @@ services:
       REPO_PATH: /repo
       SESSION_SECRET: ${SESSION_SECRET:?secret de session requis}
       PUBLIC_API_URL: ${PUBLIC_API_URL:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      PUBLIC_ADMIN_URL: ${PUBLIC_ADMIN_URL:-}
     volumes:
       # Le clone du dépôt sur le VPS : la console y écrit les site.json,
       # commite et pousse. Git reste la source de vérité du contenu.

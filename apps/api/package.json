@@ -14,10 +14,13 @@
     "@fastify/rate-limit": "^10.2.1",
     "fastify": "^5.2.0",
     "postgres": "^3.4.5",
-    "zod": "^3.24.1"
+    "zod": "^3.24.1",
+    "stripe": "^17.5.0"
   },
   "exports": {
     ".": "./src/index.ts",
-    "./analytics": "./src/analytics.ts"
+    "./analytics": "./src/analytics.ts",
+    "./billing": "./src/billing.ts",
+    "./reports": "./src/reports.ts"
   }
 }

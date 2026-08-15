@@ -10,6 +10,7 @@ import { authRoutes, SESSION_COOKIE } from "./routes/auth.ts";
 import { clientRoutes } from "./routes/clients.ts";
 import { requestRoutes } from "./routes/requests.ts";
 import { reportRoutes } from "./routes/reports.ts";
+import { billingRoutes } from "./routes/billing.ts";
 
 const app = Fastify({
   logger: { level: isProduction ? "info" : "debug" },
@@ -64,6 +65,7 @@ authRoutes(app);
 clientRoutes(app);
 requestRoutes(app);
 reportRoutes(app);
+billingRoutes(app);
 
 await app.listen({ port: config.PORT, host: config.HOST });
 
