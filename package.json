@@ -17,13 +17,16 @@
     "placeholders": "node --experimental-strip-types scripts/gen-placeholders.ts",
     "tenant": "node --experimental-strip-types apps/api/src/cli/upsert-tenant.ts",
     "api": "pnpm --filter @bxl/api run dev",
-    "console": "pnpm --filter @bxl/console run dev",
-    "admin:create": "node --experimental-strip-types apps/console/src/cli/create-admin.ts"
+    "admin:create": "node --experimental-strip-types apps/admin/src/cli/create-admin.ts",
+    "admin": "pnpm --filter @bxl/admin run dev",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "sharp": "^0.33.5",
     "typescript": "^5.7.2",
-    "zod": "^3.24.1"
+    "zod": "^3.24.1",
+    "vitest": "^2.1.8"
   }
 }

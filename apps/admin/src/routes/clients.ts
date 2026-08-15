@@ -3,6 +3,7 @@ import { WEEKDAYS, type Weekday } from "@bxl/schema";
 import { clients, client, readSiteRaw, writeSite, commitAndPush, publish, pull } from "../repo.ts";
 import { logPublish } from "../db.ts";
 import { layout, flash, escape } from "../views.ts";
+import { parseSlots, formatSlots } from "../hours.ts";
 
 /*
  * Édition du contenu.
@@ -16,22 +17,6 @@ import { layout, flash, escape } from "../views.ts";
 
 function adminId(request: FastifyRequest): number {
   return (request as FastifyRequest & { adminId: number }).adminId;
-}
-
-/** « 09:30-18:30, 19:00-21:00 » ⇄ créneaux. Vide = fermé. */
-function parseSlots(value: string): Array<{ open: string; close: string }> {
-  return value
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .map((part) => {
-      const [open, close] = part.split("-").map((s) => s.trim());
-      return { open: open ?? "", close: close ?? "" };
-    });
-}
-
-function formatSlots(slots: Array<{ open: string; close: string }>): string {
-  return slots.map((s) => `${s.open}-${s.close}`).join(", ");
 }
 
 function editPage(slug: string, message?: { kind: "ok" | "error"; text: string }): string {

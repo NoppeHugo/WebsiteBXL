@@ -25,6 +25,10 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Tests des chemins où une erreur coûte de l'argent ou expose des
+      # données : contrat de contenu, authentification, défenses de l'API.
+      - run: pnpm test
+
       # Validation de tous les clients : format, photos référencées,
       # traductions manquantes dans les langues vendues.
       - run: pnpm check

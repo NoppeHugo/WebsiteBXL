@@ -48,10 +48,10 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
 
-  console:
+  admin:
     build:
       context: ..
-      dockerfile: apps/console/Dockerfile
+      dockerfile: apps/admin/Dockerfile
     restart: unless-stopped
     depends_on:
       db:

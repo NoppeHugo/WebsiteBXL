@@ -35,6 +35,30 @@ const Consent = z
  */
 const Honeypot = z.string().max(200).optional();
 
+/**
+ * URL de retour, restreinte à http(s).
+ *
+ * `z.string().url()` accepte `javascript:` et `data:` — ce sont des URL
+ * valides. La route revérifie l'origine, ce qui les rejetterait de toute
+ * façon, mais une défense qui ne tient que par son second étage finit par
+ * tomber le jour où le premier change.
+ */
+const ReturnUrl = z
+  .string()
+  .url()
+  .max(300)
+  .refine(
+    (value) => {
+      try {
+        const protocol = new URL(value).protocol;
+        return protocol === "http:" || protocol === "https:";
+      } catch {
+        return false;
+      }
+    },
+    { message: "seules les adresses http et https sont acceptées" },
+  );
+
 const Customer = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(200),
@@ -60,7 +84,7 @@ export const BookingRequestInput = z.object({
    * l'origine déclarée du client côté serveur : accepter une URL arbitraire
    * ferait de l'API une redirection ouverte, utilisable pour du hameçonnage.
    */
-  redirectTo: z.string().url().max(300).optional().or(z.literal("")),
+  redirectTo: ReturnUrl.optional().or(z.literal("")),
 });
 export type BookingRequestInput = z.infer<typeof BookingRequestInput>;
 
@@ -72,7 +96,7 @@ export const ContactMessageInput = z.object({
   locale: Language.default("fr"),
   consent: Consent,
   _company: Honeypot,
-  redirectTo: z.string().url().max(300).optional().or(z.literal("")),
+  redirectTo: ReturnUrl.optional().or(z.literal("")),
 });
 export type ContactMessageInput = z.infer<typeof ContactMessageInput>;
 

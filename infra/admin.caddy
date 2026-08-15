@@ -1,7 +1,7 @@
-# Bloc Caddy de la console. À déposer dans /etc/caddy/sites/ après avoir
+# Bloc Caddy de l'interface d'administration. À déposer dans /etc/caddy/sites/ après avoir
 # remplacé le domaine, puis : sudo systemctl reload caddy
 #
-# La console peut modifier et mettre hors ligne tous les sites clients : elle
+# L'interface peut modifier et mettre hors ligne tous les sites clients : elle
 # vit sur un sous-domaine distinct, jamais sur le domaine d'un client.
 
 admin.exemple.be {

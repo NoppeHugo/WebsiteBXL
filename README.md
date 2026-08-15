@@ -218,10 +218,10 @@ git. Postgres ne stocke **que** les données transactionnelles : réservations,
 clients finaux, facturation, audience.
 
 **Pourquoi :** historique complet, rollback trivial, édition possible à la main
-quand c'est plus rapide, et la console admin (§3.7) n'est qu'un éditeur qui
+quand c'est plus rapide, et l'interface d'administration admin (§3.7) n'est qu'un éditeur qui
 commit. Chaque outil à sa place.
 
-### 3.7 Console d'administration — mono-utilisateur, pilotage de tous les sites
+### 3.7 Interface d'administration — mono-utilisateur, pilotage de tous les sites
 
 **Décision :** une application web privée, sur `admin.<domaine>`, qui permet de
 piloter l'ensemble des sites hébergés sur le VPS depuis une seule interface.
@@ -237,9 +237,9 @@ piloter l'ensemble des sites hébergés sur le VPS depuis une seule interface.
 - Audience du mois et génération du rapport client.
 - Statut d'abonnement et de paiement, bouton de suspension.
 
-**Fonctionnement :** la console écrit dans un clone du repo présent sur le VPS,
+**Fonctionnement :** l'interface d'administration écrit dans un clone du repo présent sur le VPS,
 commit, push, puis déclenche le build et le déploiement du seul client modifié.
-Git reste la source de vérité ; la console n'est qu'une interface d'écriture
+Git reste la source de vérité ; l'interface d'administration n'est qu'une interface d'écriture
 confortable.
 
 **Sécurité :** même avec un seul utilisateur, l'authentification est sérieuse —
@@ -260,7 +260,7 @@ formulaires HTML suffisent, et fonctionnent depuis un téléphone en
 déplacement.
 
 **Séquencement :** livrée, mais elle ne remplace pas le terrain. À 3 sites,
-éditer un JSON reste plus rapide que n'importe quelle interface ; la console
+éditer un JSON reste plus rapide que n'importe quelle interface ; l'interface d'administration
 prend son sens vers 5-8 clients, quand le temps perdu en édition manuelle
 devient réel.
 
@@ -343,7 +343,7 @@ le formulaire de contact et, plus tard, par la réservation.
 
 ### 3.9 Édition de contenu par le client — non
 
-Le client ne modifie rien lui-même. Les modifications passent par la console
+Le client ne modifie rien lui-même. Les modifications passent par l'interface d'administration
 (§3.7). **C'est un choix commercial, pas une limitation :** « vous ne touchez à
 rien, je m'occupe de tout » est précisément ce qui est facturé dans le mensuel,
 et cela évite qu'un commerçant casse la mise en page un vendredi soir.
@@ -408,7 +408,7 @@ WebsiteBXL/
 │  │  ├─ src/components/   # Hero, Services, Galerie, Horaires, Avis, Contact, Map, CTA résa
 │  │  ├─ src/layouts/
 │  │  └─ src/pages/[lang]/ # i18n FR / NL / EN
-│  └─ console/             # Console admin + API réservation (Node/TS + Postgres)
+│  └─ console/             # Interface d'administration + API réservation (Node/TS + Postgres)
 ├─ clients/
 │  ├─ salon-marie/
 │  │  ├─ site.json         # nom, adresse, tél, horaires, services, tarifs, domaine, langues, suspended
@@ -435,7 +435,7 @@ Ajouter un client = un dossier, un JSON, des photos.
 ```
 /srv/sites/salon-marie/releases/2026-08-14-1/
 /srv/sites/salon-marie/current -> releases/2026-08-14-1
-/srv/repo/                        # clone utilisé par la console
+/srv/repo/                        # clone utilisé par l'interface d'administration
 /etc/caddy/Caddyfile              # import /etc/caddy/sites/*.caddy
 /etc/caddy/sites/salon-marie.caddy
 ```
@@ -556,7 +556,7 @@ Un template cassé peut casser tous les sites au prochain build. Deux garde-fous
 Avec ces deux mécanismes, le risque est maîtrisé et l'avantage en maintenance
 reste écrasant.
 
-### Le risque de la console
+### Le risque de l'interface d'administration
 
 C'est le point le plus sensible du système : une seule application capable de
 modifier et de mettre hors ligne tous les sites clients. Authentification forte,
@@ -624,13 +624,13 @@ Reste, sur le terrain :
 
 ### Phase 2 — Passage à l'échelle du contenu *(partiellement livrée)*
 
-- [x] Console admin (`apps/console`) : liste des clients, édition par
+- [x] Interface d'administration (`apps/admin`) : liste des clients, édition par
       formulaires, éditeur JSON, publication en un bouton, suivi des demandes
       de rendez-vous.
 - [x] Authentification à deux facteurs (mot de passe scrypt + TOTP), sessions
       signées, protection globale par crochet, journal des publications.
 - [x] Drapeau de suspension opérationnel de bout en bout.
-- [ ] Upload de photos depuis la console — pour l'instant les photos se
+- [ ] Upload de photos depuis l'interface d'administration — pour l'instant les photos se
       déposent dans `clients/<slug>/media/` puis se poussent par git.
 - [ ] Umami + rapport d'audience mensuel automatisé.
 - [ ] Mollie : mandats SEPA et prélèvements automatiques.
@@ -640,12 +640,12 @@ Reste, sur le terrain :
 ```bash
 # Sur le VPS, une fois le dépôt cloné dans /srv/repo
 cd infra && docker compose up -d          # db + api + console
-docker compose exec console node --experimental-strip-types \
+docker compose exec admin node --experimental-strip-types \
   src/cli/create-admin.ts                 # compte + secret TOTP
-scp infra/console.caddy root@vps:/etc/caddy/sites/   # après avoir mis le domaine
+scp infra/admin.caddy root@vps:/etc/caddy/sites/   # après avoir mis le domaine
 ```
 
-Le bloc Caddy de la console contient un filtre par adresse IP, commenté :
+Le bloc Caddy de l'interface contient un filtre par adresse IP, commenté :
 l'activer réduit fortement la surface exposée de l'outil le plus sensible du
 projet.
 
@@ -684,7 +684,7 @@ PUBLIC_API_URL=https://api.exemple.be pnpm build salon-marie
 
 - Agenda temps réel, disponibilités calculées, confirmation automatique.
 - Gestion de la concurrence en base.
-- Interface agenda dans la console.
+- Interface agenda dans l'interface d'administration.
 
 ### Phase 5 — Consolidation
 
@@ -716,7 +716,7 @@ cp .env.example .env      # renseigner DEPLOY_HOST une fois le VPS prêt
 | `pnpm placeholders <slug>` | Régénère les visuels de remplacement. |
 | `pnpm tenant <slug> --email …` | Enregistre le commerce auprès de l'API et génère son `tenantId`. |
 | `pnpm api` | Lance l'API de réservation en local. |
-| `pnpm console` | Lance la console d'administration en local. |
+| `pnpm admin` | Lance la interface d'administration en local. |
 | `pnpm admin:create` | Crée le compte d'administration et son secret TOTP. |
 | `./scripts/deploy.sh <slug>` | Déploie sur le VPS (nouvelle release + bascule du lien). |
 
@@ -751,7 +751,7 @@ que le DNS du client pointe vers le serveur. Aucune intervention ensuite.
 ### Où se trouve quoi
 
 - **Le contenu d'un client** : `clients/<slug>/site.json` — textes, horaires,
-  prestations, statut. C'est le fichier que la console d'administration éditera
+  prestations, statut. C'est le fichier que la interface d'administration éditera
   en phase 2.
 - **L'apparence d'un client** : `clients/<slug>/theme.json` — couleurs, polices,
   variantes de mise en page.

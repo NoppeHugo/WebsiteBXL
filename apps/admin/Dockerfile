@@ -1,4 +1,4 @@
-# Console d'administration.
+# Interface d'administration.
 #
 # L'image embarque git, pnpm et rsync : la console commite le contenu, lance le
 # build et déclenche le déploiement. Elle a donc besoin des mêmes outils que
@@ -13,14 +13,14 @@ WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/schema/package.json ./packages/schema/
-COPY apps/console/package.json ./apps/console/
+COPY apps/admin/package.json ./apps/admin/
 
-RUN pnpm install --frozen-lockfile --filter @bxl/console...
+RUN pnpm install --frozen-lockfile --filter @bxl/admin...
 
 COPY packages/schema ./packages/schema
-COPY apps/console ./apps/console
+COPY apps/admin ./apps/admin
 
-WORKDIR /app/apps/console
+WORKDIR /app/apps/admin
 
 ENV NODE_ENV=production
 EXPOSE 4000
