@@ -69,6 +69,18 @@ button.danger { background: var(--danger); color: #fff; }
 pre { background: var(--surface); padding: 1rem; border-radius: 12px; overflow-x: auto; font-size: 0.8rem; }
 .muted { color: var(--muted); font-size: 0.85rem; }
 fieldset { border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: 1.5rem; }
+.media-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 1rem; margin-bottom: 1.5rem;
+}
+.media { margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.media img {
+  width: 100%; aspect-ratio: 4 / 3; object-fit: cover;
+  border-radius: 10px; border: 1px solid var(--border); background: var(--surface);
+}
+.media figcaption { display: flex; flex-direction: column; font-size: 0.75rem; word-break: break-all; }
+.media button { padding: 0.35em 0.9em; font-size: 0.8rem; }
+input[type="file"] { padding: 0.5em; background: var(--surface); }
 legend { color: var(--muted); font-size: 0.85rem; padding: 0 0.4rem; }
 `;
 

@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import formbody from "@fastify/formbody";
+import multipart from "@fastify/multipart";
 import rateLimit from "@fastify/rate-limit";
 import { config, isProduction } from "./config.ts";
 import { readSession } from "./auth.ts";
@@ -19,6 +20,8 @@ const app = Fastify({
 
 await app.register(formbody, { bodyLimit: 2 * 1024 * 1024 });
 await app.register(cookie);
+// Envoi de photos : plusieurs fichiers par requête, taille bornée dans la route.
+await app.register(multipart);
 await app.register(rateLimit, { global: false });
 
 /*

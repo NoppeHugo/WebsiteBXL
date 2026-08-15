@@ -1,9 +1,18 @@
+import { createReadStream } from "node:fs";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { WEEKDAYS, type Weekday } from "@bxl/schema";
 import { clients, client, readSiteRaw, writeSite, commitAndPush, publish, pull } from "../repo.ts";
+import { config } from "../config.ts";
 import { logPublish } from "../db.ts";
 import { layout, flash, escape } from "../views.ts";
 import { parseSlots, formatSlots } from "../hours.ts";
+import {
+  listMedia,
+  mediaPath,
+  saveMedia,
+  deleteMedia,
+  MAX_UPLOAD_BYTES,
+} from "../media.ts";
 
 /*
  * Édition du contenu.
@@ -22,6 +31,7 @@ function adminId(request: FastifyRequest): number {
 function editPage(slug: string, message?: { kind: "ok" | "error"; text: string }): string {
   const loaded = client(slug);
   const site = loaded.site;
+  const photos = listMedia(config.REPO_PATH, slug);
 
   const hoursFields = WEEKDAYS.map(
     (day) => `<label>${day}
@@ -103,6 +113,39 @@ ${message ? flash(message.kind, message.text) : ""}
     <button type="submit" class="secondary">Publier en ligne</button>
   </div>
   <p class="muted">Construit le site et le déploie. Refusé si le statut n'est pas « live ».</p>
+</form>
+
+<h2>Photos</h2>
+<p class="muted">
+  ${escape(String(photos.length))} fichier(s). Les images sont réduites et
+  converties à l'envoi : inutile de les préparer avant.
+</p>
+
+${
+  photos.length > 0
+    ? `<div class="media-grid">${photos
+        .map(
+          (photo) => `<figure class="media">
+      <img src="/clients/${escape(slug)}/media/${escape(photo.name)}" alt="" loading="lazy">
+      <figcaption>
+        <span>${escape(photo.name)}</span>
+        <span class="muted">${Math.round(photo.bytes / 1024)} ko</span>
+      </figcaption>
+      <form method="post" action="/clients/${escape(slug)}/media/${escape(photo.name)}/delete"
+            onsubmit="return confirm('Supprimer ${escape(photo.name)} ?')">
+        <button class="danger">Supprimer</button>
+      </form>
+    </figure>`,
+        )
+        .join("")}</div>`
+    : ""
+}
+
+<form method="post" action="/clients/${escape(slug)}/media" enctype="multipart/form-data">
+  <label>Ajouter des photos
+    <input type="file" name="photos" accept="image/*" multiple required>
+  </label>
+  <div class="actions"><button type="submit">Envoyer</button></div>
 </form>
 
 <h2>Édition avancée</h2>
@@ -262,6 +305,95 @@ export function clientRoutes(app: FastifyInstance): void {
           text: result.ok
             ? "Site publié."
             : result.output.slice(-600) || "échec du déploiement",
+        }),
+      );
+    },
+  );
+  /*
+   * Aperçu d'une photo. Le nom passe par `mediaPath`, qui refuse tout ce qui
+   * n'est pas un nom de fichier simple : sans ce contrôle, un nom fabriqué
+   * ferait lire n'importe quel fichier du serveur.
+   */
+  app.get<{ Params: { slug: string; name: string } }>(
+    "/clients/:slug/media/:name",
+    async (request, reply) => {
+      const path = mediaPath(config.REPO_PATH, request.params.slug, request.params.name);
+      if (!path) return reply.code(404).send("introuvable");
+      return reply.type("image/jpeg").send(createReadStream(path));
+    },
+  );
+
+  app.post<{ Params: { slug: string } }>(
+    "/clients/:slug/media",
+    async (request, reply) => {
+      const { slug } = request.params;
+      const saved: string[] = [];
+      const errors: string[] = [];
+
+      for await (const part of request.files({
+        limits: { fileSize: MAX_UPLOAD_BYTES, files: 30 },
+      })) {
+        const buffer = await part.toBuffer();
+        const result = await saveMedia(config.REPO_PATH, slug, part.filename, buffer);
+        if (result.ok && result.name) saved.push(result.name);
+        else errors.push(`${part.filename} : ${result.error}`);
+      }
+
+      if (saved.length > 0) {
+        const pushed = await commitAndPush(
+          slug,
+          `photos(${slug}) : ${saved.length} fichier(s) ajouté(s)`,
+        );
+        await logPublish(adminId(request), slug, "save", `photos: ${saved.join(", ")}`);
+        if (!pushed.ok) errors.push(`git : ${pushed.output.slice(0, 200)}`);
+      }
+
+      return reply.type("text/html").send(
+        editPage(slug, {
+          kind: errors.length > 0 ? "error" : "ok",
+          text:
+            errors.length > 0
+              ? errors.join(" · ")
+              : `${saved.length} photo(s) ajoutée(s). Publiez pour les mettre en ligne.`,
+        }),
+      );
+    },
+  );
+
+  app.post<{ Params: { slug: string; name: string } }>(
+    "/clients/:slug/media/:name/delete",
+    async (request, reply) => {
+      const { slug, name } = request.params;
+
+      /*
+       * Une photo référencée par site.json ne peut pas être supprimée : le
+       * build échouerait, et le refus est plus utile qu'un site cassé.
+       */
+      const site = client(slug).site;
+      const used = [
+        site.hero.image,
+        ...site.gallery.map((p) => p.src),
+        ...site.team.map((m) => m.photo).filter(Boolean),
+      ];
+      if (used.includes(name)) {
+        return reply.code(400).type("text/html").send(
+          editPage(slug, {
+            kind: "error",
+            text: `${name} est utilisée par le site. Retirez-la d'abord du contenu.`,
+          }),
+        );
+      }
+
+      const removed = deleteMedia(config.REPO_PATH, slug, name);
+      if (removed) {
+        await commitAndPush(slug, `photos(${slug}) : ${name} supprimée`);
+        await logPublish(adminId(request), slug, "save", `suppression: ${name}`);
+      }
+
+      return reply.type("text/html").send(
+        editPage(slug, {
+          kind: removed ? "ok" : "error",
+          text: removed ? `${name} supprimée.` : "fichier introuvable",
         }),
       );
     },
