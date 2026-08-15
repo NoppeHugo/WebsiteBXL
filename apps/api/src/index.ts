@@ -6,6 +6,7 @@ import { config } from "./config.ts";
 import { migrate, purgeExpired, listOrigins, sql } from "./db.ts";
 import { bookingRoutes } from "./routes/booking.ts";
 import { contactRoutes } from "./routes/contact.ts";
+import { collectRoutes } from "./routes/collect.ts";
 
 const app = Fastify({
   logger: { level: config.NODE_ENV === "production" ? "info" : "debug" },
@@ -64,6 +65,7 @@ app.get("/health", async () => {
 
 bookingRoutes(app);
 contactRoutes(app);
+collectRoutes(app);
 
 await migrate();
 
@@ -71,9 +73,9 @@ await migrate();
 const purgeTimer = setInterval(
   () => {
     purgeExpired()
-      .then(({ bookings, messages }) => {
-        if (bookings || messages) {
-          app.log.info({ bookings, messages }, "données expirées supprimées");
+      .then(({ bookings, messages, events }) => {
+        if (bookings || messages || events) {
+          app.log.info({ bookings, messages, events }, "données expirées supprimées");
         }
       })
       .catch((error) => app.log.error({ err: error }, "purge impossible"));

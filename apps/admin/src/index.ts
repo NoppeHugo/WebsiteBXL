@@ -9,6 +9,7 @@ import { sql } from "./db.ts";
 import { authRoutes, SESSION_COOKIE } from "./routes/auth.ts";
 import { clientRoutes } from "./routes/clients.ts";
 import { requestRoutes } from "./routes/requests.ts";
+import { reportRoutes } from "./routes/reports.ts";
 
 const app = Fastify({
   logger: { level: isProduction ? "info" : "debug" },
@@ -62,6 +63,7 @@ app.get("/health", async () => {
 authRoutes(app);
 clientRoutes(app);
 requestRoutes(app);
+reportRoutes(app);
 
 await app.listen({ port: config.PORT, host: config.HOST });
 

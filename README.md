@@ -370,24 +370,58 @@ Un drapeau `suspended: true` dans `site.json` déploie une page « site
 temporairement indisponible ». Deux lignes de code maintenant ; une improvisation
 dans l'urgence si on l'oublie.
 
-### 3.12 Paiement — Mollie
+### 3.12 Encaissement — ordre permanent d'abord, Mollie plus tard
 
-**Décision :** Mollie plutôt que Stripe.
+**Décision révisée.** Pas d'intégration de paiement au démarrage.
 
-**Pourquoi :** acteur du Benelux, gestion des mandats de domiciliation SEPA
-nettement meilleure et moins chère pour un usage belge. Le prélèvement doit
-tourner seul, sinon on court après les paiements.
+**Pourquoi :** prélever sur le compte d'un tiers exige un contrat créancier
+avec sa banque et un identifiant créancier — frais d'ouverture, frais mensuels,
+souvent un volume minimum. Ce n'est pas accessible depuis une application
+bancaire ordinaire.
 
-### 3.13 Analytics — Umami auto-hébergé (arme anti-churn)
+**À la place :** le commerçant met en place un **ordre permanent** depuis sa
+propre banque, le jour de la signature. Zéro frais, zéro intégration,
+opérationnel immédiatement.
 
-**Décision :** Umami (ou Plausible) auto-hébergé sur le même VPS, sans cookies
-— donc sans bandeau de consentement, ce qui préserve le design des sites.
+**La contrepartie, à ne pas ignorer :** c'est lui qui contrôle l'ordre, donc il
+peut l'arrêter sans prévenir. D'où le besoin d'un suivi des paiements dans
+l'interface d'administration — montant attendu, dernier paiement reçu,
+signalement des retards — pour savoir qui suspendre.
 
-**Pourquoi c'est stratégique et pas cosmétique :** chaque mois, le commerçant
-reçoit « 340 visites, 28 clics sur l'itinéraire, 12 appels depuis le site ».
-C'est **ça** qui empêche la résiliation au bout de huit mois : il voit ce qu'il
-achète. Le churn est le vrai risque du modèle, et ce rapport mensuel automatisé
-en est la meilleure défense — pour un coût nul une fois branché.
+**Bascule vers Mollie vers 15-20 clients**, quand la réconciliation manuelle
+coûtera plus cher que les commissions.
+
+### 3.13 Mesure d'audience — collecte maison (arme anti-churn)
+
+**Décision révisée.** Le plan initial prévoyait Umami auto-hébergé. La collecte
+est finalement intégrée à l'API existante.
+
+**Pourquoi ce changement :** ce qui a de la valeur ici n'est pas un tableau de
+bord — il ne serait presque jamais ouvert — mais le **message mensuel envoyé au
+commerçant**. Or ce message repose sur des événements précis (clics sur le
+téléphone, demandes d'itinéraire, demandes de rendez-vous) qu'il aurait fallu
+instrumenter à la main dans Umami de toute façon. La base et l'API existaient
+déjà : un service de plus à maintenir, sauvegarder et mettre à jour ne se
+justifiait pas.
+
+**Ce qui est mesuré :** pages vues, visiteurs distincts, part de téléphone,
+appels, itinéraires, demandes de rendez-vous, messages, provenances.
+
+**Vie privée, et pourquoi c'est aussi un argument commercial :** aucun cookie,
+aucun stockage sur l'appareil du visiteur, aucune adresse IP conservée. Un
+visiteur est compté via une empreinte non réversible mêlant son adresse, son
+navigateur et un **sel qui change chaque jour** — elle permet de compter des
+visiteurs uniques sur une journée et devient inexploitable le lendemain, y
+compris pour nous. Conséquence directe : **pas de bandeau de consentement**, ce
+qui préserve le design des sites et évite une friction à chaque visite.
+
+**Le livrable :** l'interface d'administration produit un texte prêt à
+copier-coller dans un courriel au commerçant. C'est **ça** qui empêche la
+résiliation au bout de huit mois — il voit ce qu'il achète. Un tableau de bord
+ne produit pas cet effet.
+
+**Umami reste une option** si un vrai tableau de bord devient nécessaire : les
+deux peuvent coexister, le site n'aurait qu'un script de plus.
 
 ### 3.14 Emails transactionnels — Resend
 
@@ -630,10 +664,10 @@ Reste, sur le terrain :
 - [x] Authentification à deux facteurs (mot de passe scrypt + TOTP), sessions
       signées, protection globale par crochet, journal des publications.
 - [x] Drapeau de suspension opérationnel de bout en bout.
-- [ ] Upload de photos depuis l'interface d'administration — pour l'instant les photos se
-      déposent dans `clients/<slug>/media/` puis se poussent par git.
-- [ ] Umami + rapport d'audience mensuel automatisé.
-- [ ] Mollie : mandats SEPA et prélèvements automatiques.
+- [x] Envoi et suppression de photos depuis l'interface, avec réduction et
+      conversion automatiques à l'arrivée.
+- [x] Mesure d'audience sans cookie et rapport mensuel prêt à envoyer.
+- [ ] Suivi des abonnements et des paiements (voir §3.12).
 
 **Mise en service :**
 

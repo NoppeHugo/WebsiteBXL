@@ -36,6 +36,8 @@ const Env = z.object({
    */
   RETENTION_BOOKING_DAYS: z.coerce.number().int().positive().default(365),
   RETENTION_CONTACT_DAYS: z.coerce.number().int().positive().default(180),
+  /** L'audience n'a d'intérêt que sur l'année écoulée, pour comparer. */
+  RETENTION_ANALYTICS_DAYS: z.coerce.number().int().positive().default(400),
 });
 
 const parsed = Env.safeParse(process.env);

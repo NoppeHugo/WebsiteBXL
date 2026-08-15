@@ -5,6 +5,7 @@ import { site, theme, languages, defaultLang, t, path } from "../lib/client.ts";
 import { htmlLang, ui } from "../lib/i18n.ts";
 import { localBusinessJsonLd } from "../lib/seo.ts";
 import { media } from "../lib/media.ts";
+import { apiEndpoint } from "../lib/api.ts";
 import "../styles/global.css";
 
 interface Props {
@@ -63,6 +64,59 @@ const shareImageUrl = Astro.site
   : shareImage.src;
 
 const jsonLd = localBusinessJsonLd(lang, Astro.site, shareImageUrl);
+
+const collectUrl = site.tenantId ? apiEndpoint("/v1/collect") : undefined;
+
+/**
+ * Mesure d'audience, sans cookie et sans identifiant persistant.
+ *
+ * Elle existe pour une raison commerciale précise : le rapport mensuel envoyé
+ * au commerçant lui montre ce qu'il paie, et c'est la meilleure défense contre
+ * la résiliation. Les événements suivis sont ceux qui le convainquent — appels,
+ * itinéraires, demandes de rendez-vous — pas des indicateurs abstraits.
+ *
+ * Aucune donnée n'est lue sur l'appareil du visiteur : ni cookie, ni stockage
+ * local. D'où l'absence de bandeau de consentement, ce qui préserve aussi le
+ * design de la page.
+ */
+const collectScript = `(function(){
+  var url = ${JSON.stringify(collectUrl ?? "")};
+  var tenant = ${JSON.stringify(site.tenantId ?? "")};
+  if (!url || !tenant || !navigator.sendBeacon) return;
+
+  function send(kind) {
+    try {
+      navigator.sendBeacon(url, new Blob([JSON.stringify({
+        tenantId: tenant,
+        kind: kind,
+        path: location.pathname,
+        lang: ${JSON.stringify(lang)},
+        referrer: document.referrer || undefined
+      })], { type: "application/json" }));
+    } catch (e) {}
+  }
+
+  send("view");
+
+  // Les clics qui comptent pour le commerçant, reconnus par la destination du
+  // lien plutôt que par des marqueurs à poser sur chaque bouton.
+  document.addEventListener("click", function (event) {
+    var link = event.target.closest && event.target.closest("a");
+    if (!link) return;
+    var href = link.getAttribute("href") || "";
+    if (href.indexOf("tel:") === 0) return send("call");
+    if (href.indexOf("google.com/maps") !== -1 || href.indexOf("maps.app") !== -1) return send("directions");
+    if (href.indexOf("#reservation") !== -1) return send("booking");
+    if (link.rel && link.rel.indexOf("me") !== -1) return send("social");
+  }, { passive: true });
+
+  // Envois de formulaire : la demande de rendez-vous et le message de contact.
+  document.addEventListener("submit", function (event) {
+    var action = (event.target.getAttribute("action") || "");
+    if (action.indexOf("/v1/booking-requests") !== -1) return send("booking");
+    if (action.indexOf("/v1/contact") !== -1) return send("contact");
+  }, { passive: true });
+})();`;
 
 /**
  * Apparition en fondu au défilement.
@@ -247,5 +301,6 @@ const formScript = `(function(){
 
     {theme.effects.reveal && <script is:inline set:html={revealScript} />}
     <script is:inline set:html={formScript} />
+    {collectUrl && <script is:inline set:html={collectScript} />}
   </body>
 </html>

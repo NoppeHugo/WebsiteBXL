@@ -61,6 +61,7 @@ export async function migrate(): Promise<void> {
 export async function purgeExpired(): Promise<{
   bookings: number;
   messages: number;
+  events: number;
 }> {
   const bookings = await sql`
     delete from booking_requests
@@ -70,7 +71,17 @@ export async function purgeExpired(): Promise<{
     delete from contact_messages
     where created_at < now() - ${`${config.RETENTION_CONTACT_DAYS} days`}::interval
   `;
-  return { bookings: bookings.count, messages: messages.count };
+  const events = await sql`
+    delete from page_events
+    where created_at < now() - ${`${config.RETENTION_ANALYTICS_DAYS} days`}::interval
+  `;
+  // Les sels périmés partent avec : sans eux, les empreintes restantes ne
+  // veulent plus rien dire, ce qui est précisément l'objectif.
+  await sql`
+    delete from visitor_salts
+    where day < current_date - ${`${config.RETENTION_ANALYTICS_DAYS} days`}::interval
+  `;
+  return { bookings: bookings.count, messages: messages.count, events: events.count };
 }
 
 export interface Tenant {

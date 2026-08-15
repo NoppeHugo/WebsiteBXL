@@ -80,6 +80,17 @@ fieldset { border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1
 }
 .media figcaption { display: flex; flex-direction: column; font-size: 0.75rem; word-break: break-all; }
 .media button { padding: 0.35em 0.9em; font-size: 0.8rem; }
+.filters { display: flex; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.filters label { margin: 0; }
+.filters select { min-width: 12rem; }
+.tiles {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 1px; background: var(--border); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem;
+}
+.tile { background: var(--surface); padding: 1rem; display: flex; flex-direction: column; gap: 0.15rem; }
+.tile b { font-size: 1.7rem; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.tile span { font-size: 0.78rem; color: var(--muted); }
 input[type="file"] { padding: 0.5em; background: var(--surface); }
 legend { color: var(--muted); font-size: 0.85rem; padding: 0 0.4rem; }
 `;
@@ -106,6 +117,7 @@ ${
   <nav>
     <a href="/">Clients</a>
     <a href="/requests">Demandes</a>
+    <a href="/reports">Rapports</a>
     <form method="post" action="/logout" style="display:inline">
       <button class="secondary" style="padding:0.3em 1em;font-size:0.85rem">Quitter</button>
     </form>
