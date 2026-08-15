@@ -328,9 +328,121 @@ body[data-glass="true"] .nav[data-scrolled="true"] {
   color: var(--c-text);
 }
 
+/* -------------------------------------------------------------------------- */
+/* Menu sur petit écran                                                       */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Sans JavaScript, rien de ce bloc ne s'applique : `data-enhanced` n'est posé
+ * que par le script. Les liens restent alors affichés, quitte à passer à la
+ * ligne. Un bouton inerte cachant le sommaire du site serait pire.
+ */
+.nav__burger {
+  display: none;
+}
+
+/*
+ * Panneau ouvert : la barre s'opacifie. En haut de page et en mode verre, elle
+ * n'est presque pas teintée — assez pour une seule ligne posée sur la photo,
+ * pas pour quatre liens qu'il faut pouvoir lire.
+ */
+.nav[data-menu="open"],
+body[data-glass="true"] .nav[data-menu="open"] {
+  background: color-mix(in srgb, var(--c-bg) 96%, transparent);
+  border-bottom-color: var(--c-border);
+}
+
 @media (max-width: 900px) {
-  .nav__links {
-    display: none;
+  .nav[data-enhanced="true"] .nav__burger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    order: 3;
+    font: inherit;
+    font-size: var(--step--1);
+    letter-spacing: var(--ui-tracking);
+    text-transform: var(--ui-transform);
+    color: inherit;
+    background: none;
+    border: none;
+    padding: 0.5rem 0;
+    cursor: pointer;
+  }
+
+  .nav__burger-bars {
+    display: grid;
+    gap: 4px;
+    width: 1.1rem;
+  }
+
+  .nav__burger-bars i {
+    display: block;
+    height: 1.5px;
+    background: currentColor;
+    transition: transform 0.25s, opacity 0.25s;
+  }
+
+  /* Les deux barres se croisent : le bouton dit ce qu'il fera, pas ce qu'il est. */
+  .nav[data-menu="open"] .nav__burger-bars i:first-child {
+    transform: translateY(2.75px) rotate(45deg);
+  }
+
+  .nav[data-menu="open"] .nav__burger-bars i:last-child {
+    transform: translateY(-2.75px) rotate(-45deg);
+  }
+
+  .nav[data-enhanced="true"] .nav__inner {
+    flex-wrap: wrap;
+  }
+
+  .nav[data-enhanced="true"] .nav__nav {
+    order: 4;
+    flex-basis: 100%;
+  }
+
+  /*
+   * Repli par la hauteur plutôt que par `display`, pour que l'ouverture soit
+   * animée. `visibility` retire les liens du parcours de tabulation une fois
+   * repliés — un lien invisible mais focalisable envoie le curseur nulle part.
+   */
+  .nav[data-enhanced="true"] .nav__links {
+    display: grid;
+    grid-auto-flow: row;
+    gap: 0;
+    overflow: hidden;
+    max-height: 0;
+    visibility: hidden;
+    /*
+     * `visibility` bascule sans durée, mais après coup au repli : une
+     * transition ordinaire la garderait « hidden » pendant la moitié de
+     * l'ouverture, et le premier lien serait alors infocalisable — le focus
+     * resterait sur le bouton, la tabulation repartirait derrière le panneau.
+     */
+    transition: max-height 0.3s ease, visibility 0s linear 0.3s;
+  }
+
+  .nav[data-menu="open"] .nav__links {
+    max-height: 60vh;
+    visibility: visible;
+    overflow-y: auto;
+    padding-block-end: 0.75rem;
+    transition: max-height 0.3s ease, visibility 0s;
+  }
+
+  .nav[data-enhanced="true"] .nav__links li {
+    border-top: 1px solid var(--c-border);
+  }
+
+  .nav[data-enhanced="true"] .nav__links a {
+    display: block;
+    padding: 0.95rem 0;
+    font-size: var(--step-0);
+  }
+}
+
+@media (max-width: 900px) and (prefers-reduced-motion: reduce) {
+  .nav[data-enhanced="true"] .nav__links {
+    transition: none;
   }
 }
 

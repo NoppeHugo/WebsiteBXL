@@ -28,11 +28,36 @@ const links = [
   <div class="wrap nav__inner">
     <a class="nav__brand" href={path(lang)}>{site.business.name}</a>
 
-    <nav aria-label={ui(lang, "menu")}>
-      <ul class="nav__links">
+    <nav aria-label={ui(lang, "menu")} class="nav__nav">
+      <ul class="nav__links" id="nav-links">
         {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
       </ul>
     </nav>
+
+    {
+      /*
+       * Bouton de menu, sur petit écran.
+       *
+       * Il n'apparaît qu'une fois le script en place — d'où `hidden` dans le
+       * HTML livré. Sans JavaScript, ce sont les liens eux-mêmes qui restent
+       * visibles : un bouton inerte masquant le sommaire vaudrait moins
+       * qu'une seconde ligne de liens un peu serrée.
+       *
+       * Ce menu existe pour une raison précise : sur téléphone, la première
+       * question posée à un commerce est « c'est ouvert ? ». Elle ne doit pas
+       * demander de faire défiler une page entière.
+       */
+    }
+    <button
+      type="button"
+      class="nav__burger"
+      aria-controls="nav-links"
+      aria-expanded="false"
+      hidden
+    >
+      <span class="nav__burger-label">{ui(lang, "menu")}</span>
+      <span class="nav__burger-bars" aria-hidden="true"><i></i><i></i></span>
+    </button>
 
     <div class="nav__actions">
       {
@@ -74,14 +99,78 @@ const links = [
 </style>
 
 <script>
-  // La barre devient opaque dès qu'on quitte le haut de page, pour rester
-  // lisible par-dessus la photo du hero.
   const nav = document.querySelector<HTMLElement>(".nav");
+
   if (nav) {
+    // La barre devient opaque dès qu'on quitte le haut de page, pour rester
+    // lisible par-dessus la photo du hero.
     const update = () => {
       nav.dataset.scrolled = String(window.scrollY > 40);
     };
     update();
     window.addEventListener("scroll", update, { passive: true });
+
+    const burger = nav.querySelector<HTMLButtonElement>(".nav__burger");
+    const links = nav.querySelector<HTMLElement>("#nav-links");
+
+    if (burger && links && links.children.length > 0) {
+      /*
+       * Le script prend la main : le bouton apparaît et les liens passent en
+       * panneau dépliable. Marqué sur la barre plutôt que sur le corps du
+       * document, pour que la règle CSS reste locale à la navigation.
+       */
+      nav.dataset.enhanced = "true";
+      burger.hidden = false;
+
+      const setOpen = (open: boolean): void => {
+        burger.setAttribute("aria-expanded", String(open));
+        nav.dataset.menu = open ? "open" : "closed";
+        /*
+         * Le premier lien reçoit le focus à l'ouverture — sinon, au clavier,
+         * la tabulation continuerait derrière le panneau. Au repli, le focus
+         * revient au bouton : le perdre renverrait en haut du document.
+         */
+        if (open) {
+          /*
+           * Lecture volontaire d'une propriété de mise en page : elle force le
+           * navigateur à appliquer la règle qui vient d'être posée. Sans elle,
+           * le lien est encore `visibility: hidden` au moment du `focus()`,
+           * qui échoue en silence — et la tabulation repart derrière le
+           * panneau.
+           */
+          void links.offsetHeight;
+          links.querySelector("a")?.focus();
+        } else if (links.contains(document.activeElement)) {
+          burger.focus();
+        }
+      };
+
+      setOpen(false);
+      burger.addEventListener("click", () => {
+        setOpen(burger.getAttribute("aria-expanded") !== "true");
+      });
+
+      // Un lien mène toujours à la même page : le panneau n'a plus de raison
+      // de masquer ce vers quoi il vient d'emmener.
+      links.addEventListener("click", (event) => {
+        if ((event.target as HTMLElement).closest("a")) setOpen(false);
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        if (burger.getAttribute("aria-expanded") !== "true") return;
+        setOpen(false);
+        burger.focus();
+      });
+
+      /*
+       * Repli au passage en grand écran : les liens y sont affichés en ligne,
+       * et un panneau resté « ouvert » laisserait `aria-expanded` mentir à
+       * propos d'un bouton devenu invisible.
+       */
+      matchMedia("(min-width: 900px)").addEventListener("change", (event) => {
+        if (event.matches) setOpen(false);
+      });
+    }
   }
 </script>
