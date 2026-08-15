@@ -52,6 +52,16 @@ svg {
   height: auto;
 }
 
+/*
+ * `hidden` doit l'emporter sur toute règle de disposition. Sans cela, un
+ * `display: flex` posé sur un composant rend visible un élément que le script
+ * croit masqué — c'est ainsi que le panneau de confirmation s'affichait en
+ * même temps que le formulaire.
+ */
+[hidden] {
+  display: none !important;
+}
+
 a {
   color: inherit;
   text-decoration-thickness: 1px;
@@ -1079,7 +1089,10 @@ body[data-glass="true"] .service-group__title {
   opacity: 0;
 }
 
+/* `display` explicite : hors des formulaires classiques, cette étiquette
+   n'héritait d'aucune disposition et la case restait collée au texte. */
 .consent {
+  display: grid;
   grid-template-columns: auto 1fr;
   align-items: start;
   gap: 0.6rem;
@@ -1087,6 +1100,14 @@ body[data-glass="true"] .service-group__title {
 
 .consent input {
   margin-top: 0.25em;
+}
+
+/* Les cases et les champs natifs prennent la couleur d'accent du client :
+   c'est ce qui évite le bleu par défaut du navigateur au milieu d'un thème. */
+input[type="checkbox"],
+input[type="radio"],
+input[type="date"] {
+  accent-color: var(--c-accent);
 }
 
 .booking-form button,
@@ -1113,4 +1134,511 @@ body[data-glass="true"] .service-group__title {
 .form-status[data-state="error"] {
   color: var(--c-text);
   border-color: color-mix(in srgb, var(--c-text) 35%, transparent);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Réservation — parcours par étapes                                          */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Une décision à la fois. L'étape en cours est dépliée, les précédentes se
+ * replient en une ligne de résumé, les suivantes attendent. La couleur
+ * d'accent n'apparaît qu'à deux endroits : ce qui est sélectionné, et le
+ * bouton qui engage. Tout le reste est hairline et gris.
+ */
+
+.rdv {
+  margin-top: clamp(2.5rem, 6vw, 4rem);
+  margin-inline: auto;
+  max-width: 34rem;
+  text-align: left;
+  background: color-mix(in srgb, var(--c-surface) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c-text) 10%, transparent);
+  border-radius: clamp(16px, 2vw, 22px);
+  overflow: hidden;
+}
+
+body[data-glass="true"] .rdv {
+  backdrop-filter: saturate(170%) blur(var(--blur));
+  -webkit-backdrop-filter: saturate(170%) blur(var(--blur));
+}
+
+/* ------------------------------------------------------------------ étapes */
+
+.rdv__step + .rdv__step {
+  border-top: 1px solid color-mix(in srgb, var(--c-text) 9%, transparent);
+}
+
+/* La navigation est fixe : sans cette réserve, l'étape amenée à l'écran vient
+   se glisser dessous et son titre disparaît. */
+.rdv__step {
+  scroll-margin-top: calc(var(--notice-h) + 5rem);
+}
+
+.rdv__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem clamp(1.1rem, 3vw, 1.75rem);
+}
+
+/* Une étape franchie redevient cliquable : revenir en arrière ne doit jamais
+   obliger à tout reprendre. */
+.rdv__step[data-done="true"] .rdv__head {
+  cursor: pointer;
+}
+
+.rdv__step[data-done="true"][data-open="false"] .rdv__head:hover .rdv__chosen {
+  color: var(--c-accent);
+}
+
+.rdv__label {
+  font-size: var(--step--1);
+  color: var(--c-muted);
+  margin: 0;
+}
+
+.rdv__step[data-open="true"] > .rdv__head > .rdv__label {
+  color: var(--c-text);
+}
+
+.rdv__chosen {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--c-muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.2s;
+}
+
+.rdv__step[data-open="true"] .rdv__chosen:empty {
+  display: none;
+}
+
+/* Dépliage par la hauteur de grille : pas de valeur en dur à maintenir, donc
+   aucun saut quand le contenu change de taille. */
+.rdv__body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.45s cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 0.3s ease;
+}
+
+/* L'élément de grille ne porte aucun rembourrage : contrairement au contenu,
+   un rembourrage ne se compresse pas et laisserait une bande visible sous
+   chaque étape repliée. Il vit donc sur l'élément intérieur. */
+.rdv__clip {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.rdv__step[data-open="true"] > .rdv__body {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rdv__body {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------- prestations */
+
+.rdv__services {
+  list-style: none;
+  padding: 0 clamp(1.1rem, 3vw, 1.75rem) 0.5rem;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.rdv__service {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.15rem 1rem;
+  align-items: baseline;
+  background: none;
+  border: none;
+  border-top: 1px solid color-mix(in srgb, var(--c-text) 8%, transparent);
+  padding: 0.95rem 0;
+  font: inherit;
+  color: var(--c-text);
+  text-align: left;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.rdv__services li:first-child .rdv__service {
+  border-top: none;
+}
+
+.rdv__service:hover {
+  opacity: 0.7;
+}
+
+.rdv__service-name {
+  font-size: var(--step-0);
+}
+
+.rdv__service-price {
+  font-size: var(--step-0);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rdv__service-meta {
+  grid-column: 1;
+  font-size: var(--step--1);
+  color: var(--c-muted);
+}
+
+.rdv__service[aria-pressed="true"] .rdv__service-name,
+.rdv__service[aria-pressed="true"] .rdv__service-price {
+  color: var(--c-accent);
+}
+
+/* ------------------------------------------------------------------- jours */
+
+.rdv__days {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 0.25rem clamp(1.1rem, 3vw, 1.75rem) 1.4rem;
+  scrollbar-width: none;
+}
+
+.rdv__days::-webkit-scrollbar {
+  display: none;
+}
+
+.rdv__days[data-state="loading"],
+.rdv__days[data-state="empty"] {
+  display: block;
+  color: var(--c-muted);
+  font-size: var(--step--1);
+}
+
+.rdv__day {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  width: 4.1rem;
+  padding: 0.7rem 0.3rem;
+  background: none;
+  color: var(--c-text);
+  border: 1px solid color-mix(in srgb, var(--c-text) 12%, transparent);
+  border-radius: 14px;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s, transform 0.15s;
+}
+
+.rdv__day:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--c-text) 35%, transparent);
+}
+
+.rdv__day:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.rdv__day:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+
+.rdv__day[aria-pressed="true"] {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: var(--c-accent-text);
+}
+
+.rdv__day-name {
+  font-size: 0.72rem;
+  text-transform: lowercase;
+  color: var(--c-muted);
+}
+
+.rdv__day[aria-pressed="true"] .rdv__day-name,
+.rdv__day[aria-pressed="true"] .rdv__day-note {
+  color: inherit;
+  opacity: 0.85;
+}
+
+.rdv__day-num {
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.rdv__day-note {
+  font-size: 0.66rem;
+  color: var(--c-muted);
+  text-transform: lowercase;
+}
+
+/* ---------------------------------------------------------------- créneaux */
+
+.rdv__slots {
+  padding: 0 clamp(1.1rem, 3vw, 1.75rem) 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.rdv__slots[data-state="empty"] {
+  color: var(--c-muted);
+  font-size: var(--step--1);
+}
+
+.rdv__group-name {
+  margin: 0 0 0.55rem;
+  font-size: var(--step--1);
+  color: var(--c-muted);
+}
+
+.rdv__times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.rdv__time {
+  font: inherit;
+  font-size: var(--step--1);
+  font-variant-numeric: tabular-nums;
+  color: var(--c-text);
+  background: none;
+  border: 1px solid color-mix(in srgb, var(--c-text) 12%, transparent);
+  border-radius: 980px;
+  padding: 0.5em 0.95em;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s,
+    transform 0.15s;
+}
+
+.rdv__time:hover {
+  border-color: color-mix(in srgb, var(--c-text) 35%, transparent);
+}
+
+.rdv__time:active {
+  transform: scale(0.94);
+}
+
+.rdv__time[aria-pressed="true"] {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: var(--c-accent-text);
+}
+
+/* ----------------------------------------------------------- coordonnées */
+
+.rdv__you {
+  padding: 0 clamp(1.1rem, 3vw, 1.75rem) 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.rdv__fields {
+  display: grid;
+  gap: 0.85rem;
+}
+
+@media (min-width: 30rem) {
+  .rdv__fields {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.rdv__fields label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: var(--step--1);
+  color: var(--c-muted);
+}
+
+.rdv__fields input {
+  font: inherit;
+  font-size: var(--step-0);
+  color: var(--c-text);
+  background: color-mix(in srgb, var(--c-text) 6%, transparent);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 0.7em 0.85em;
+  width: 100%;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.rdv__fields input:focus {
+  outline: none;
+  border-color: var(--c-accent);
+  background: color-mix(in srgb, var(--c-text) 9%, transparent);
+}
+
+.rdv__more summary {
+  font-size: var(--step--1);
+  color: var(--c-muted);
+  cursor: pointer;
+  list-style: none;
+  padding-block: 0.2rem;
+}
+
+.rdv__more summary::-webkit-details-marker {
+  display: none;
+}
+
+.rdv__more summary::before {
+  content: "+ ";
+}
+
+.rdv__more[open] summary::before {
+  content: "− ";
+}
+
+.rdv__more[open] summary {
+  margin-bottom: 0.85rem;
+}
+
+.rdv__consent {
+  font-size: var(--step--1);
+  color: var(--c-muted);
+}
+
+.rdv__recap {
+  font-size: var(--step--1);
+  color: var(--c-muted);
+  padding-top: 0.35rem;
+  border-top: 1px solid color-mix(in srgb, var(--c-text) 9%, transparent);
+}
+
+.rdv__recap:empty {
+  display: none;
+}
+
+.rdv__confirm {
+  font: inherit;
+  font-size: var(--step-0);
+  width: 100%;
+  padding: 0.9em 1.5em;
+  border: none;
+  border-radius: 980px;
+  background: var(--c-accent);
+  color: var(--c-accent-text);
+  cursor: pointer;
+  transition: filter 0.2s, opacity 0.2s;
+}
+
+.rdv__confirm:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+.rdv__confirm:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ------------------------------------------------------------ confirmation */
+
+.rdv__done {
+  padding: clamp(2rem, 6vw, 3rem) clamp(1.25rem, 4vw, 2rem);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.rdv__check {
+  width: 3.25rem;
+  height: 3.25rem;
+  fill: none;
+  stroke: var(--c-accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  margin-bottom: 0.5rem;
+}
+
+.rdv__check circle,
+.rdv__check path {
+  stroke-dasharray: 160;
+  stroke-dashoffset: 160;
+  animation: rdv-draw 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+
+.rdv__check path {
+  animation-delay: 0.28s;
+}
+
+@keyframes rdv-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rdv__check circle,
+  .rdv__check path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+.rdv__done h3 {
+  font-size: var(--step-2);
+  margin: 0;
+}
+
+.rdv__done-when {
+  font-size: var(--step-0);
+}
+
+.rdv__done-body {
+  font-size: var(--step--1);
+  color: var(--c-muted);
+}
+
+.rdv__ics {
+  margin-top: 0.75rem;
+  font-size: var(--step--1);
+  color: var(--c-accent);
+  text-decoration: none;
+  border: 1px solid color-mix(in srgb, var(--c-accent) 45%, transparent);
+  border-radius: 980px;
+  padding: 0.6em 1.3em;
+}
+
+.rdv__ics:hover {
+  background: color-mix(in srgb, var(--c-accent) 12%, transparent);
+}
+
+.rdv__again {
+  font: inherit;
+  font-size: var(--step--1);
+  color: var(--c-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+  padding: 0.4rem;
+}
+
+.rdv__noscript {
+  padding: 1.25rem clamp(1.1rem, 3vw, 1.75rem);
+  font-size: var(--step--1);
+  color: var(--c-muted);
+}
+
+.rdv .form-status:empty {
+  display: none;
 }

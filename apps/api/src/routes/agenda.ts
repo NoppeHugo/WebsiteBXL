@@ -12,6 +12,15 @@ const AvailabilityQuery = z.object({
   tenantId: z.string().uuid(),
   serviceId: z.string().min(1).max(80),
   day: IsoDay,
+  /**
+   * Nombre de jours renvoyés à partir de `day`.
+   *
+   * Une seule requête pour toute la quinzaine : la bande de dates peut alors
+   * afficher d'emblée les jours fermés ou complets, et passer d'un jour à
+   * l'autre devient instantané. Interroger jour par jour ferait clignoter une
+   * attente à chaque clic.
+   */
+  days: z.coerce.number().int().min(1).max(31).optional(),
 });
 
 const BookInput = z.object({
@@ -53,13 +62,23 @@ export function agendaRoutes(app: FastifyInstance): void {
       const tenant = await findTenant(parsed.data.tenantId);
       if (!tenant) return reply.code(404).send({ error: "commerce inconnu" });
 
-      const availability = await dayAvailability(
-        sql,
-        tenant.id,
-        parsed.data.serviceId,
-        parsed.data.day,
-      );
-      return reply.send(availability);
+      const { serviceId, day, days } = parsed.data;
+
+      if (!days) {
+        return reply.send(
+          await dayAvailability(sql, tenant.id, serviceId, day),
+        );
+      }
+
+      const start = new Date(`${day}T12:00:00Z`);
+      const results = [];
+      for (let i = 0; i < days; i += 1) {
+        const current = new Date(start.getTime() + i * 86_400_000)
+          .toISOString()
+          .slice(0, 10);
+        results.push(await dayAvailability(sql, tenant.id, serviceId, current));
+      }
+      return reply.send({ days: results });
     },
   });
 

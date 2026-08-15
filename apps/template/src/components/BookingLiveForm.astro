@@ -1,5 +1,6 @@
 ---
 import type { Language } from "@bxl/schema";
+import { formatPrice } from "@bxl/schema";
 import { site, t, path } from "../lib/client.ts";
 import { ui } from "../lib/i18n.ts";
 import { apiEndpoint } from "../lib/api.ts";
@@ -14,29 +15,54 @@ const availabilityUrl = apiEndpoint("/v1/availability");
 const bookUrl = apiEndpoint("/v1/appointments");
 
 /**
- * Réservation en agenda temps réel (v2).
+ * Réservation en agenda temps réel.
  *
- * Le client choisit une prestation et un jour, voit les créneaux réellement
- * libres, et confirme. Contrairement à la demande de rendez-vous, c'est une
- * réservation ferme : le courriel qu'il reçoit le dit.
+ * Le parcours avance par étapes — prestation, jour, heure, coordonnées — et
+ * n'affiche qu'une décision à la fois. Tout présenter d'un coup donnait un mur
+ * de vingt-six créneaux au-dessus de six champs : exact, mais décourageant, et
+ * c'est sur téléphone que se prennent la plupart des rendez-vous. Chaque étape
+ * franchie se replie en une ligne de résumé, modifiable d'un geste.
  *
- * Cette partie a besoin de JavaScript — afficher des disponibilités qui
- * changent d'une minute à l'autre ne se fait pas en HTML statique. Le
- * téléphone reste donc affiché, et `<noscript>` le rappelle explicitement :
- * personne ne doit se retrouver devant un encart vide.
+ * Les disponibilités des quinze prochains jours sont chargées en une seule
+ * requête : la bande de dates montre d'emblée les jours fermés ou complets, et
+ * passer d'un jour à l'autre n'attend rien.
+ *
+ * Cette partie exige JavaScript — des créneaux qui changent d'une minute à
+ * l'autre ne se rendent pas en HTML statique. Le téléphone reste donc affiché,
+ * et `<noscript>` le rappelle.
  */
 
 const today = new Date().toISOString().slice(0, 10);
-const maxDay = new Date(Date.now() + 120 * 86_400_000).toISOString().slice(0, 10);
-
 const returnUrl = Astro.site ? new URL(path(lang), Astro.site).href : undefined;
+
+const services = site.services.map((service) => ({
+  id: service.id,
+  name: t(service.name, lang),
+  durationMin: service.durationMin,
+  price: formatPrice(service, lang),
+}));
 ---
 
 {
-  availabilityUrl && bookUrl && site.tenantId && site.services.length > 0 && (
-    <div class="booking-form" data-live-booking>
-      <h3>{ui(lang, "booking_live_title")}</h3>
-
+  availabilityUrl && bookUrl && site.tenantId && services.length > 0 && (
+    <div
+      class="rdv"
+      data-live-booking
+      data-availability={availabilityUrl}
+      data-tenant={site.tenantId}
+      data-today={today}
+      data-lang={lang}
+      data-business={site.business.name}
+      data-address={`${site.business.address.street}, ${site.business.address.postalCode} ${site.business.address.city}`}
+      data-label-closed={ui(lang, "booking_closed_short")}
+      data-label-full={ui(lang, "booking_full_short")}
+      data-label-loading={ui(lang, "booking_slots_loading")}
+      data-label-empty={ui(lang, "booking_slots_empty")}
+      data-label-morning={ui(lang, "period_morning")}
+      data-label-afternoon={ui(lang, "period_afternoon")}
+      data-label-evening={ui(lang, "period_evening")}
+      data-label-change={ui(lang, "booking_change")}
+    >
       <form
         method="post"
         action={bookUrl}
@@ -47,82 +73,147 @@ const returnUrl = Astro.site ? new URL(path(lang), Astro.site).href : undefined;
         data-label-conflict={ui(lang, "booking_taken")}
         data-reload-on-success
         data-label-send={ui(lang, "booking_confirm")}
-        data-availability={availabilityUrl}
-        data-tenant={site.tenantId}
       >
         <input type="hidden" name="tenantId" value={site.tenantId} />
         <input type="hidden" name="locale" value={lang} />
         {returnUrl && <input type="hidden" name="redirectTo" value={returnUrl} />}
-        <input type="hidden" name="startsAt" data-slot-value required />
+        <input type="hidden" name="serviceId" data-field-service required />
+        <input type="hidden" name="startsAt" data-field-slot required />
 
-        <div class="booking-form__row">
-          <label>
-            <span>{ui(lang, "booking_service")}</span>
-            <select name="serviceId" required data-service>
-              {site.services.map((service) => (
-                <option value={service.id} data-duration={service.durationMin}>
-                  {t(service.name, lang)} — {service.durationMin} {ui(lang, "minutes")}
-                </option>
+        {/* Étape 1 — la prestation */}
+        <section class="rdv__step" data-step="service" data-open="true">
+          <header class="rdv__head">
+            <p class="rdv__label">{ui(lang, "booking_step_service")}</p>
+            <p class="rdv__chosen" data-summary="service" />
+          </header>
+
+          <div class="rdv__body">
+            <div class="rdv__clip">
+            <ul class="rdv__services">
+              {services.map((service) => (
+                <li>
+                  <button
+                    type="button"
+                    class="rdv__service"
+                    data-service-id={service.id}
+                    data-service-name={service.name}
+                    data-service-duration={service.durationMin}
+                    data-service-price={service.price}
+                  >
+                    <span class="rdv__service-name">{service.name}</span>
+                    <span class="rdv__service-meta">
+                      {service.durationMin} {ui(lang, "minutes")}
+                    </span>
+                    <span class="rdv__service-price">{service.price}</span>
+                  </button>
+                </li>
               ))}
-            </select>
-          </label>
+            </ul>
+            </div>
+          </div>
+        </section>
 
-          <label>
-            <span>{ui(lang, "booking_date")}</span>
-            <input type="date" data-day required min={today} max={maxDay} value={today} />
-          </label>
-        </div>
+        {/* Étape 2 — le jour */}
+        <section class="rdv__step" data-step="day">
+          <header class="rdv__head">
+            <p class="rdv__label">{ui(lang, "booking_step_day")}</p>
+            <p class="rdv__chosen" data-summary="day" />
+          </header>
+          <div class="rdv__body">
+            <div class="rdv__clip"><div class="rdv__days" data-days /></div>
+          </div>
+        </section>
 
-        <div
-          class="slots"
-          data-slots
-          aria-live="polite"
-          data-label-loading={ui(lang, "booking_slots_loading")}
-          data-label-empty={ui(lang, "booking_slots_empty")}
-          data-label-error={ui(lang, "form_error")}
-        />
+        {/* Étape 3 — l'heure */}
+        <section class="rdv__step" data-step="time">
+          <header class="rdv__head">
+            <p class="rdv__label">{ui(lang, "booking_step_time")}</p>
+            <p class="rdv__chosen" data-summary="time" />
+          </header>
+          <div class="rdv__body">
+            <div class="rdv__clip"><div class="rdv__slots" data-slots aria-live="polite" /></div>
+          </div>
+        </section>
 
-        <div class="booking-form__row">
-          <label>
-            <span>{ui(lang, "form_name")}</span>
-            <input type="text" name="name" required autocomplete="name" />
-          </label>
-          <label>
-            <span>{ui(lang, "form_email")}</span>
-            <input type="email" name="email" required autocomplete="email" />
-          </label>
-        </div>
+        {/* Étape 4 — les coordonnées */}
+        <section class="rdv__step" data-step="you">
+          <header class="rdv__head">
+            <p class="rdv__label">{ui(lang, "booking_step_you")}</p>
+          </header>
 
-        <label>
-          <span>{ui(lang, "booking_phone")}</span>
-          <input type="tel" name="phone" autocomplete="tel" />
-        </label>
+          <div class="rdv__body">
+            <div class="rdv__clip">
+            <div class="rdv__you">
+            <div class="rdv__fields">
+              <label>
+                <span>{ui(lang, "form_name")}</span>
+                <input type="text" name="name" required autocomplete="name" />
+              </label>
+              <label>
+                <span>{ui(lang, "form_email")}</span>
+                <input type="email" name="email" required autocomplete="email" />
+              </label>
+            </div>
 
-        <label>
-          <span>{ui(lang, "booking_note")}</span>
-          <textarea name="note" rows="2" />
-        </label>
+            {/* Le superflu reste replié : Apple ne demande jamais plus que
+                nécessaire à l'écran. */}
+            <details class="rdv__more">
+              <summary>{ui(lang, "booking_more")}</summary>
+              <div class="rdv__fields">
+                <label>
+                  <span>{ui(lang, "booking_phone")}</span>
+                  <input type="tel" name="phone" autocomplete="tel" />
+                </label>
+                <label>
+                  <span>{ui(lang, "booking_note")}</span>
+                  <input type="text" name="note" />
+                </label>
+              </div>
+            </details>
 
-        <input type="text" name="_company" tabindex="-1" autocomplete="off"
-               aria-hidden="true" class="honeypot" />
+            <input type="text" name="_company" tabindex="-1" autocomplete="off"
+                   aria-hidden="true" class="honeypot" />
 
-        <label class="consent">
-          <input type="checkbox" name="consent" required />
-          <span>
-            {ui(lang, "form_consent")}{" "}
-            <a href={`${path(lang)}legal/`}>{ui(lang, "legal")}</a>
-          </span>
-        </label>
+            <label class="consent rdv__consent">
+              <input type="checkbox" name="consent" required />
+              <span>
+                {ui(lang, "form_consent")}{" "}
+                <a href={`${path(lang)}legal/`}>{ui(lang, "legal")}</a>
+              </span>
+            </label>
 
-        <button type="submit" class="btn btn--primary" disabled data-submit>
-          {ui(lang, "booking_confirm")}
-        </button>
+            <p class="rdv__recap" data-recap />
 
-        <p class="form-status" role="status" aria-live="polite" />
+            <button type="submit" class="rdv__confirm" disabled data-submit>
+              {ui(lang, "booking_confirm")}
+            </button>
+
+            <p class="form-status" role="status" aria-live="polite" />
+            </div>
+            </div>
+          </div>
+        </section>
       </form>
 
+      {/* Panneau de confirmation, substitué au formulaire une fois réservé. */}
+      <div class="rdv__done" data-done hidden>
+        <svg class="rdv__check" viewBox="0 0 52 52" aria-hidden="true">
+          <circle cx="26" cy="26" r="24" />
+          <path d="M15 27l8 8 15-16" />
+        </svg>
+        <h3>{ui(lang, "booking_success_title")}</h3>
+        <p class="rdv__done-when" data-done-when />
+        <p class="rdv__done-body">{ui(lang, "booking_success_body")}</p>
+        <a class="rdv__ics" data-ics download="rendez-vous.ics" hidden>
+          {ui(lang, "booking_add_calendar")}
+        </a>
+        <button type="button" class="rdv__again" data-again>
+          {ui(lang, "booking_again")}
+        </button>
+      </div>
+
       <noscript>
-        <p class="booking-form__note">
+        <p class="rdv__noscript">
           {ui(lang, "booking_needs_js")}{" "}
           <a href={telHref()}>{site.business.phone}</a>
         </p>
@@ -131,127 +222,4 @@ const returnUrl = Astro.site ? new URL(path(lang), Astro.site).href : undefined;
   )
 }
 
-<script>
-  /*
-   * Chargement des créneaux à chaque changement de prestation ou de date.
-   *
-   * Le bouton de confirmation reste désactivé tant qu'aucun créneau n'est
-   * choisi : sans cela, un envoi partirait sans horaire et l'API le
-   * refuserait, ce qui donnerait au visiteur l'impression d'une panne.
-   */
-  const root = document.querySelector<HTMLElement>("[data-live-booking]");
-  if (root) {
-    const form = root.querySelector("form")!;
-    const service = form.querySelector<HTMLSelectElement>("[data-service]")!;
-    const day = form.querySelector<HTMLInputElement>("[data-day]")!;
-    const box = form.querySelector<HTMLElement>("[data-slots]")!;
-    const hidden = form.querySelector<HTMLInputElement>("[data-slot-value]")!;
-    const submit = form.querySelector<HTMLButtonElement>("[data-submit]")!;
-    const endpoint = form.dataset.availability!;
-    const tenant = form.dataset.tenant!;
-    const locale = (form.querySelector<HTMLInputElement>("[name=locale]")!).value;
-
-    const time = new Intl.DateTimeFormat(`${locale}-BE`, {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Europe/Brussels",
-    });
-
-    let request = 0;
-
-    async function load() {
-      const ticket = ++request;
-      hidden.value = "";
-      submit.disabled = true;
-      box.dataset.state = "loading";
-      box.textContent = box.dataset.labelLoading ?? "…";
-
-      try {
-        const url = new URL(endpoint);
-        url.searchParams.set("tenantId", tenant);
-        url.searchParams.set("serviceId", service.value);
-        url.searchParams.set("day", day.value);
-
-        const response = await fetch(url, { headers: { Accept: "application/json" } });
-        const data = await response.json();
-
-        // Une réponse plus lente qu'une autre ne doit pas écraser la plus
-        // récente : le visiteur verrait les créneaux d'un autre jour.
-        if (ticket !== request) return;
-
-        box.textContent = "";
-        box.dataset.state = "";
-
-        if (data.closed || !data.slots?.length) {
-          box.dataset.state = "empty";
-          box.textContent = box.dataset.labelEmpty ?? "";
-          return;
-        }
-
-        for (const iso of data.slots) {
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = "slot";
-          button.textContent = time.format(new Date(iso));
-          button.addEventListener("click", () => {
-            for (const other of box.querySelectorAll(".slot")) {
-              other.removeAttribute("aria-pressed");
-            }
-            button.setAttribute("aria-pressed", "true");
-            hidden.value = iso;
-            submit.disabled = false;
-          });
-          box.append(button);
-        }
-      } catch {
-        if (ticket !== request) return;
-        box.dataset.state = "empty";
-        box.textContent = box.dataset.labelError ?? "";
-      }
-    }
-
-    service.addEventListener("change", load);
-    day.addEventListener("change", load);
-    // Après une réservation, les créneaux restants ne sont plus les mêmes.
-    form.addEventListener("bxl:booked", () => void load());
-    void load();
-  }
-</script>
-
-<style>
-  .slots {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    min-height: 2.5rem;
-    align-items: center;
-  }
-
-  .slots[data-state="loading"],
-  .slots[data-state="empty"] {
-    color: var(--c-muted);
-    font-size: var(--step--1);
-  }
-
-  .slot {
-    font: inherit;
-    font-size: var(--step--1);
-    color: var(--c-text);
-    background: color-mix(in srgb, var(--c-surface) 70%, transparent);
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-btn);
-    padding: 0.5em 1em;
-    cursor: pointer;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .slot:hover {
-    border-color: var(--c-text);
-  }
-
-  .slot[aria-pressed="true"] {
-    background: var(--c-accent);
-    color: var(--c-accent-text);
-    border-color: var(--c-accent);
-  }
-</style>
+<script src="../scripts/booking.ts"></script>

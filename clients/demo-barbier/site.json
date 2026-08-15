@@ -368,7 +368,7 @@
     }
   ],
   "booking": {
-    "mode": "request"
+    "mode": "live"
   },
   "seo": {
     "title": {
