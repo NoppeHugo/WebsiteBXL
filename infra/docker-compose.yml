@@ -67,6 +67,12 @@ services:
       PUBLIC_API_URL: ${PUBLIC_API_URL:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       PUBLIC_ADMIN_URL: ${PUBLIC_ADMIN_URL:-}
+      # L'interface écrit au client final quand le salon annule un
+      # rendez-vous. En production, `log` fait refuser le démarrage : un
+      # client non prévenu se déplace pour rien.
+      EMAIL_DRIVER: ${EMAIL_DRIVER:-resend}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-}
     volumes:
       # Le clone du dépôt sur le VPS : la console y écrit les site.json,
       # commite et pousse. Git reste la source de vérité du contenu.

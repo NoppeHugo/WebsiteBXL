@@ -226,6 +226,14 @@ d'envoi de courriels, et empêchait d'écrire le moindre test sans monter tout
 l'environnement. La contrainte est légère à respecter et coûteuse à réparer
 après coup.
 
+**Ce à quoi elle ressemble en pratique.** Le transport des courriels vit dans
+`mail-transport.ts` : il ne lit aucune variable d'environnement, il reçoit ses
+options. Chaque service en construit le sien à partir de sa propre
+configuration — `apps/api/src/mail.ts` et `apps/admin/src/mail.ts`, quinze
+lignes chacun. C'est ce qui permet à l'interface d'administration d'écrire aux
+clients finaux sans charger la configuration de l'API, et de tester l'envoi
+sans aucune variable d'environnement.
+
 ### 3.6 Git comme source de vérité du contenu
 
 **Décision :** le contenu des sites (`site.json`, `theme.json`, médias) vit dans
@@ -403,6 +411,12 @@ Les choix qui en découlent :
   besoin de voir.
 - **Le salon est prévenu de chaque annulation** : c'est un créneau qu'il peut
   revendre, et il ne le saura pas autrement.
+- **Et réciproquement.** Quand le salon annule depuis l'agenda — un appel, une
+  fermeture imprévue — le client reçoit un courriel dans sa langue avec le
+  numéro à appeler. Sans lui, il se présenterait devant une porte fermée : pire
+  qu'une absence, puisque c'est le commerce qui en porte l'image, sur l'outil
+  qu'on lui a vendu. L'état précédent est relu avant d'écrire, pour ne pas
+  annoncer deux fois la même annulation.
 - **Pas de SMS.** Coût par envoi réel (~0,05 €), donc à répercuter ou à
   plafonner dans le mensuel, pour un gain marginal sur un public qui lit ses
   courriels. Écarté volontairement, réévaluable si les absences persistent.

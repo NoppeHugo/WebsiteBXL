@@ -25,6 +25,15 @@ const Env = z.object({
   PUBLIC_API_URL: z.string().default(""),
   STRIPE_SECRET_KEY: z.string().optional(),
   PUBLIC_ADMIN_URL: z.string().default(""),
+
+  /**
+   * Envoi de courriels. L'interface écrit au client final quand le salon
+   * annule un rendez-vous : sans cela, le client se présenterait devant une
+   * porte fermée. Mêmes valeurs que pour l'API.
+   */
+  EMAIL_DRIVER: z.enum(["log", "resend"]).default("log"),
+  RESEND_API_KEY: z.string().optional(),
+  MAIL_FROM: z.string().default("no-reply@example.com"),
 });
 
 const parsed = Env.safeParse(process.env);
@@ -37,3 +46,12 @@ if (!parsed.success) {
 
 export const config = parsed.data;
 export const isProduction = config.NODE_ENV === "production";
+
+if (config.EMAIL_DRIVER === "resend" && !config.RESEND_API_KEY) {
+  throw new Error("EMAIL_DRIVER=resend nécessite RESEND_API_KEY");
+}
+if (isProduction && config.EMAIL_DRIVER === "log") {
+  throw new Error(
+    "EMAIL_DRIVER=log en production : un client dont le rendez-vous est annulé ne serait jamais prévenu.",
+  );
+}

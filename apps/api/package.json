@@ -20,6 +20,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./analytics": "./src/analytics.ts",
+    "./mail-transport": "./src/mail-transport.ts",
+    "./appointment-notices": "./src/appointment-notices.ts",
     "./billing": "./src/billing.ts",
     "./reports": "./src/reports.ts"
   }

@@ -1,45 +1,15 @@
 import { config } from "./config.ts";
+import { createMailer } from "./mail-transport.ts";
 
-export interface Mail {
-  to: string;
-  replyTo?: string;
-  subject: string;
-  text: string;
-}
+export type { Mail, Send } from "./mail-transport.ts";
 
 /**
- * Envoi transactionnel.
- *
- * Jamais de SMTP auto-hébergé : la délivrabilité est mauvaise et la
- * maintenance permanente. En développement, `log` écrit dans la console au
- * lieu d'envoyer — la configuration refuse ce mode en production.
+ * L'envoi de l'API, lié à sa configuration. Le transport lui-même vit dans
+ * `mail-transport.ts`, qui n'en dépend pas : c'est ce fichier-ci, et lui seul,
+ * qui connaît l'environnement.
  */
-export async function sendMail(mail: Mail): Promise<void> {
-  if (config.EMAIL_DRIVER === "log") {
-    console.log(
-      `\n--- courriel (mode log) ---\nÀ : ${mail.to}\nObjet : ${mail.subject}\n\n${mail.text}\n---\n`,
-    );
-    return;
-  }
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${config.RESEND_API_KEY}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      from: config.MAIL_FROM,
-      to: [mail.to],
-      subject: mail.subject,
-      text: mail.text,
-      ...(mail.replyTo && { reply_to: mail.replyTo }),
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `envoi refusé par Resend (${response.status}) : ${await response.text()}`,
-    );
-  }
-}
+export const sendMail = createMailer({
+  driver: config.EMAIL_DRIVER,
+  apiKey: config.RESEND_API_KEY,
+  from: config.MAIL_FROM,
+});
