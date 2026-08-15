@@ -85,26 +85,38 @@ const site = {
   seo: {},
 };
 
+// Style maison : typographie système Apple, surfaces en verre, pilules.
+// C'est la palette — et surtout la couleur d'accent — qu'on change d'un client
+// à l'autre pour que deux commerces voisins n'aient pas le même site.
 const theme = {
   palette: {
-    bg: "#0d0d0e",
-    surface: "#151517",
-    text: "#f2efe9",
-    muted: "#a09a92",
-    accent: "#c8a15a",
-    accentText: "#0d0d0e",
-    border: "#2a2a2d",
+    bg: "#000000",
+    surface: "#1d1d1f",
+    text: "#f5f5f7",
+    muted: "#86868b",
+    accent: "#0071e3",
+    accentText: "#ffffff",
+    border: "#2c2c2e",
   },
   fonts: {
-    display: "Georgia, 'Times New Roman', serif",
-    body: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
-    displayWeight: 400,
-    displayTracking: "0.02em",
+    display:
+      "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    body: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    displayWeight: 600,
+    displayTracking: "-0.022em",
     displayTransform: "none",
+    uiTransform: "none",
+    uiTracking: "0",
   },
-  layout: { hero: "fullbleed", gallery: "grid", nav: "overlay" },
-  radius: "none",
+  layout: {
+    hero: "fullbleed",
+    heroAlign: "center",
+    gallery: "grid",
+    nav: "overlay",
+  },
+  radius: "round",
   grain: false,
+  effects: { glass: true, blur: 22, reveal: true },
 };
 
 // On valide avant d'écrire : le squelette généré ne doit jamais être une source

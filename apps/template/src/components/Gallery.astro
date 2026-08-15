@@ -11,6 +11,18 @@ interface Props {
 const { lang } = Astro.props;
 
 const variant = theme.layout.gallery;
+
+/**
+ * Largeur réelle d'une vignette selon la variante. Un `sizes` approximatif
+ * fait servir des images soit floues sur écran retina, soit inutilement
+ * lourdes — et le poids des photos est le principal levier de vitesse sur des
+ * sites qui en sont remplis.
+ */
+const sizes = {
+  grid: "(max-width: 700px) 100vw, 33vw",
+  mosaic: "(max-width: 700px) 50vw, 40vw",
+  strip: "(max-width: 700px) 78vw, 420px",
+}[variant];
 ---
 
 <section class="section" id="galerie">
@@ -26,8 +38,8 @@ const variant = theme.layout.gallery;
             <Image
               src={media(photo.src)}
               alt={t(photo.alt, lang)}
-              widths={[400, 800, 1200]}
-              sizes="(max-width: 700px) 100vw, 40vw"
+              widths={[400, 800, 1200, 1600]}
+              sizes={sizes}
               loading={index < 2 ? "eager" : "lazy"}
               quality={76}
             />

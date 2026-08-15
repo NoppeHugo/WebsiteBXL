@@ -16,7 +16,7 @@ const image = media(site.hero.image);
 const variant = theme.layout.hero;
 ---
 
-<section class={`hero hero--${variant}`}>
+<section class={`hero hero--${variant}`} data-align={theme.layout.heroAlign}>
   <div class="hero__media">
     <Image
       src={image}

@@ -132,11 +132,71 @@ sites. Garde-fous obligatoires, décrits en §6.
 ### 3.3 Le thème comme donnée
 
 Chaque client possède un `theme.json` (couleurs, typographie, variante de mise
-en page) en plus de son `site.json` (contenu).
+en page, effets) en plus de son `site.json` (contenu).
 
 **Pourquoi :** 30 sites qui ne se ressemblent pas, sans écrire 30 bases de code.
 Un coiffeur ne doit jamais pouvoir dire « c'est le même site que le salon d'en
-face ». Prévoir dès le départ 3-4 variantes de hero et de galerie.
+face ».
+
+**Champs disponibles :**
+
+| Champ | Valeurs | Effet |
+|---|---|---|
+| `palette` | 7 couleurs hexadécimales | Fond, surface, texte, texte atténué, accent, texte sur accent, bordure. |
+| `fonts.display` / `.body` | pile CSS | Titres et texte courant. |
+| `fonts.displayWeight` / `.displayTracking` / `.displayTransform` | — | Graisse, interlettrage et casse des titres. |
+| `fonts.uiTransform` / `.uiTracking` | — | Casse et interlettrage des boutons et de la navigation. |
+| `layout.hero` | `fullbleed` \| `split` \| `minimal` | Structure du hero. |
+| `layout.heroAlign` | `start` \| `center` | Texte du hero ancré à gauche, ou centré. |
+| `layout.gallery` | `grid` \| `mosaic` \| `strip` | Disposition des photos. |
+| `layout.nav` | `overlay` \| `solid` | Navigation par-dessus la photo, ou opaque. |
+| `radius` | `none` \| `soft` \| `round` | `round` donne cartes arrondies et boutons en pilule. |
+| `grain` | booléen | Grain photographique léger. |
+| `effects.glass` | booléen | Surfaces translucides floutées. |
+| `effects.blur` | 0–60 | Intensité du flou, en pixels. |
+| `effects.reveal` | booléen | Apparition en fondu au défilement. |
+
+**Style maison** (défaut de `pnpm new`) : typographie système Apple, fond noir,
+accent bleu, boutons en pilule, verre et apparition au défilement. C'est la
+**palette**, et surtout la couleur d'accent, qu'on change d'un client à l'autre
+pour les différencier — pas la structure.
+
+### 3.3 bis Polices : pourquoi la pile système
+
+**Décision :** aucune police n'est hébergée pour l'instant ; on utilise la pile
+système `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, …`.
+
+**Pourquoi :** SF Pro, la police d'Apple, **ne peut pas être hébergée sur le
+site d'un client** — sa licence la réserve aux plateformes Apple. La pile
+système la fournit nativement sur iPhone et Mac, donc la démo montrée sur
+téléphone affiche la vraie SF Pro, légalement et sans un octet à télécharger.
+Sur Windows et Android, le repli sur Segoe UI et Roboto reste très proche.
+
+**Montée en gamme quand un rendu identique partout sera nécessaire :**
+auto-héberger **Inter** (licence libre, dessinée dans le même esprit que SF)
+dans `apps/template/public/fonts`. Jamais via le CDN Google Fonts : le
+transfert d'adresses IP vers un tiers hors UE a déjà valu des condamnations en
+Europe.
+
+### 3.3 ter Le verre : un effet, deux contraintes
+
+**Décision :** les surfaces translucides (`effects.glass`) sont limitées à la
+navigation, aux cartes d'avis, au bandeau de réservation et à la barre mobile.
+
+**Pourquoi cette limite :** chaque zone floutée est recomposée par le processeur
+graphique à chaque défilement. En multiplier les occurrences fait saccader les
+téléphones d'entrée de gamme — or c'est précisément sur téléphone que se joue
+l'essentiel du trafic d'un commerce de proximité.
+
+**Et la couleur d'accent** reste réservée aux boutons et aux anneaux de focus.
+Un bleu d'action en petit corps sur fond sombre ne tient pas les seuils de
+contraste, et disperser la couleur affaiblit le seul endroit où elle doit
+attirer l'œil : le bouton de réservation.
+
+L'apparition au défilement (`effects.reveal`) masque du contenu par JavaScript.
+Trois garde-fous en découlent, tous en place : la classe qui masque est posée
+par le script (sans JavaScript, rien n'est caché), l'effet est désactivé à
+l'arrivée sur une ancre, et l'impression force l'affichage complet.
 
 ### 3.4 Caddy comme serveur web
 

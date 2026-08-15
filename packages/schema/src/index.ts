@@ -283,6 +283,13 @@ export const ThemeConfig = z.object({
    * Piles de polices système, ou polices auto-hébergées déposées dans
    * `apps/template/public/fonts`. Jamais de CDN Google Fonts : le transfert
    * d'IP vers un tiers hors UE a déjà valu des condamnations en Europe.
+   *
+   * Cas particulier des polices Apple : SF Pro ne peut pas être hébergée sur
+   * un site client, sa licence la réservant aux plateformes Apple. La pile
+   * système (`-apple-system`) la fournit nativement sur iPhone et Mac, avec un
+   * repli sur Segoe UI ou Roboto ailleurs — c'est la seule façon légale de
+   * l'obtenir. Pour un rendu identique sur toutes les plateformes, héberger
+   * Inter, sous licence libre et très proche de SF.
    */
   fonts: z.object({
     display: z.string().min(1),
@@ -290,15 +297,38 @@ export const ThemeConfig = z.object({
     displayWeight: z.number().int().min(100).max(900).default(400),
     displayTracking: z.string().default("0"),
     displayTransform: z.enum(["none", "uppercase"]).default("none"),
+    /** Casse et interlettrage des éléments d'interface : boutons, navigation. */
+    uiTransform: z.enum(["none", "uppercase"]).default("uppercase"),
+    uiTracking: z.string().default("0.12em"),
   }),
   layout: z.object({
     hero: z.enum(["fullbleed", "split", "minimal"]).default("fullbleed"),
+    /** Texte du hero aligné à gauche, ou centré comme sur les pages Apple. */
+    heroAlign: z.enum(["start", "center"]).default("start"),
     gallery: z.enum(["grid", "mosaic", "strip"]).default("grid"),
     nav: z.enum(["overlay", "solid"]).default("overlay"),
   }),
   radius: z.enum(["none", "soft", "round"]).default("none"),
   /** Léger grain photographique sur les fonds sombres. */
   grain: z.boolean().default(false),
+
+  /**
+   * Effets de matière. `glass` produit les surfaces translucides floutées
+   * typiques des interfaces Apple : navigation, cartes et bandeaux laissent
+   * transparaître la photo qui défile derrière.
+   *
+   * Le flou est coûteux à l'affichage sur les téléphones d'entrée de gamme :
+   * il reste réservé à quelques surfaces, jamais appliqué à des dizaines
+   * d'éléments simultanés.
+   */
+  effects: z
+    .object({
+      glass: z.boolean().default(false),
+      blur: z.number().int().min(0).max(60).default(20),
+      /** Apparition en fondu des sections au défilement. */
+      reveal: z.boolean().default(false),
+    })
+    .default({}),
 });
 
 export type ThemeConfig = z.infer<typeof ThemeConfig>;

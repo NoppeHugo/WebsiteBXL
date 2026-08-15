@@ -1,25 +1,33 @@
 {
   "palette": {
-    "bg": "#0c0c0d",
-    "surface": "#141416",
-    "text": "#f4f1eb",
-    "muted": "#9c968d",
-    "accent": "#c19a52",
-    "accentText": "#0c0c0d",
-    "border": "#26262a"
+    "bg": "#000000",
+    "surface": "#1d1d1f",
+    "text": "#f5f5f7",
+    "muted": "#86868b",
+    "accent": "#0071e3",
+    "accentText": "#ffffff",
+    "border": "#2c2c2e"
   },
   "fonts": {
-    "display": "Georgia, 'Iowan Old Style', 'Times New Roman', serif",
-    "body": "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif",
-    "displayWeight": 400,
-    "displayTracking": "0.01em",
-    "displayTransform": "none"
+    "display": "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    "body": "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    "displayWeight": 600,
+    "displayTracking": "-0.022em",
+    "displayTransform": "none",
+    "uiTransform": "none",
+    "uiTracking": "0"
   },
   "layout": {
     "hero": "fullbleed",
+    "heroAlign": "center",
     "gallery": "mosaic",
     "nav": "overlay"
   },
-  "radius": "none",
-  "grain": true
+  "radius": "round",
+  "grain": false,
+  "effects": {
+    "glass": true,
+    "blur": 22,
+    "reveal": true
+  }
 }

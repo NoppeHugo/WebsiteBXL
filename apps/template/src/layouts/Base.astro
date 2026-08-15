@@ -24,7 +24,10 @@ const description =
 
 const canonical = new URL(path(lang), Astro.site).href;
 
-const radiusValue = { none: "0", soft: "8px", round: "18px" }[theme.radius];
+// Les cartes et les boutons ne suivent pas la même géométrie : « round »
+// signifie carte arrondie et bouton en pilule, comme sur les pages Apple.
+const radiusCard = { none: "0", soft: "10px", round: "18px" }[theme.radius];
+const radiusButton = { none: "0", soft: "8px", round: "980px" }[theme.radius];
 
 const themeVars = [
   `--c-bg:${theme.palette.bg}`,
@@ -39,7 +42,11 @@ const themeVars = [
   `--display-weight:${theme.fonts.displayWeight}`,
   `--display-tracking:${theme.fonts.displayTracking}`,
   `--display-transform:${theme.fonts.displayTransform}`,
-  `--radius:${radiusValue}`,
+  `--ui-transform:${theme.fonts.uiTransform}`,
+  `--ui-tracking:${theme.fonts.uiTracking}`,
+  `--radius:${radiusCard}`,
+  `--radius-btn:${radiusButton}`,
+  `--blur:${theme.effects.blur}px`,
 ].join(";");
 
 // Image de partage : c'est elle qui s'affiche quand le commerçant envoie son
@@ -56,6 +63,46 @@ const shareImageUrl = Astro.site
   : shareImage.src;
 
 const jsonLd = localBusinessJsonLd(lang, Astro.site, shareImageUrl);
+
+/**
+ * Apparition en fondu au défilement.
+ *
+ * La classe qui masque est posée par ce script, jamais présente dans le HTML
+ * livré : sans JavaScript — ou si le script échoue — tout le contenu reste
+ * visible. Un effet décoratif ne doit jamais pouvoir rendre illisible le site
+ * d'un client.
+ */
+const revealScript = `(function(){
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (!("IntersectionObserver" in window)) return;
+  var targets = document.querySelectorAll(".section__head, .service, .gallery figure, .team li, .review, .cta__title, .cta__actions, .hours, .contact__list");
+  if (!targets.length) return;
+
+  function revealAll() {
+    for (var i = 0; i < targets.length; i++) {
+      targets[i].setAttribute("data-revealed", "true");
+    }
+  }
+
+  // Arrivée directe sur une ancre : la page ne défile pas depuis le haut, donc
+  // on affiche tout plutôt que de risquer une section restée invisible.
+  if (location.hash) return;
+
+  for (var i = 0; i < targets.length; i++) targets[i].classList.add("reveal-target");
+
+  var io = new IntersectionObserver(function (entries) {
+    for (var j = 0; j < entries.length; j++) {
+      if (!entries[j].isIntersecting) continue;
+      entries[j].target.setAttribute("data-revealed", "true");
+      io.unobserve(entries[j].target);
+    }
+  }, { rootMargin: "0px 0px -10% 0px" });
+  for (var k = 0; k < targets.length; k++) io.observe(targets[k]);
+
+  // Filets de sécurité : impression, et saut vers une ancre en cours de visite.
+  window.addEventListener("beforeprint", revealAll);
+  window.addEventListener("hashchange", revealAll);
+})();`;
 ---
 
 <!doctype html>
@@ -112,9 +159,16 @@ const jsonLd = localBusinessJsonLd(lang, Astro.site, shareImageUrl);
     }
   </head>
 
-  <body data-grain={String(theme.grain)} data-notice={String(site.demo)}>
+  <body
+    data-grain={String(theme.grain)}
+    data-notice={String(site.demo)}
+    data-glass={String(theme.effects.glass)}
+    data-reveal={String(theme.effects.reveal)}
+  >
     <a class="skip" href="#content">{ui(lang, "skip_to_content")}</a>
     {site.demo && <p class="notice">{ui(lang, "demo_notice")}</p>}
     <slot />
+
+    {theme.effects.reveal && <script is:inline set:html={revealScript} />}
   </body>
 </html>

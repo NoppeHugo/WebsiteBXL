@@ -127,11 +127,18 @@ p {
   font-size: var(--step-3);
 }
 
+/*
+ * La couleur d'accent est réservée aux boutons et aux anneaux de focus, où
+ * elle porte une action. Les libellés, le jour courant et les étoiles utilisent
+ * les teintes de texte : un bleu d'action en petit corps sur fond sombre ne
+ * tient pas les seuils de contraste, et disperser la couleur affaiblit le seul
+ * endroit où elle doit attirer l'œil.
+ */
 .eyebrow {
   font-size: var(--step--1);
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--c-accent);
+  color: var(--c-muted);
   margin-bottom: 1rem;
 }
 
@@ -165,15 +172,16 @@ p {
   align-items: center;
   justify-content: center;
   gap: 0.5em;
-  padding: 0.95em 1.9em;
-  font-size: var(--step--1);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  padding: 0.85em 1.6em;
+  font-size: var(--step-0);
+  letter-spacing: var(--ui-tracking);
+  text-transform: var(--ui-transform);
   text-decoration: none;
   border: 1px solid transparent;
-  border-radius: var(--radius);
+  border-radius: var(--radius-btn);
   cursor: pointer;
-  transition: background-color 0.25s, color 0.25s, border-color 0.25s;
+  transition: background-color 0.25s, color 0.25s, border-color 0.25s,
+    filter 0.25s;
 }
 
 .btn--primary {
@@ -181,19 +189,26 @@ p {
   color: var(--c-accent-text);
 }
 
+/* Éclaircissement au survol plutôt qu'inversion : le bouton garde son
+   identité, comme les boutons d'action des interfaces Apple. */
 .btn--primary:hover {
-  background: var(--c-text);
-  color: var(--c-bg);
+  filter: brightness(1.12);
 }
 
 .btn--ghost {
-  border-color: currentColor;
+  border-color: color-mix(in srgb, currentColor 35%, transparent);
   color: inherit;
 }
 
 .btn--ghost:hover {
-  background: var(--c-text);
-  color: var(--c-bg);
+  border-color: currentColor;
+  background: color-mix(in srgb, var(--c-text) 8%, transparent);
+}
+
+/* Sur une surface en verre, le bouton secondaire devient lui-même translucide. */
+body[data-glass="true"] .btn--ghost {
+  backdrop-filter: blur(calc(var(--blur) / 2));
+  -webkit-backdrop-filter: blur(calc(var(--blur) / 2));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -213,7 +228,25 @@ p {
 .nav[data-scrolled="true"] {
   background: color-mix(in srgb, var(--c-bg) 92%, transparent);
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-bottom-color: var(--c-border);
+}
+
+/*
+ * En mode verre, la navigation est translucide dès le chargement, pas
+ * seulement après défilement : c'est ce qui donne la sensation d'une couche
+ * posée au-dessus de la photo plutôt que d'une barre qui apparaît.
+ * La saturation compense le lavage des couleurs induit par le flou.
+ */
+body[data-glass="true"] .nav {
+  background: color-mix(in srgb, var(--c-bg) 72%, transparent);
+  backdrop-filter: saturate(180%) blur(var(--blur));
+  -webkit-backdrop-filter: saturate(180%) blur(var(--blur));
+  border-bottom-color: color-mix(in srgb, var(--c-border) 60%, transparent);
+}
+
+body[data-glass="true"] .nav[data-scrolled="true"] {
+  background: color-mix(in srgb, var(--c-bg) 82%, transparent);
 }
 
 .nav__inner {
@@ -243,8 +276,8 @@ p {
 
 .nav__links a {
   font-size: var(--step--1);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: var(--ui-tracking);
+  text-transform: var(--ui-transform);
   text-decoration: none;
   color: var(--c-muted);
   transition: color 0.2s;
@@ -258,6 +291,11 @@ p {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.nav__cta {
+  padding: 0.5em 1.1em;
+  font-size: var(--step--1);
 }
 
 .langs {
@@ -330,6 +368,26 @@ p {
 
 .hero__content {
   padding-block: clamp(4rem, 12vh, 8rem);
+}
+
+/* Variante centrée : le texte occupe l'axe de la photo, à la manière des pages
+   produit Apple, au lieu de s'ancrer en bas à gauche. */
+.hero[data-align="center"] {
+  align-items: center;
+  text-align: center;
+}
+
+.hero[data-align="center"] .hero__title {
+  max-width: 20ch;
+  margin-inline: auto;
+}
+
+.hero[data-align="center"] .hero__sub {
+  margin-inline: auto;
+}
+
+.hero[data-align="center"] .hero__actions {
+  justify-content: center;
 }
 
 .hero__title {
@@ -407,7 +465,7 @@ p {
   font-size: var(--step--1);
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--c-accent);
+  color: var(--c-muted);
   padding-bottom: 0.9rem;
   border-bottom: 1px solid var(--c-border);
   margin-bottom: 0.5rem;
@@ -515,9 +573,14 @@ p {
   .gallery--mosaic {
     grid-template-columns: repeat(2, 1fr);
   }
+  /* `:last-child` doit figurer ici : sans lui, la règle « dernière image
+     pleine largeur » de l'affichage large s'applique encore et réclame six
+     colonnes, que la grille crée implicitement — ce qui écrase toute la
+     mosaïque sur téléphone. */
   .gallery--mosaic figure,
   .gallery--mosaic figure:nth-child(5n + 1),
-  .gallery--mosaic figure:nth-child(5n + 2) {
+  .gallery--mosaic figure:nth-child(5n + 2),
+  .gallery--mosaic figure:last-child:nth-child(5n + 1) {
     grid-column: span 1;
     grid-row: span 2;
   }
@@ -602,7 +665,7 @@ p {
 }
 
 .review__stars {
-  color: var(--c-accent);
+  color: var(--c-text);
   letter-spacing: 0.15em;
   font-size: var(--step--1);
 }
@@ -645,7 +708,8 @@ p {
 }
 
 .hours li[data-today="true"] {
-  color: var(--c-accent);
+  color: var(--c-text);
+  font-weight: 600;
 }
 
 .hours__day {
@@ -788,17 +852,25 @@ p {
 /* Bandeaux d'état                                                            */
 /* -------------------------------------------------------------------------- */
 
+/*
+ * Bandeau de démonstration : discret à dessein. C'est la première chose vue
+ * quand le site est montré à un prospect — il doit signaler le statut sans
+ * capter l'attention avant la photo.
+ */
 .notice {
   position: fixed;
   inset-block-start: 0;
   inset-inline: 0;
   z-index: 70;
-  background: var(--c-accent);
-  color: var(--c-accent-text);
+  background: color-mix(in srgb, var(--c-surface) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--c-muted);
   text-align: center;
   padding: 0.55rem 1rem;
   font-size: var(--step--1);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--c-border);
 }
 
 .suspended {
@@ -832,4 +904,85 @@ body[data-grain="true"]::after {
   pointer-events: none;
   opacity: 0.035;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* -------------------------------------------------------------------------- */
+/* Verre, profondeur et apparition                                            */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Surfaces translucides. Le principe : au lieu d'un fond opaque qui masque la
+ * photo, la carte laisse passer une version floutée de ce qui se trouve
+ * derrière. La saturation compense le lavage des couleurs propre au flou, et
+ * un liseré clair simule l'épaisseur du matériau.
+ *
+ * Réservé à un petit nombre de surfaces : chaque zone floutée est recomposée
+ * par le processeur graphique à chaque défilement, et en multiplier les
+ * occurrences fait saccader les téléphones d'entrée de gamme.
+ */
+body[data-glass="true"] .review,
+body[data-glass="true"] .cta,
+body[data-glass="true"] .actionbar a {
+  background: color-mix(in srgb, var(--c-surface) 55%, transparent);
+  backdrop-filter: saturate(170%) blur(var(--blur));
+  -webkit-backdrop-filter: saturate(170%) blur(var(--blur));
+  border-color: color-mix(in srgb, var(--c-text) 12%, transparent);
+}
+
+body[data-glass="true"] .actionbar {
+  background: color-mix(in srgb, var(--c-text) 10%, transparent);
+  border-top-color: color-mix(in srgb, var(--c-text) 12%, transparent);
+}
+
+body[data-glass="true"] .actionbar a.is-primary {
+  background: var(--c-accent);
+  color: var(--c-accent-text);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Le bandeau de réservation se détache du fond au lieu de s'y fondre. */
+body[data-glass="true"] .cta {
+  border-radius: var(--radius);
+  border-inline: 1px solid;
+  margin-inline: var(--gutter);
+}
+
+/* Les hairlines translucides remplacent les bordures pleines : sur une
+   interface en verre, une ligne opaque paraît collée. */
+body[data-glass="true"] .service,
+body[data-glass="true"] .hours li,
+body[data-glass="true"] .service-group__title {
+  border-color: color-mix(in srgb, var(--c-text) 14%, transparent);
+}
+
+/*
+ * Apparition au défilement. La classe est posée par le script de `Base.astro`,
+ * jamais présente dans le HTML livré : sans JavaScript, rien n'est masqué.
+ */
+.reveal-target {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.7s cubic-bezier(0.2, 0.6, 0.2, 1),
+    transform 0.7s cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+.reveal-target[data-revealed="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-target {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* À l'impression, rien ne doit rester masqué par un effet décoratif. */
+@media print {
+  .reveal-target {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
