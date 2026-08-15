@@ -50,7 +50,7 @@ export function contactRoutes(app: FastifyInstance): void {
       });
     } catch (error) {
       request.log.error(
-        { err: error, contactMessageId: row.id, tenant: tenant.slug },
+        { err: error, contactMessageId: row?.id, tenant: tenant.slug },
         "message enregistré mais non transmis au commerce",
       );
     }

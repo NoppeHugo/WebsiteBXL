@@ -1,0 +1,13 @@
+---
+import type { Language } from "@bxl/schema";
+import { secondaryLanguages } from "../../lib/client.ts";
+import Cancel from "../../components/Cancel.astro";
+
+export function getStaticPaths() {
+  return secondaryLanguages().map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Language;
+---
+
+<Cancel lang={lang} />

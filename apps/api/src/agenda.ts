@@ -65,10 +65,11 @@ export async function dayAvailability(
   `;
   if (hours.length === 0) return { day, closed: true, slots: [] };
 
-  const [{ count }] = await sql<Array<{ count: string }>>`
+  const [counted] = await sql<Array<{ count: string }>>`
     select count(*) as count from resources
     where tenant_id = ${tenantId} and active
   `;
+  const count = counted?.count ?? "0";
 
   const busy = await sql<Array<{ starts: Date; ends: Date }>>`
     select lower(during) as starts, upper(during) as ends
@@ -96,7 +97,14 @@ export async function dayAvailability(
 }
 
 export type BookOutcome =
-  | { ok: true; id: string; resource: string; serviceName: string; endsAt: Date }
+  | {
+      ok: true;
+      id: string;
+      resource: string;
+      serviceName: string;
+      endsAt: Date;
+      cancelToken: string;
+    }
   | { ok: false; reason: "unknown_service" | "no_resource" | "taken" | "closed" };
 
 /**
@@ -151,7 +159,7 @@ export async function bookAppointment(
 
   for (const resource of resources) {
     try {
-      const [row] = await sql<Array<{ id: string }>>`
+      const [row] = await sql<Array<{ id: string; cancel_token: string }>>`
         insert into appointments (
           tenant_id, resource_id, service_id, service_name, during,
           customer_name, customer_email, customer_phone, note, locale
@@ -161,7 +169,7 @@ export async function bookAppointment(
           ${input.name}, ${input.email}, ${input.phone ?? null},
           ${input.note ?? null}, ${input.locale}
         )
-        returning id
+        returning id, cancel_token
       `;
       return {
         ok: true,
@@ -169,6 +177,7 @@ export async function bookAppointment(
         resource: resource.name,
         serviceName: service.name,
         endsAt,
+        cancelToken: row!.cancel_token,
       };
     } catch (error) {
       // 23P01 : violation de la contrainte d'exclusion — cette personne est
@@ -178,4 +187,64 @@ export async function bookAppointment(
   }
 
   return { ok: false, reason: "taken" };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Annulation                                                                 */
+/* -------------------------------------------------------------------------- */
+
+export interface AppointmentView {
+  id: string;
+  business_name: string;
+  service_name: string;
+  starts_at: string;
+  status: string;
+  customer_name: string;
+  locale: string;
+}
+
+/**
+ * Retrouve un rendez-vous par son jeton d'annulation.
+ *
+ * Le jeton tient lieu d'authentification : le connaître prouve qu'on a reçu le
+ * courriel de confirmation. Il n'expose donc que ce que ce courriel contenait
+ * déjà, et jamais l'adresse ni le téléphone du client.
+ */
+export async function findByCancelToken(
+  sql: Sql,
+  token: string,
+): Promise<AppointmentView | undefined> {
+  const rows = await sql<AppointmentView[]>`
+    select a.id, t.business_name, a.service_name,
+           lower(a.during) as starts_at, a.status, a.customer_name, a.locale
+    from appointments a
+    join tenants t on t.id = a.tenant_id
+    where a.cancel_token = ${token}
+  `;
+  return rows[0];
+}
+
+export type CancelOutcome = "cancelled" | "already" | "too_late" | "unknown";
+
+/**
+ * Annule un rendez-vous.
+ *
+ * Refusé une fois l'heure passée : laisser annuler après coup effacerait
+ * l'absence des statistiques du salon, alors que c'est précisément ce qu'il a
+ * besoin de voir.
+ */
+export async function cancelByToken(
+  sql: Sql,
+  token: string,
+  now = new Date(),
+): Promise<CancelOutcome> {
+  const appointment = await findByCancelToken(sql, token);
+  if (!appointment) return "unknown";
+  if (appointment.status === "cancelled") return "already";
+  if (new Date(appointment.starts_at) <= now) return "too_late";
+
+  await sql`
+    update appointments set status = 'cancelled' where cancel_token = ${token}
+  `;
+  return "cancelled";
 }

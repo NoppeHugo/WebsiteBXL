@@ -1546,6 +1546,22 @@ body[data-glass="true"] .rdv {
   cursor: default;
 }
 
+/*
+ * Annulation : la couleur d'accent du salon vaut approbation, elle ne convient
+ * pas à un geste qui supprime. Le rouge annonce ce que fait le bouton avant
+ * qu'on le presse — et rend au passage le lien « je le garde » plus visible,
+ * ce qui sert le commerce autant que le client.
+ */
+.rdv__confirm--danger {
+  /*
+   * Le rouge est tiré vers la couleur du texte du thème : il s'éclaircit sur
+   * un salon en palette sombre, s'assombrit sur une palette claire, et reste
+   * donc lisible sans avoir à décliner un rouge par thème.
+   */
+  background: color-mix(in srgb, #ff3b30 84%, var(--c-text));
+  color: #fff;
+}
+
 /* ------------------------------------------------------------ confirmation */
 
 .rdv__done {

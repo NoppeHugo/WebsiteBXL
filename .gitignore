@@ -9,3 +9,7 @@ dist/
 apps/template/src/media/
 .preview-*.png
 .admin-*.png
+
+# Captures de contrôle prises pendant le développement, jamais un livrable.
+.rdv*.png
+.cancel-*.png

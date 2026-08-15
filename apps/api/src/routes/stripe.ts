@@ -91,6 +91,20 @@ export function stripeRoutes(app: FastifyInstance): void {
 
         const item = subscription.items.data[0];
 
+        /*
+         * `current_period_end` a déménagé : porté par l'abonnement jusqu'à la
+         * version d'API 2025-03, puis par chaque ligne d'abonnement. Le webhook
+         * arrive dans la version configurée sur le compte Stripe, pas celle du
+         * SDK — lire un seul des deux emplacements donnerait donc une échéance
+         * vide selon le compte, et la page facturation ne saurait plus dire
+         * quand le prélèvement suivant tombe.
+         */
+        const periodEnd =
+          (item as { current_period_end?: number } | undefined)
+            ?.current_period_end ??
+          (subscription as unknown as { current_period_end?: number })
+            .current_period_end;
+
         await upsertSubscription(sql, {
           tenantId: tenant.tenant_id,
           customerId,
@@ -101,9 +115,7 @@ export function stripeRoutes(app: FastifyInstance): void {
               : (subscription.status as SubscriptionStatus),
           amountCents: item?.price.unit_amount ?? null,
           plan: subscription.metadata?.plan ?? null,
-          currentPeriodEnd: item?.current_period_end
-            ? new Date(item.current_period_end * 1000)
-            : null,
+          currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
         });
         return;
       }

@@ -101,6 +101,8 @@ export const Service = z.object({
   category: LocalizedText.optional(),
 });
 
+export type Service = z.infer<typeof Service>;
+
 export const TeamMember = z.object({
   name: z.string().min(1),
   role: LocalizedText.optional(),

@@ -1,0 +1,112 @@
+---
+import type { Language } from "@bxl/schema";
+import { site, path } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+import { apiEndpoint } from "../lib/api.ts";
+import { telHref } from "../lib/booking.ts";
+import Base from "../layouts/Base.astro";
+import Nav from "./Nav.astro";
+import Footer from "./Footer.astro";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const lookupUrl = apiEndpoint("/v1/appointments/lookup");
+const cancelUrl = apiEndpoint("/v1/appointments/cancel");
+
+/**
+ * Page d'annulation, atteinte depuis le lien du courriel de confirmation.
+ *
+ * Elle affiche d'abord le rendez-vous concerné : annuler à l'aveugle est le
+ * meilleur moyen de supprimer le mauvais. Le jeton dans l'adresse tient lieu
+ * d'authentification — le connaître prouve qu'on a reçu ce courriel — et la
+ * page n'expose donc rien de plus que ce courriel contenait déjà.
+ */
+---
+
+<Base lang={lang} noindex>
+  <Nav lang={lang} />
+
+  <main id="content" class="section cancel-page">
+    <div class="wrap">
+      {
+        /*
+         * Sans API déclarée au build, rien ne peut être annulé : mieux vaut
+         * renvoyer vers le téléphone que laisser un bouton qui ne fait rien.
+         * Le cas se produit sur un site vendu sans agenda en ligne, dont la
+         * page reste construite mais n'est jamais liée.
+         */
+        !lookupUrl || !cancelUrl ? (
+          <div class="rdv rdv--cancel">
+            <div class="rdv__done">
+              <h1>{ui(lang, "cancel_title")}</h1>
+              <p class="rdv__done-body">{ui(lang, "cancel_offline")}</p>
+              <p class="rdv__done-when">
+                <a href={telHref()}>{site.business.phone}</a>
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div
+            class="rdv rdv--cancel"
+            data-cancel
+            data-lookup={lookupUrl}
+            data-cancel-url={cancelUrl}
+            data-lang={lang}
+            data-label-unknown={ui(lang, "cancel_unknown")}
+            data-label-already={ui(lang, "cancel_already")}
+            data-label-too-late={ui(lang, "cancel_too_late")}
+            data-label-done={ui(lang, "cancel_done")}
+            data-label-error={ui(lang, "form_error")}
+            data-label-back={ui(lang, "back_home")}
+          >
+            <div class="rdv__done">
+              <h1>{ui(lang, "cancel_title")}</h1>
+              <p class="rdv__done-when" data-cancel-when>
+                {ui(lang, "cancel_loading")}
+              </p>
+              <p class="rdv__done-body" data-cancel-message />
+
+              <button
+                type="button"
+                class="rdv__confirm rdv__confirm--danger"
+                data-cancel-confirm
+                hidden
+              >
+                {ui(lang, "cancel_confirm")}
+              </button>
+
+              <a class="rdv__again" href={path(lang)} data-cancel-keep hidden>
+                {ui(lang, "cancel_keep")}
+              </a>
+
+              <p class="rdv__done-body">
+                <a href={telHref()}>{site.business.phone}</a>
+              </p>
+            </div>
+          </div>
+        )
+      }
+    </div>
+  </main>
+
+  <Footer lang={lang} />
+</Base>
+
+<style>
+  .cancel-page {
+    padding-top: clamp(7rem, 14vh, 10rem);
+  }
+
+  .rdv--cancel {
+    max-width: 30rem;
+  }
+
+  .rdv--cancel h1 {
+    font-size: var(--step-2);
+  }
+</style>
+
+<script src="../scripts/cancel.ts"></script>

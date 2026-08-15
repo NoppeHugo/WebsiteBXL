@@ -119,9 +119,11 @@ for (const slug of slugs) {
           " — enregistrer le commerce avec `pnpm tenant <slug>`",
       );
     }
-    if (site.booking.mode === "live") {
+    // L'agenda temps réel a besoin d'une équipe déclarée : elle sert de liste
+    // des personnes qui reçoivent, donc de nombre de rendez-vous simultanés.
+    if (site.booking.mode === "live" && site.team.length === 0) {
       report.warnings.push(
-        "mode de réservation « live » : l'agenda temps réel n'est pas encore livré (phase 4)",
+        "agenda temps réel sans équipe déclarée : une seule personne sera supposée recevoir",
       );
     }
   } catch (error) {

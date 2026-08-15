@@ -9,6 +9,7 @@ import { contactRoutes } from "./routes/contact.ts";
 import { collectRoutes } from "./routes/collect.ts";
 import { agendaRoutes } from "./routes/agenda.ts";
 import { sendMonthlyReports, shouldRunToday } from "./reports.ts";
+import { sendReminders } from "./reminders.ts";
 import { sendMail } from "./mail.ts";
 import { stripeRoutes } from "./routes/stripe.ts";
 
@@ -70,7 +71,7 @@ await app.register(cors, {
    * valeur de retour. Utiliser en plus le callback ferait résoudre l'origine
    * deux fois, la seconde avec `undefined`, et toute requête échouerait.
    */
-  origin: async (origin) => {
+  origin: async (origin: string | undefined) => {
     // Requête sans en-tête Origin : envoi de formulaire classique, pas une
     // requête inter-origines. Rien à bloquer.
     if (!origin) return true;
@@ -120,6 +121,21 @@ const reportTimer = setInterval(() => {
 }, 6 * 60 * 60 * 1000);
 reportTimer.unref();
 void runReports().catch(() => {});
+
+/*
+ * Rappels de rendez-vous, vérifiés chaque heure. La fenêtre d'envoi couvre
+ * dix-huit heures, donc une interruption du service ne fait rien manquer.
+ */
+const reminderTimer = setInterval(() => {
+  sendReminders(sql, sendMail)
+    .then((result) => {
+      if (result.sent.length || result.failed.length) {
+        app.log.info(result, "rappels de rendez-vous");
+      }
+    })
+    .catch((error) => app.log.error({ err: error }, "rappels impossibles"));
+}, 60 * 60 * 1000);
+reminderTimer.unref();
 
 // Purge quotidienne des données expirées (obligation de conservation limitée).
 const purgeTimer = setInterval(

@@ -25,6 +25,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Relecture des types. Node exécute les .ts en effaçant simplement les
+      # types, sans jamais les vérifier : sans cette étape, une erreur de type
+      # ne se manifeste qu'en production.
+      - run: pnpm typecheck
+
       # Tests des chemins où une erreur coûte de l'argent ou expose des
       # données : contrat de contenu, authentification, défenses de l'API.
       - run: pnpm test

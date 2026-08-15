@@ -75,7 +75,7 @@ export function bookingRoutes(app: FastifyInstance): void {
       });
     } catch (error) {
       request.log.error(
-        { err: error, bookingRequestId: row.id, tenant: tenant.slug },
+        { err: error, bookingRequestId: row?.id, tenant: tenant.slug },
         "demande enregistrée mais non transmise au salon",
       );
     }
@@ -90,7 +90,7 @@ export function bookingRoutes(app: FastifyInstance): void {
       });
     } catch (error) {
       request.log.warn(
-        { err: error, bookingRequestId: row.id },
+        { err: error, bookingRequestId: row?.id },
         "accusé de réception non envoyé au client",
       );
     }

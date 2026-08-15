@@ -340,9 +340,8 @@ verrou, pas par une vérification applicative. À traiter dès la v2, pas après
   Cette partie exige JavaScript — des disponibilités qui changent d'une minute
   à l'autre ne se rendent pas en HTML statique. Le téléphone reste donc affiché
   et `<noscript>` le rappelle.
-- **v3 — rappels et anti no-show.** Rappel SMS 24 h avant, annulation en ligne,
-  historique client. Le SMS a un coût réel (~0,05 €/envoi) : à répercuter ou à
-  plafonner dans le mensuel.
+- **v3 — anti no-show (livrée).** Rappel par courriel entre 18 et 36 h avant le
+  rendez-vous, et annulation en ligne en un clic. Voir §3.8 ter.
 
 **Exigence de fiabilité :** un agenda qui double-book un samedi fait perdre du
 chiffre d'affaires au salon. La barre de qualité est bien plus haute que sur une
@@ -373,6 +372,43 @@ incomplet.
 
 La même page porte la section « données personnelles », rendue nécessaire par
 le formulaire de contact et, plus tard, par la réservation.
+
+### 3.8 ter Absences — rappel par courriel et annulation en un clic
+
+**Décision :** chaque rendez-vous porte un jeton d'annulation, envoyé dans le
+courriel de confirmation puis rappelé la veille. Le client annule seul, sans
+compte ni mot de passe. Pas de SMS.
+
+**Pourquoi :** l'absence est le coût invisible d'un agenda en ligne. Un créneau
+vide ne se revend pas, et c'est le salon qui le paie — donc, à terme, sa
+confiance dans l'outil. Un rappel la veille réduit nettement les oublis, mais
+l'essentiel est ailleurs : **il faut qu'annuler soit plus facile que ne pas
+venir.** Un client qui annule à 18 h la veille rend un créneau vendable ; un
+client qui ne se présente pas ne rend rien.
+
+Les choix qui en découlent :
+
+- **Le jeton tient lieu d'authentification.** Le connaître prouve qu'on a reçu
+  le courriel. La page d'annulation n'expose donc rien de plus que ce courriel
+  contenait déjà : prestation, date, prénom.
+- **La page montre le rendez-vous avant de proposer d'annuler.** Annuler à
+  l'aveugle est le meilleur moyen de supprimer le mauvais.
+- **Fenêtre d'envoi de 18 à 36 h.** Assez large pour qu'une interruption du
+  service ne fasse rien manquer, assez étroite pour ne pas prévenir trois jours
+  à l'avance — un rappel trop tôt est un rappel oublié. `reminder_sent_at`
+  garantit l'unicité de l'envoi, et n'est posé qu'après un envoi réussi : un
+  échec est réessayé à la passe suivante.
+- **Annulation refusée une fois l'heure passée.** Laisser annuler après coup
+  effacerait l'absence des statistiques du salon — précisément ce qu'il a
+  besoin de voir.
+- **Le salon est prévenu de chaque annulation** : c'est un créneau qu'il peut
+  revendre, et il ne le saura pas autrement.
+- **Pas de SMS.** Coût par envoi réel (~0,05 €), donc à répercuter ou à
+  plafonner dans le mensuel, pour un gain marginal sur un public qui lit ses
+  courriels. Écarté volontairement, réévaluable si les absences persistent.
+
+Le créneau libéré redevient réservable immédiatement : la contrainte d'exclusion
+ignore les rendez-vous annulés.
 
 ### 3.9 Édition de contenu par le client — non
 
@@ -543,9 +579,16 @@ serveur par client.
 
 ### 4.4 Intégration continue
 
-Sur push vers `main` : détection des clients modifiés, build de ceux-là
-uniquement (ou de tous si `apps/template` a changé), puis `rsync` vers le VPS
-par clé SSH stockée en secret GitHub.
+Sur push vers `main` : `pnpm typecheck`, `pnpm test` et `pnpm check`, puis
+détection des clients modifiés, build de ceux-là uniquement (ou de tous si
+`apps/template` a changé), enfin `rsync` vers le VPS par clé SSH stockée en
+secret GitHub.
+
+Les trois contrôles passent **avant** le build, et dans cet ordre : une erreur
+de type ne se voit qu'à l'exécution (Node efface les types sans les lire), un
+test rouge signale une régression métier, et `pnpm check` attrape ce qui casse
+un site en particulier. Sur un monorepo où un template fautif casse trente
+sites d'un coup, c'est la contrepartie du §3.1.
 
 ---
 
@@ -761,15 +804,21 @@ pnpm tenant salon-marie --email salon@exemple.be
 PUBLIC_API_URL=https://api.exemple.be pnpm build salon-marie
 ```
 
-### Phase 4 — Réservation v2
+### Phase 4 — Réservation v2 ✅
 
 - Agenda temps réel, disponibilités calculées, confirmation automatique.
-- Gestion de la concurrence en base.
+- Gestion de la concurrence en base (contrainte d'exclusion, §3.8).
 - Interface agenda dans l'interface d'administration.
+- Parcours de réservation par étapes, pensé pour le téléphone.
 
-### Phase 5 — Consolidation
+### Phase 5 — Consolidation *(en cours)*
 
-- Rappels SMS et annulation en ligne.
+- ✅ Anti no-show : rappel par courriel et annulation en ligne (§3.8 ter). Le
+  SMS est écarté volontairement.
+- ✅ Vérification des types du monorepo (`pnpm typecheck`) — Node exécute les
+  `.ts` sans jamais les relire, ce contrôle est donc le seul qui les regarde.
+- Mise en ligne sur le VPS : images Docker, Caddy, sauvegardes, supervision.
+  Rien de tout cela n'a encore tourné sur une vraie machine.
 - Deuxième niche (métiers de bouche) avec ses propres variantes de template.
 - Envisager un CMS git-based si le volume le justifie.
 
@@ -793,11 +842,13 @@ cp .env.example .env      # renseigner DEPLOY_HOST une fois le VPS prêt
 | `pnpm build <slug>` | Construit un site dans `dist/<slug>/`. |
 | `pnpm build:all` | Construit tous les clients (ce que fait l'intégration continue). |
 | `pnpm check` | Valide tous les clients sans construire : format, photos manquantes, traductions absentes. |
+| `pnpm typecheck` | Relit les types du code Node et du template. Node n'effectue aucune vérification à l'exécution : sans cette commande, personne ne les regarde. |
+| `pnpm test` | Suite de tests (vitest). |
 | `pnpm caddy <slug>` | Génère le bloc Caddy du client depuis son domaine et ses alias. |
 | `pnpm placeholders <slug>` | Régénère les visuels de remplacement. |
 | `pnpm tenant <slug> --email …` | Enregistre le commerce auprès de l'API et génère son `tenantId`. |
 | `pnpm api` | Lance l'API de réservation en local. |
-| `pnpm admin` | Lance la interface d'administration en local. |
+| `pnpm admin` | Lance l'interface d'administration en local. |
 | `pnpm admin:create` | Crée le compte d'administration et son secret TOTP. |
 | `./scripts/deploy.sh <slug>` | Déploie sur le VPS (nouvelle release + bascule du lien). |
 

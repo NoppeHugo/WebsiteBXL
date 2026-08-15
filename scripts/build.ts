@@ -42,6 +42,15 @@ if (slugs.length === 0) {
 let built = 0;
 const failures: Array<{ slug: string; error: string }> = [];
 
+/*
+ * `PUBLIC_API_URL` est lue par Astro au moment du build et figée dans le HTML.
+ * Absente, les formulaires et l'agenda ne sont tout simplement pas rendus : le
+ * site paraît normal mais ne peut plus rien recevoir. C'est une panne muette,
+ * et elle mérite donc d'être annoncée avant le build plutôt que découverte par
+ * un client qui s'étonne de ne plus avoir de demandes.
+ */
+const apiUrl = process.env.PUBLIC_API_URL?.trim();
+
 for (const slug of slugs) {
   console.log(`\n${colors.dim}────────────────────────${colors.reset}`);
   info(`build ${colors.cyan}${slug}${colors.reset}`);
@@ -56,6 +65,12 @@ for (const slug of slugs) {
     }
     if (client.site.status === "suspended") {
       warn("statut « suspended » — génère la page « site indisponible »");
+    }
+    if (!apiUrl && client.site.tenantId) {
+      warn(
+        "PUBLIC_API_URL absente : ni formulaire de contact ni réservation dans" +
+          " le site produit — exporter la variable avant de construire",
+      );
     }
 
     // Les photos passent par `src/` pour bénéficier du pipeline d'images

@@ -19,7 +19,7 @@ const slug = args.find((a) => !a.startsWith("--"));
 
 function option(name: string, fallback: string): string {
   const index = args.indexOf(`--${name}`);
-  return index !== -1 && args[index + 1] ? args[index + 1] : fallback;
+  return (index !== -1 ? args[index + 1] : undefined) || fallback;
 }
 
 if (!slug) {
