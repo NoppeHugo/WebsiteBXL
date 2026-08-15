@@ -10,7 +10,7 @@ import {
 } from "../agenda.ts";
 import { cancelUrl } from "../reminders.ts";
 import { sendMail } from "../mail.ts";
-import { ok, rejected, safeRedirect } from "../respond.ts";
+import { ok, rejected, returnTo } from "../respond.ts";
 
 const IsoDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -170,7 +170,7 @@ export function agendaRoutes(app: FastifyInstance): void {
     const tenant = await findTenant(input.tenantId);
     if (!tenant) return rejected(request, reply, 404, "commerce inconnu");
 
-    const redirectTo = safeRedirect(input.redirectTo, tenant.origin);
+    const redirectTo = returnTo(request, input.redirectTo, tenant.origin);
 
     const result = await bookAppointment(sql, {
       tenantId: tenant.id,

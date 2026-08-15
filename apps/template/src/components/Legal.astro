@@ -33,7 +33,7 @@ const host = [STUDIO.hosting.name, STUDIO.hosting.address]
   .join(" — ");
 ---
 
-<Base lang={lang}>
+<Base lang={lang} pageTitle={ui(lang, "legal_title")} segment="legal">
   <Nav lang={lang} />
 
   <main id="content" class="section legal-page">

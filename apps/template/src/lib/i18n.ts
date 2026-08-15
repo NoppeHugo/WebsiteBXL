@@ -101,6 +101,9 @@ const strings = {
     form_error:
       "L'envoi a échoué. Vous pouvez nous joindre par téléphone en attendant.",
     back_home: "Retour à l'accueil",
+    notfound_title: "Page introuvable",
+    notfound_body:
+      "Cette adresse ne correspond à aucune page. Le salon, lui, est toujours là.",
     made_by: "Site & photographies",
   },
   nl: {
@@ -198,6 +201,9 @@ const strings = {
     form_error:
       "Verzenden mislukt. U kunt ons intussen telefonisch bereiken.",
     back_home: "Terug naar de startpagina",
+    notfound_title: "Pagina niet gevonden",
+    notfound_body:
+      "Dit adres hoort bij geen enkele pagina. De zaak is er wel nog altijd.",
     made_by: "Site & fotografie",
   },
   en: {
@@ -294,6 +300,9 @@ const strings = {
     form_ok: "Message sent. We will reply shortly.",
     form_error: "Sending failed. You can reach us by phone in the meantime.",
     back_home: "Back to home",
+    notfound_title: "Page not found",
+    notfound_body:
+      "This address does not match any page. The shop, however, is still here.",
     made_by: "Website & photography",
   },
 } as const satisfies Record<Language, Record<string, string>>;

@@ -31,6 +31,15 @@ export function path(lang: Language, anchor?: string): string {
   return anchor ? `${base}#${anchor}` : base;
 }
 
+/**
+ * Adresse d'une page secondaire — mentions légales, annulation — dans une
+ * langue donnée. Même règle que l'accueil : la langue par défaut vit à la
+ * racine, les autres sous leur préfixe.
+ */
+export function subPath(lang: Language, segment: string): string {
+  return lang === defaultLang ? `/${segment}/` : `/${lang}/${segment}/`;
+}
+
 /** Les langues autres que celle par défaut, pour `getStaticPaths`. */
 export function secondaryLanguages(): Language[] {
   return languages.filter((l) => l !== defaultLang);

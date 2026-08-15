@@ -44,6 +44,26 @@ describe("balise de mesure d'audience", () => {
   });
 });
 
+describe("retour d'envoi sans JavaScript", () => {
+  it("porte les deux ancres attendues par l'API", () => {
+    /*
+     * L'API renvoie vers ces ancres après un envoi classique, et c'est `:target`
+     * qui révèle le bandeau. Les renommer d'un côté sans l'autre ne casse rien
+     * de visible : le visiteur est simplement renvoyé sur une page muette, sans
+     * savoir si son message est parti.
+     */
+    expect(source).toContain('id="envoi-ok"');
+    expect(source).toContain('id="envoi-ko"');
+  });
+
+  it("écrit les deux messages dans le HTML livré", () => {
+    // Pas seulement dans le script : sans JavaScript, seul le HTML parle.
+    const body = source.slice(source.indexOf("<body"));
+    expect(body).toContain('ui(lang, "form_ok")');
+    expect(body).toContain('ui(lang, "form_error")');
+  });
+});
+
 describe("scripts en ligne", () => {
   it("n'utilise aucun accent grave", () => {
     /*

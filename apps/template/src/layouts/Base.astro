@@ -1,7 +1,7 @@
 ---
 import { getImage } from "astro:assets";
 import type { Language } from "@bxl/schema";
-import { site, theme, languages, defaultLang, t, path } from "../lib/client.ts";
+import { site, theme, languages, defaultLang, t, path, subPath } from "../lib/client.ts";
 import { htmlLang, ui } from "../lib/i18n.ts";
 import { localBusinessJsonLd } from "../lib/seo.ts";
 import { media } from "../lib/media.ts";
@@ -12,18 +12,53 @@ interface Props {
   lang: Language;
   /** Une page d'état (suspendu, 404) ne doit jamais être indexée. */
   noindex?: boolean;
+  /**
+   * Identité de la page secondaire.
+   *
+   * Sans elles, mentions légales, annulation et page introuvable héritaient
+   * du titre et de l'adresse canonique de l'accueil : trois onglets
+   * indiscernables pour le visiteur, et une page qui se déclare copie d'une
+   * autre auprès de Google.
+   */
+  pageTitle?: string;
+  pageDescription?: string;
+  /**
+   * Segment de la page, sans barres — « legal », « annulation ». Sert à
+   * l'adresse canonique et aux variantes de langue, qui doivent désigner la
+   * page équivalente et non l'accueil.
+   */
+  segment?: string;
 }
 
-const { lang, noindex = false } = Astro.props;
+const {
+  lang,
+  noindex = false,
+  pageTitle,
+  pageDescription,
+  segment,
+} = Astro.props;
 
-const title =
+const homeTitle =
   t(site.seo.title, lang) ||
   `${site.business.name} — ${t(site.business.tagline, lang) || site.business.address.city}`;
 
-const description =
-  t(site.seo.description, lang) || t(site.business.description, lang);
+const title = pageTitle ? `${pageTitle} — ${site.business.name}` : homeTitle;
 
-const canonical = new URL(path(lang), Astro.site).href;
+const description =
+  pageDescription ||
+  t(site.seo.description, lang) ||
+  t(site.business.description, lang);
+
+/*
+ * Les variantes de langue ne valent qu'entre pages équivalentes : sur les
+ * mentions légales néerlandaises, annoncer l'accueil français comme traduction
+ * est une déclaration que Google vérifie, et invalide en bloc quand elle est
+ * fausse.
+ */
+const pathFor = (l: Language): string =>
+  segment ? subPath(l, segment) : path(l);
+
+const canonical = new URL(pathFor(lang), Astro.site).href;
 
 // Les cartes et les boutons ne suivent pas la même géométrie : « round »
 // signifie carte arrondie et bouton en pilule, comme sur les pages Apple.
@@ -166,8 +201,13 @@ const revealScript = `(function(){
 /**
  * Amélioration des formulaires : envoi en arrière-plan quand `fetch` est
  * disponible, sinon le navigateur poste normalement et l'API renvoie vers la
- * page avec `?sent=1`. Les deux chemins mènent au même message de
- * confirmation — le formulaire fonctionne sans JavaScript.
+ * page avec `?sent=1#envoi-ok`.
+ *
+ * La confirmation du second chemin est affichée par CSS, via `:target` — pas
+ * par ce script, qui ne s'exécute justement pas chez ceux qui l'empruntent.
+ * Ce bloc-ci ne sert qu'au cas résiduel d'un navigateur qui a JavaScript mais
+ * pas `fetch` : il écrit le message dans le formulaire et retire l'ancre, pour
+ * ne pas afficher les deux à la fois.
  *
  * Un seul script pour tous les formulaires de la page : les libellés
  * traduits voyagent dans les attributs `data-label-*` du formulaire.
@@ -188,7 +228,13 @@ const formScript = `(function(){
       box.textContent = sent === "1" ? okLabel : koLabel;
       if (sent === "1") first.reset();
     }
-    history.replaceState(null, "", location.pathname + location.hash);
+    // L'ancre de retour est retirée en même temps que le paramètre : la
+    // laisser afficherait le bandeau sans JavaScript par-dessus le message
+    // que ce script vient d'écrire.
+    var hash = location.hash === "#envoi-ok" || location.hash === "#envoi-ko"
+      ? ""
+      : location.hash;
+    history.replaceState(null, "", location.pathname + hash);
   }
 
   if (!window.fetch) return;
@@ -291,14 +337,14 @@ const formScript = `(function(){
         <link
           rel="alternate"
           hreflang={htmlLang(l)}
-          href={new URL(path(l), Astro.site).href}
+          href={new URL(pathFor(l), Astro.site).href}
         />
       ))
     }
     <link
       rel="alternate"
       hreflang="x-default"
-      href={new URL(path(defaultLang), Astro.site).href}
+      href={new URL(pathFor(defaultLang), Astro.site).href}
     />
 
     <meta property="og:type" content="website" />
@@ -330,6 +376,28 @@ const formScript = `(function(){
   >
     <a class="skip" href="#content">{ui(lang, "skip_to_content")}</a>
     {site.demo && <p class="notice">{ui(lang, "demo_notice")}</p>}
+
+    {
+      /*
+       * Retour d'un envoi de formulaire sans JavaScript.
+       *
+       * L'API renvoie vers `#envoi-ok` ou `#envoi-ko`, et c'est `:target` qui
+       * fait apparaître le bandeau : aucun script n'intervient. C'est la seule
+       * façon de tenir la promesse du formulaire sans JavaScript — la version
+       * précédente écrivait la confirmation en JavaScript, donc ne l'affichait
+       * jamais aux visiteurs qui en sont dépourvus, les seuls à emprunter ce
+       * chemin.
+       *
+       * Ces bandeaux n'occupent aucune place tant qu'ils ne sont pas visés.
+       */
+    }
+    <p id="envoi-ok" class="envoi envoi--ok" role="status">
+      {ui(lang, "form_ok")}
+    </p>
+    <p id="envoi-ko" class="envoi envoi--ko" role="status">
+      {ui(lang, "form_error")}
+    </p>
+
     <slot />
 
     {theme.effects.reveal && <script is:inline set:html={revealScript} />}

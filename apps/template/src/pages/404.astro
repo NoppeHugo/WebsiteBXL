@@ -1,18 +1,32 @@
 ---
 import { defaultLang, site, path } from "../lib/client.ts";
 import { ui } from "../lib/i18n.ts";
+import { telHref } from "../lib/booking.ts";
 import Base from "../layouts/Base.astro";
 
+/**
+ * Page introuvable.
+ *
+ * Servie par Caddy pour toute adresse inconnue, dans la langue par défaut du
+ * client : le serveur ne sait pas laquelle le visiteur voulait, et une page
+ * d'erreur n'a pas d'équivalent traduit à désigner.
+ *
+ * Elle donne deux issues plutôt qu'un simple message : revenir à l'accueil, ou
+ * appeler. Quelqu'un qui atterrit ici cherchait le commerce, pas une page.
+ */
 const lang = defaultLang;
 ---
 
-<Base lang={lang} noindex>
+<Base lang={lang} noindex pageTitle={ui(lang, "notfound_title")}>
   <main class="suspended" id="content">
-    <h1>404</h1>
-    <p>{site.business.name}</p>
-    <p>
+    <h1>{ui(lang, "notfound_title")}</h1>
+    <p>{ui(lang, "notfound_body")}</p>
+    <p class="suspended__actions">
       <a class="btn btn--primary" href={path(lang)}>
-        {ui(lang, "nav_contact")}
+        {ui(lang, "back_home")}
+      </a>
+      <a class="btn btn--ghost" href={telHref()}>
+        {site.business.phone}
       </a>
     </p>
   </main>

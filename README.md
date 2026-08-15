@@ -332,6 +332,17 @@ verrou, pas par une vérification applicative. À traiter dès la v2, pas après
   **fonctionne sans JavaScript** : le navigateur poste normalement et l'API
   renvoie vers la page. Une demande qui se perd parce qu'un script n'a pas
   chargé coûte bien plus cher qu'une page de confirmation moins élégante.
+
+  La confirmation de ce chemin est affichée **par CSS**, via `:target` : l'API
+  renvoie vers `#envoi-ok` ou `#envoi-ko`, et le bandeau correspondant se
+  démasque. Elle était auparavant écrite en JavaScript — donc jamais montrée
+  aux seuls visiteurs qui empruntent ce chemin. La promesse tenait dans le
+  code, pas à l'écran.
+
+  Quand l'adresse de retour annoncée par le formulaire ne correspond pas à
+  l'origine enregistrée du commerce — un `www` de trop suffit — l'API retombe
+  sur cette origine et journalise l'écart, au lieu de laisser le visiteur sur
+  du JSON brut au domaine de l'API.
 - **v2 — agenda temps réel ✅ livrée.** Le client voit les créneaux réellement
   libres et réserve fermement. Aucun prestataire externe : un service comme
   Salonkee coûterait 50-150 €/mois **au salon**, hébergerait son agenda chez un

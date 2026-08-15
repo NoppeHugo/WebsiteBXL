@@ -3,7 +3,7 @@ import { ContactMessageInput } from "@bxl/schema/booking";
 import { sql, findTenant } from "../db.ts";
 import { sendMail } from "../mail.ts";
 import { contactToBusiness } from "../templates.ts";
-import { ok, rejected, safeRedirect } from "../respond.ts";
+import { ok, rejected, returnTo } from "../respond.ts";
 
 export function contactRoutes(app: FastifyInstance): void {
   app.post("/v1/contact", async (request, reply) => {
@@ -22,7 +22,7 @@ export function contactRoutes(app: FastifyInstance): void {
       return rejected(request, reply, 404, "commerce inconnu");
     }
 
-    const redirectTo = safeRedirect(input.redirectTo, tenant.origin);
+    const redirectTo = returnTo(request, input.redirectTo, tenant.origin);
 
     const [row] = await sql<{ id: string }[]>`
       insert into contact_messages (

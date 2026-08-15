@@ -3,7 +3,7 @@ import { BookingRequestInput, isAcceptableDate } from "@bxl/schema/booking";
 import { sql, findTenant } from "../db.ts";
 import { sendMail } from "../mail.ts";
 import { bookingToBusiness, bookingToCustomer } from "../templates.ts";
-import { ok, rejected, safeRedirect } from "../respond.ts";
+import { ok, rejected, returnTo } from "../respond.ts";
 
 export function bookingRoutes(app: FastifyInstance): void {
   app.post("/v1/booking-requests", async (request, reply) => {
@@ -17,10 +17,14 @@ export function bookingRoutes(app: FastifyInstance): void {
 
     const input = parsed.data;
 
-    // Piège à robots : rempli, on répond comme si tout s'était bien passé,
-    // pour ne pas indiquer au robot ce qui l'a trahi.
+    /*
+     * Piège à robots : rempli, on répond comme si tout s'était bien passé,
+     * pour ne pas indiquer au robot ce qui l'a trahi. Réponse identique à
+     * celle d'un envoi réussi depuis un formulaire amélioré par JavaScript,
+     * et sans interroger la base — un robot ne mérite pas une requête.
+     */
     if (input._company) {
-      return ok(request, reply, safeRedirect(input.redirectTo, "https://x.invalid"));
+      return ok(request, reply, undefined);
     }
 
     const tenant = await findTenant(input.tenantId);
@@ -28,7 +32,7 @@ export function bookingRoutes(app: FastifyInstance): void {
       return rejected(request, reply, 404, "commerce inconnu");
     }
 
-    const redirectTo = safeRedirect(input.redirectTo, tenant.origin);
+    const redirectTo = returnTo(request, input.redirectTo, tenant.origin);
 
     if (!isAcceptableDate(input.preferredDate)) {
       return rejected(request, reply, 400, "date hors limites", redirectTo);
