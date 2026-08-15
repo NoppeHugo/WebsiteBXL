@@ -247,10 +247,22 @@ mot de passe haché (argon2), 2FA TOTP, sessions à expiration, limitation du
 nombre de tentatives. Cette console peut modifier et mettre hors ligne
 l'intégralité des sites clients : c'est l'actif le plus sensible du projet.
 
-**Séquencement :** conçue dès maintenant au niveau du format des données, mais
-**construite en phase 2**, après les premiers clients payants. À 3 sites,
-éditer un JSON reste plus rapide que n'importe quelle interface. La console se
-justifie quand le temps perdu en édition manuelle devient réel, vers 5-8 clients.
+**Ce que le formulaire structuré modifie, et pourquoi seulement cela :** statut,
+coordonnées, horaires, tarifs et durées — ce qui change souvent et n'est pas
+traduit. Les libellés traduits ne sont éditables que par l'éditeur JSON
+intégré : un champ simplifié qui écraserait les versions néerlandaise et
+anglaise ferait perdre du travail facturé, sans prévenir.
+
+**Rendu en HTML côté serveur, sans framework d'interface.** C'est un outil
+interne pour une seule personne : une application monopage y ajouterait un
+build, des dépendances et une surface de maintenance pour une valeur nulle. Des
+formulaires HTML suffisent, et fonctionnent depuis un téléphone en
+déplacement.
+
+**Séquencement :** livrée, mais elle ne remplace pas le terrain. À 3 sites,
+éditer un JSON reste plus rapide que n'importe quelle interface ; la console
+prend son sens vers 5-8 clients, quand le temps perdu en édition manuelle
+devient réel.
 
 ### 3.8 Réservation en ligne — produit maison, différenciateur du Premium
 
@@ -610,13 +622,32 @@ Reste, sur le terrain :
 - **Aucune fonctionnalité nouvelle** tant que la vente n'est pas validée sur le
   terrain.
 
-### Phase 2 — Passage à l'échelle du contenu
+### Phase 2 — Passage à l'échelle du contenu *(partiellement livrée)*
 
-- Console admin : liste des clients, édition par formulaires, upload photos,
-  prévisualisation, publication.
-- Umami + rapport d'audience mensuel automatisé.
-- Mollie : mandats SEPA et prélèvements automatiques.
-- Drapeau de suspension opérationnel.
+- [x] Console admin (`apps/console`) : liste des clients, édition par
+      formulaires, éditeur JSON, publication en un bouton, suivi des demandes
+      de rendez-vous.
+- [x] Authentification à deux facteurs (mot de passe scrypt + TOTP), sessions
+      signées, protection globale par crochet, journal des publications.
+- [x] Drapeau de suspension opérationnel de bout en bout.
+- [ ] Upload de photos depuis la console — pour l'instant les photos se
+      déposent dans `clients/<slug>/media/` puis se poussent par git.
+- [ ] Umami + rapport d'audience mensuel automatisé.
+- [ ] Mollie : mandats SEPA et prélèvements automatiques.
+
+**Mise en service :**
+
+```bash
+# Sur le VPS, une fois le dépôt cloné dans /srv/repo
+cd infra && docker compose up -d          # db + api + console
+docker compose exec console node --experimental-strip-types \
+  src/cli/create-admin.ts                 # compte + secret TOTP
+scp infra/console.caddy root@vps:/etc/caddy/sites/   # après avoir mis le domaine
+```
+
+Le bloc Caddy de la console contient un filtre par adresse IP, commenté :
+l'activer réduit fortement la surface exposée de l'outil le plus sensible du
+projet.
 
 ### Phase 3 — Réservation v1 ✅ *(débloque la vente du Premium)*
 
@@ -685,6 +716,8 @@ cp .env.example .env      # renseigner DEPLOY_HOST une fois le VPS prêt
 | `pnpm placeholders <slug>` | Régénère les visuels de remplacement. |
 | `pnpm tenant <slug> --email …` | Enregistre le commerce auprès de l'API et génère son `tenantId`. |
 | `pnpm api` | Lance l'API de réservation en local. |
+| `pnpm console` | Lance la console d'administration en local. |
+| `pnpm admin:create` | Crée le compte d'administration et son secret TOTP. |
 | `./scripts/deploy.sh <slug>` | Déploie sur le VPS (nouvelle release + bascule du lien). |
 
 ### Livrer un nouveau client

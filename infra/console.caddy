@@ -1,0 +1,19 @@
+# Bloc Caddy de la console. À déposer dans /etc/caddy/sites/ après avoir
+# remplacé le domaine, puis : sudo systemctl reload caddy
+#
+# La console peut modifier et mettre hors ligne tous les sites clients : elle
+# vit sur un sous-domaine distinct, jamais sur le domaine d'un client.
+
+admin.exemple.be {
+	import commun
+
+	# Filet supplémentaire devant l'authentification de l'application :
+	# restreindre l'accès à quelques adresses IP connues divise par beaucoup
+	# la surface exposée. Retirer ce bloc si l'accès doit être possible
+	# depuis n'importe où.
+	# @autorise remote_ip 203.0.113.4 198.51.100.0/24
+	# handle @autorise {
+	reverse_proxy 127.0.0.1:4000
+	# }
+	# respond 403
+}

@@ -16,7 +16,9 @@
     "deploy": "./scripts/deploy.sh",
     "placeholders": "node --experimental-strip-types scripts/gen-placeholders.ts",
     "tenant": "node --experimental-strip-types apps/api/src/cli/upsert-tenant.ts",
-    "api": "pnpm --filter @bxl/api run dev"
+    "api": "pnpm --filter @bxl/api run dev",
+    "console": "pnpm --filter @bxl/console run dev",
+    "admin:create": "node --experimental-strip-types apps/console/src/cli/create-admin.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

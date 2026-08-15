@@ -48,5 +48,29 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
 
+  console:
+    build:
+      context: ..
+      dockerfile: apps/console/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://bxl:${POSTGRES_PASSWORD}@db:5432/bxl
+      NODE_ENV: production
+      PORT: 4000
+      REPO_PATH: /repo
+      SESSION_SECRET: ${SESSION_SECRET:?secret de session requis}
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-}
+    volumes:
+      # Le clone du dépôt sur le VPS : la console y écrit les site.json,
+      # commite et pousse. Git reste la source de vérité du contenu.
+      - ${REPO_PATH:?chemin du dépôt requis}:/repo
+      # Clé SSH en lecture seule, pour pousser vers GitHub et déployer.
+      - ${SSH_KEY_PATH:?clé SSH requise}:/root/.ssh/id_ed25519:ro
+    ports:
+      - "127.0.0.1:4000:4000"
+
 volumes:
   db-data:
