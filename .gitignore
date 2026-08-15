@@ -7,3 +7,4 @@ dist/
 .env.*
 !.env.example
 apps/template/src/media/
+.preview-*.png
