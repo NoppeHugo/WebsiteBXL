@@ -11,7 +11,7 @@ interface Props {
 }
 const { lang } = Astro.props;
 
-const booking = bookingTarget();
+const booking = bookingTarget(lang);
 const image = media(site.hero.image);
 const variant = theme.layout.hero;
 ---

@@ -115,6 +115,10 @@ const revealScript = `(function(){
     <link rel="canonical" href={canonical} />
     <meta name="theme-color" content={theme.palette.bg} />
 
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content={site.business.name} />
+
     {
       /* Un site de démonstration ou une page d'état ne doit pas polluer
          l'index de Google — ni concurrencer le vrai site d'un client. */

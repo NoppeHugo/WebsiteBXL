@@ -9,13 +9,18 @@ interface Props {
 }
 const { lang } = Astro.props;
 
-const booking = bookingTarget();
+const booking = bookingTarget(lang);
+
+// Les liens sont préfixés par l'URL de la page d'accueil plutôt que d'être de
+// simples ancres : depuis les mentions légales, « #services » ne mènerait nulle
+// part.
+const home = path(lang);
 
 const links = [
-  site.services.length > 0 && { href: "#services", label: ui(lang, "nav_services") },
-  site.gallery.length > 0 && { href: "#galerie", label: ui(lang, "nav_gallery") },
-  site.team.length > 0 && { href: "#equipe", label: ui(lang, "nav_team") },
-  { href: "#infos", label: ui(lang, "nav_hours") },
+  site.services.length > 0 && { href: `${home}#services`, label: ui(lang, "nav_services") },
+  site.gallery.length > 0 && { href: `${home}#galerie`, label: ui(lang, "nav_gallery") },
+  site.team.length > 0 && { href: `${home}#equipe`, label: ui(lang, "nav_team") },
+  { href: `${home}#infos`, label: ui(lang, "nav_hours") },
 ].filter(Boolean) as Array<{ href: string; label: string }>;
 ---
 

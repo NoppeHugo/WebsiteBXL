@@ -223,6 +223,44 @@ export const SiteConfig = z
         description: LocalizedText.optional(),
       })
       .default({}),
+
+    /**
+     * Mentions légales. Obligatoires en Belgique pour tout site commercial
+     * (livre XII du Code de droit économique) : identité de l'entreprise,
+     * numéro d'entreprise, TVA et coordonnées de contact doivent être
+     * accessibles facilement et en permanence.
+     *
+     * Facultatif dans le schéma pour ne pas bloquer un brouillon, mais
+     * `pnpm check` en fait une erreur dès qu'un site passe en statut « live ».
+     */
+    legal: z
+      .object({
+        /** Dénomination sociale, ou nom et prénom pour un indépendant. */
+        companyName: z.string().min(1),
+        /** SRL, SA, ASBL, personne physique… */
+        legalForm: z.string().optional(),
+        /** Numéro d'entreprise BCE, format 0123.456.789. */
+        registrationNumber: z.string().optional(),
+        /** Numéro de TVA, format BE0123.456.789. */
+        vatNumber: z.string().optional(),
+        /** Siège social, s'il diffère de l'adresse du commerce. */
+        registeredAddress: z.string().optional(),
+        /** Éditeur responsable de la publication. */
+        publisher: z.string().optional(),
+      })
+      .optional(),
+
+    contact: z
+      .object({
+        /**
+         * Adresse de réception du formulaire de contact. Sans elle, le
+         * formulaire n'est pas affiché et seuls le téléphone et l'e-mail
+         * restent proposés — mieux vaut aucun formulaire qu'un formulaire
+         * qui perd les messages du client.
+         */
+        formEndpoint: z.string().url().optional(),
+      })
+      .default({}),
   })
   .superRefine((cfg, ctx) => {
     const ids = new Set<string>();

@@ -300,6 +300,24 @@ avec chaque commerçant, un registre des traitements, une durée de conservation
 définie et une procédure d'effacement. Ce n'est pas un détail administratif :
 c'est une obligation légale dès le premier rendez-vous enregistré.
 
+### 3.8 bis Mentions légales — obligatoires, et vérifiées automatiquement
+
+**Décision :** chaque site possède une page de mentions légales, générée dans
+toutes ses langues à partir du bloc `legal` de `site.json`.
+
+**Pourquoi :** le livre XII du Code de droit économique impose à tout site
+commercial belge de rendre accessibles en permanence l'identité de
+l'entreprise, son numéro d'entreprise, sa TVA, ses coordonnées et l'identité de
+son hébergeur. Ce n'est pas une formalité qu'on ajoute après : c'est une
+condition pour facturer un site à un commerçant.
+
+`pnpm check` refuse tout site en statut `live` sans bloc `legal` — la
+vérification est bloquante, pas indicative. Un brouillon, lui, peut rester
+incomplet.
+
+La même page porte la section « données personnelles », rendue nécessaire par
+le formulaire de contact et, plus tard, par la réservation.
+
 ### 3.9 Édition de contenu par le client — non
 
 Le client ne modifie rien lui-même. Les modifications passent par la console
@@ -560,7 +578,20 @@ Reste à faire avant la prospection : remplacer les visuels de remplacement du
 site de démonstration par de vraies photos, et renseigner `STUDIO` dans
 `apps/template/src/lib/studio.ts` pour la signature en pied de page.
 
-### Phase 1 — Clients pilotes *(objectif : valider la vente)*
+### Phase 1 — Livrable et clients pilotes *(objectif : valider la vente)*
+
+Finitions qui rendent un site réellement facturable :
+
+- [x] `robots.txt` et `sitemap.xml` générés par client, avec les correspondances
+      entre langues. Non indexables tant que le site n'est pas `live`.
+- [x] Favicon et icône d'écran d'accueil iOS, générées depuis l'initiale du
+      commerce et sa couleur d'accent.
+- [x] Page de mentions légales dans toutes les langues, avec section données
+      personnelles. Bloquante en contrôle pour un site `live`.
+- [x] Formulaire de contact avec consentement, piège à robots et envoi sans
+      JavaScript en repli. Affiché seulement si un point d'envoi est configuré.
+
+Reste, sur le terrain :
 
 - 2-3 salons pilotes, setup offert contre témoignage.
 - Fiche Google Business optimisée pour chacun.

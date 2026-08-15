@@ -8,7 +8,7 @@ interface Props {
 }
 const { lang } = Astro.props;
 
-const booking = bookingTarget();
+const booking = bookingTarget(lang);
 ---
 
 <nav class="actionbar" aria-label={ui(lang, "book_short")}>

@@ -98,6 +98,24 @@ for (const slug of slugs) {
     if (site.status === "live" && site.demo) {
       report.errors.push("un site marqué « demo » ne doit pas être en statut « live »");
     }
+
+    // Les mentions légales sont une obligation pour tout site commercial belge.
+    // Bloquant à la mise en ligne, tolérable sur un brouillon.
+    if (site.status === "live" && !site.legal) {
+      report.errors.push(
+        "mentions légales absentes — obligatoires pour un site commercial en Belgique",
+      );
+    }
+    if (site.legal && !site.legal.registrationNumber && !site.legal.vatNumber) {
+      report.warnings.push(
+        "ni numéro d'entreprise ni numéro de TVA dans les mentions légales",
+      );
+    }
+    if (!site.contact.formEndpoint) {
+      report.warnings.push(
+        "aucun formulaire de contact : seuls le téléphone et l'e-mail sont proposés",
+      );
+    }
   } catch (error) {
     report.errors.push(error instanceof Error ? error.message : String(error));
   }

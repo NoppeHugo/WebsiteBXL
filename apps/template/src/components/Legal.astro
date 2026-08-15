@@ -1,0 +1,141 @@
+---
+import type { Language } from "@bxl/schema";
+import { site, path } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+import { STUDIO } from "../lib/studio.ts";
+import Base from "../layouts/Base.astro";
+import Nav from "./Nav.astro";
+import Footer from "./Footer.astro";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const { legal, business } = site;
+
+const rows = [
+  legal?.legalForm && [ui(lang, "legal_company"), `${legal.companyName} — ${legal.legalForm}`],
+  !legal?.legalForm && legal && [ui(lang, "legal_company"), legal.companyName],
+  legal?.registrationNumber && [
+    ui(lang, "legal_registration"),
+    legal.registrationNumber,
+  ],
+  legal?.vatNumber && [ui(lang, "legal_vat"), legal.vatNumber],
+].filter(Boolean) as Array<[string, string]>;
+
+const address =
+  legal?.registeredAddress ??
+  `${business.address.street}, ${business.address.postalCode} ${business.address.city}`;
+
+const host = [STUDIO.hosting.name, STUDIO.hosting.address]
+  .filter(Boolean)
+  .join(" — ");
+---
+
+<Base lang={lang}>
+  <Nav lang={lang} />
+
+  <main id="content" class="section legal-page">
+    <div class="wrap">
+      <div class="section__head">
+        <h1 class="section__title">{ui(lang, "legal_title")}</h1>
+      </div>
+
+      <section class="legal-block">
+        <h2>{ui(lang, "legal_publisher")}</h2>
+        <dl class="legal-list">
+          {
+            rows.map(([label, value]) => (
+              <div>
+                <dt>{label}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))
+          }
+          <div>
+            <dt>{ui(lang, "legal_address")}</dt>
+            <dd>{address}</dd>
+          </div>
+          <div>
+            <dt>{ui(lang, "legal_contact")}</dt>
+            <dd>
+              <a href={`tel:${business.phone.replace(/[\s.]/g, "")}`}>
+                {business.phone}
+              </a>
+              {
+                business.email && (
+                  <>
+                    {" — "}
+                    <a href={`mailto:${business.email}`}>{business.email}</a>
+                  </>
+                )
+              }
+            </dd>
+          </div>
+          {
+            legal?.publisher && (
+              <div>
+                <dt>{ui(lang, "legal_editor")}</dt>
+                <dd>{legal.publisher}</dd>
+              </div>
+            )
+          }
+        </dl>
+      </section>
+
+      <section class="legal-block">
+        <h2>{ui(lang, "legal_hosting")}</h2>
+        <p>{host}</p>
+      </section>
+
+      <section class="legal-block">
+        <h2>{ui(lang, "legal_privacy_title")}</h2>
+        <p>{ui(lang, "legal_privacy_body")}</p>
+      </section>
+
+      <p><a href={path(lang)}>{ui(lang, "back_home")}</a></p>
+    </div>
+  </main>
+
+  <Footer lang={lang} />
+</Base>
+
+<style>
+  .legal-page {
+    /* La navigation est fixe : sans cette réserve, le titre passe dessous. */
+    padding-top: clamp(7rem, 14vh, 10rem);
+  }
+
+  .legal-block {
+    margin-bottom: clamp(2rem, 5vw, 3rem);
+    max-width: var(--measure);
+  }
+
+  .legal-block h2 {
+    font-size: var(--step-1);
+    margin-bottom: 1rem;
+  }
+
+  .legal-list {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .legal-list div {
+    display: grid;
+    grid-template-columns: minmax(9rem, auto) 1fr;
+    gap: 0.5rem 1.5rem;
+  }
+
+  .legal-list dt {
+    color: var(--c-muted);
+  }
+
+  @media (max-width: 560px) {
+    .legal-list div {
+      grid-template-columns: 1fr;
+      gap: 0.15rem;
+    }
+  }
+</style>

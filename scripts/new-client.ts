@@ -83,6 +83,13 @@ const site = {
   reviews: [],
   booking: { mode: "none" },
   seo: {},
+  legal: {
+    companyName: name,
+    legalForm: "À compléter",
+    registrationNumber: "",
+    vatNumber: "",
+  },
+  contact: {},
 };
 
 // Style maison : typographie système Apple, surfaces en verre, pilules.

@@ -4,6 +4,7 @@ import { WEEKDAYS } from "@bxl/schema";
 import { site, t } from "../lib/client.ts";
 import { ui, weekday } from "../lib/i18n.ts";
 import { telHref, directionsHref } from "../lib/booking.ts";
+import ContactForm from "./ContactForm.astro";
 
 interface Props {
   lang: Language;
@@ -75,6 +76,8 @@ const { address } = site.business;
       >
         {ui(lang, "itinerary")}
       </a>
+
+      <ContactForm lang={lang} />
     </div>
   </div>
 </section>

@@ -1,0 +1,194 @@
+---
+import type { Language } from "@bxl/schema";
+import { site, path } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const endpoint = site.contact.formEndpoint;
+---
+
+{
+  endpoint && (
+    <div class="contact-form">
+      <h3>{ui(lang, "form_title")}</h3>
+
+      {/*
+        Envoi classique sans JavaScript, amélioré par `fetch` quand il est
+        disponible : un message de client qui se perd parce qu'un script n'a
+        pas chargé coûte bien plus cher qu'une page de confirmation moins
+        élégante.
+      */}
+      <form method="post" action={endpoint} data-contact-form>
+        <label>
+          <span>{ui(lang, "form_name")}</span>
+          <input type="text" name="name" required autocomplete="name" />
+        </label>
+
+        <label>
+          <span>{ui(lang, "form_email")}</span>
+          <input type="email" name="email" required autocomplete="email" />
+        </label>
+
+        <label>
+          <span>{ui(lang, "form_message")}</span>
+          <textarea name="message" rows="4" required />
+        </label>
+
+        {/* Piège à robots : un humain ne remplit pas un champ masqué. */}
+        <input
+          type="text"
+          name="_company"
+          tabindex="-1"
+          autocomplete="off"
+          aria-hidden="true"
+        />
+
+        <label class="contact-form__consent">
+          <input type="checkbox" name="consent" required />
+          <span>
+            {ui(lang, "form_consent")}{" "}
+            <a href={`${path(lang)}legal/`}>{ui(lang, "legal")}</a>
+          </span>
+        </label>
+
+        <button type="submit" class="btn btn--primary">
+          {ui(lang, "form_send")}
+        </button>
+
+        <p class="contact-form__status" role="status" aria-live="polite" />
+      </form>
+
+      <script
+        is:inline
+        set:html={`(function(){
+  var form = document.querySelector("[data-contact-form]");
+  if (!form || !window.fetch) return;
+  var status = form.querySelector(".contact-form__status");
+  var button = form.querySelector("button[type=submit]");
+  var labels = ${JSON.stringify({
+    sending: ui(lang, "form_sending"),
+    ok: ui(lang, "form_ok"),
+    error: ui(lang, "form_error"),
+    send: ui(lang, "form_send"),
+  })};
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    if (form.querySelector("[name=_company]").value) return;
+
+    button.disabled = true;
+    button.textContent = labels.sending;
+    status.textContent = "";
+
+    fetch(form.action, {
+      method: "POST",
+      body: new FormData(form),
+      headers: { Accept: "application/json" },
+    })
+      .then(function (response) {
+        if (!response.ok) throw new Error(String(response.status));
+        form.reset();
+        status.dataset.state = "ok";
+        status.textContent = labels.ok;
+      })
+      .catch(function () {
+        status.dataset.state = "error";
+        status.textContent = labels.error;
+      })
+      .finally(function () {
+        button.disabled = false;
+        button.textContent = labels.send;
+      });
+  });
+})();`}
+      />
+    </div>
+  )
+}
+
+<style>
+  .contact-form {
+    margin-top: clamp(2rem, 5vw, 3rem);
+  }
+
+  .contact-form h3 {
+    font-size: var(--step-1);
+    margin-bottom: 1.25rem;
+  }
+
+  .contact-form form {
+    display: grid;
+    gap: 1rem;
+    max-width: 34rem;
+  }
+
+  .contact-form label {
+    display: grid;
+    gap: 0.4rem;
+    font-size: var(--step--1);
+    color: var(--c-muted);
+  }
+
+  .contact-form input[type="text"],
+  .contact-form input[type="email"],
+  .contact-form textarea {
+    font: inherit;
+    font-size: var(--step-0);
+    color: var(--c-text);
+    background: color-mix(in srgb, var(--c-surface) 70%, transparent);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    padding: 0.7em 0.9em;
+    width: 100%;
+  }
+
+  .contact-form textarea {
+    resize: vertical;
+  }
+
+  .contact-form input:focus-visible,
+  .contact-form textarea:focus-visible {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 2px;
+  }
+
+  /* Le piège à robots reste dans le flux du document mais hors de l'écran :
+     `display: none` est détecté par les robots les plus courants. */
+  .contact-form input[name="_company"] {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  .contact-form__consent {
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: 0.6rem;
+  }
+
+  .contact-form__consent input {
+    margin-top: 0.25em;
+  }
+
+  .contact-form button {
+    justify-self: start;
+  }
+
+  .contact-form__status:empty {
+    display: none;
+  }
+
+  .contact-form__status[data-state="ok"] {
+    color: var(--c-text);
+  }
+
+  .contact-form__status[data-state="error"] {
+    color: var(--c-muted);
+  }
+</style>

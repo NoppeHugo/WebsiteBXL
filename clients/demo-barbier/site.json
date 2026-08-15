@@ -7,7 +7,11 @@
   "aliases": [],
   "languages": {
     "default": "fr",
-    "available": ["fr", "nl", "en"]
+    "available": [
+      "fr",
+      "nl",
+      "en"
+    ]
   },
   "business": {
     "name": "Maison Verhaeren",
@@ -28,7 +32,10 @@
       "city": "Bruxelles",
       "country": "BE"
     },
-    "geo": { "lat": 50.8503, "lng": 4.3452 },
+    "geo": {
+      "lat": 50.8503,
+      "lng": 4.3452
+    },
     "phone": "+32 2 511 00 00",
     "email": "bonjour@maison-verhaeren.demo",
     "social": {
@@ -50,11 +57,36 @@
   },
   "hours": {
     "monday": [],
-    "tuesday": [{ "open": "09:30", "close": "18:30" }],
-    "wednesday": [{ "open": "09:30", "close": "18:30" }],
-    "thursday": [{ "open": "09:30", "close": "20:00" }],
-    "friday": [{ "open": "09:30", "close": "20:00" }],
-    "saturday": [{ "open": "09:00", "close": "18:00" }],
+    "tuesday": [
+      {
+        "open": "09:30",
+        "close": "18:30"
+      }
+    ],
+    "wednesday": [
+      {
+        "open": "09:30",
+        "close": "18:30"
+      }
+    ],
+    "thursday": [
+      {
+        "open": "09:30",
+        "close": "20:00"
+      }
+    ],
+    "friday": [
+      {
+        "open": "09:30",
+        "close": "20:00"
+      }
+    ],
+    "saturday": [
+      {
+        "open": "09:00",
+        "close": "18:00"
+      }
+    ],
     "sunday": []
   },
   "hoursNote": {
@@ -66,13 +98,21 @@
     {
       "from": "2026-12-24",
       "to": "2027-01-02",
-      "reason": { "fr": "Congés de fin d'année", "nl": "Eindejaarsverlof", "en": "Year-end holidays" }
+      "reason": {
+        "fr": "Congés de fin d'année",
+        "nl": "Eindejaarsverlof",
+        "en": "Year-end holidays"
+      }
     }
   ],
   "services": [
     {
       "id": "coupe-homme",
-      "name": { "fr": "Coupe homme", "nl": "Herenknipbeurt", "en": "Men's cut" },
+      "name": {
+        "fr": "Coupe homme",
+        "nl": "Herenknipbeurt",
+        "en": "Men's cut"
+      },
       "description": {
         "fr": "Consultation, shampoing, coupe aux ciseaux et coiffage.",
         "nl": "Advies, shampoo, knippen met de schaar en styling.",
@@ -81,27 +121,51 @@
       "durationMin": 45,
       "price": 38,
       "priceFrom": false,
-      "category": { "fr": "Cheveux", "nl": "Haar", "en": "Hair" }
+      "category": {
+        "fr": "Cheveux",
+        "nl": "Haar",
+        "en": "Hair"
+      }
     },
     {
       "id": "coupe-degrade",
-      "name": { "fr": "Dégradé américain", "nl": "Fade", "en": "Skin fade" },
+      "name": {
+        "fr": "Dégradé américain",
+        "nl": "Fade",
+        "en": "Skin fade"
+      },
       "durationMin": 45,
       "price": 40,
       "priceFrom": false,
-      "category": { "fr": "Cheveux", "nl": "Haar", "en": "Hair" }
+      "category": {
+        "fr": "Cheveux",
+        "nl": "Haar",
+        "en": "Hair"
+      }
     },
     {
       "id": "coupe-enfant",
-      "name": { "fr": "Coupe enfant (–12 ans)", "nl": "Kinderknipbeurt (–12)", "en": "Children's cut (under 12)" },
+      "name": {
+        "fr": "Coupe enfant (–12 ans)",
+        "nl": "Kinderknipbeurt (–12)",
+        "en": "Children's cut (under 12)"
+      },
       "durationMin": 30,
       "price": 25,
       "priceFrom": false,
-      "category": { "fr": "Cheveux", "nl": "Haar", "en": "Hair" }
+      "category": {
+        "fr": "Cheveux",
+        "nl": "Haar",
+        "en": "Hair"
+      }
     },
     {
       "id": "taille-barbe",
-      "name": { "fr": "Taille de barbe", "nl": "Baard bijwerken", "en": "Beard trim" },
+      "name": {
+        "fr": "Taille de barbe",
+        "nl": "Baard bijwerken",
+        "en": "Beard trim"
+      },
       "description": {
         "fr": "Mise en forme à la tondeuse et au rasoir, huile de finition.",
         "nl": "Vormgeven met tondeuse en scheermes, afwerking met olie.",
@@ -110,11 +174,19 @@
       "durationMin": 30,
       "price": 25,
       "priceFrom": false,
-      "category": { "fr": "Barbe", "nl": "Baard", "en": "Beard" }
+      "category": {
+        "fr": "Barbe",
+        "nl": "Baard",
+        "en": "Beard"
+      }
     },
     {
       "id": "rasage-traditionnel",
-      "name": { "fr": "Rasage traditionnel", "nl": "Traditioneel scheren", "en": "Traditional shave" },
+      "name": {
+        "fr": "Rasage traditionnel",
+        "nl": "Traditioneel scheren",
+        "en": "Traditional shave"
+      },
       "description": {
         "fr": "Serviette chaude, blaireau, rasoir droit et soin apaisant.",
         "nl": "Warme handdoek, scheerkwast, rechte scheermes en kalmerende verzorging.",
@@ -123,19 +195,35 @@
       "durationMin": 45,
       "price": 42,
       "priceFrom": false,
-      "category": { "fr": "Barbe", "nl": "Baard", "en": "Beard" }
+      "category": {
+        "fr": "Barbe",
+        "nl": "Baard",
+        "en": "Beard"
+      }
     },
     {
       "id": "coupe-barbe",
-      "name": { "fr": "Coupe + barbe", "nl": "Knippen + baard", "en": "Cut + beard" },
+      "name": {
+        "fr": "Coupe + barbe",
+        "nl": "Knippen + baard",
+        "en": "Cut + beard"
+      },
       "durationMin": 75,
       "price": 58,
       "priceFrom": false,
-      "category": { "fr": "Formules", "nl": "Formules", "en": "Packages" }
+      "category": {
+        "fr": "Formules",
+        "nl": "Formules",
+        "en": "Packages"
+      }
     },
     {
       "id": "rituel-complet",
-      "name": { "fr": "Rituel complet", "nl": "Volledig ritueel", "en": "Full ritual" },
+      "name": {
+        "fr": "Rituel complet",
+        "nl": "Volledig ritueel",
+        "en": "Full ritual"
+      },
       "description": {
         "fr": "Coupe, rasage traditionnel, soin du visage et verre à la fin.",
         "nl": "Knippen, traditioneel scheren, gezichtsverzorging en een drankje na afloop.",
@@ -144,31 +232,55 @@
       "durationMin": 105,
       "price": 89,
       "priceFrom": false,
-      "category": { "fr": "Formules", "nl": "Formules", "en": "Packages" }
+      "category": {
+        "fr": "Formules",
+        "nl": "Formules",
+        "en": "Packages"
+      }
     },
     {
       "id": "coloration",
-      "name": { "fr": "Camouflage cheveux blancs", "nl": "Grijs camoufleren", "en": "Grey blending" },
+      "name": {
+        "fr": "Camouflage cheveux blancs",
+        "nl": "Grijs camoufleren",
+        "en": "Grey blending"
+      },
       "durationMin": 40,
       "price": 30,
       "priceFrom": true,
-      "category": { "fr": "Formules", "nl": "Formules", "en": "Packages" }
+      "category": {
+        "fr": "Formules",
+        "nl": "Formules",
+        "en": "Packages"
+      }
     }
   ],
   "team": [
     {
       "name": "Lucas",
-      "role": { "fr": "Maître barbier", "nl": "Meesterbarbier", "en": "Master barber" },
+      "role": {
+        "fr": "Maître barbier",
+        "nl": "Meesterbarbier",
+        "en": "Master barber"
+      },
       "photo": "equipe-1.jpg"
     },
     {
       "name": "Sofia",
-      "role": { "fr": "Barbière", "nl": "Barbier", "en": "Barber" },
+      "role": {
+        "fr": "Barbière",
+        "nl": "Barbier",
+        "en": "Barber"
+      },
       "photo": "equipe-2.jpg"
     },
     {
       "name": "Ahmed",
-      "role": { "fr": "Barbier", "nl": "Barbier", "en": "Barber" },
+      "role": {
+        "fr": "Barbier",
+        "nl": "Barbier",
+        "en": "Barber"
+      },
       "photo": "equipe-3.jpg"
     }
   ],
@@ -269,5 +381,15 @@
       "nl": "Traditionele barbier in de Dansaertstraat in Brussel: knippen, baard en scheren met warme handdoek. Online afspraak.",
       "en": "Traditional barbershop on Dansaert street in Brussels: scissor cuts, beard trims and hot-towel shaves. Book online."
     }
+  },
+  "legal": {
+    "companyName": "Maison Verhaeren",
+    "legalForm": "SRL (exemple)",
+    "registrationNumber": "0123.456.789",
+    "vatNumber": "BE0123.456.789",
+    "publisher": "Lucas Verhaeren"
+  },
+  "contact": {
+    "formEndpoint": "https://example.com/contact"
   }
 }

@@ -9,7 +9,7 @@ interface Props {
 }
 const { lang } = Astro.props;
 
-const booking = bookingTarget();
+const booking = bookingTarget(lang);
 
 // Tant que le widget maison n'est pas branché, le téléphone reste l'action
 // principale : un bandeau de réservation sans bouton actif ne convertit rien.

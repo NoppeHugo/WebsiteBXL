@@ -1,4 +1,5 @@
-import { site } from "./client.ts";
+import type { Language } from "@bxl/schema";
+import { site, path } from "./client.ts";
 
 export interface BookingTarget {
   /** Faut-il afficher un bouton de réservation ? */
@@ -17,7 +18,7 @@ export interface BookingTarget {
  * modes `request` et `live` réservent leur emplacement dans la page : le
  * template est prêt, seul le widget reste à brancher.
  */
-export function bookingTarget(): BookingTarget {
+export function bookingTarget(lang: Language): BookingTarget {
   switch (site.booking.mode) {
     case "external":
       return {
@@ -30,7 +31,7 @@ export function bookingTarget(): BookingTarget {
     case "live":
       return {
         enabled: true,
-        href: "#reservation",
+        href: `${path(lang)}#reservation`,
         external: false,
         widget: true,
       };

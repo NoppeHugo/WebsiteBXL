@@ -1,6 +1,6 @@
 ---
 import type { Language } from "@bxl/schema";
-import { site } from "../lib/client.ts";
+import { site, path } from "../lib/client.ts";
 import { ui } from "../lib/i18n.ts";
 import { STUDIO } from "../lib/studio.ts";
 
@@ -17,7 +17,10 @@ const year = new Date().getFullYear();
 
 <footer class="footer">
   <div class="wrap footer__inner">
-    <p>© {year} {site.business.name}</p>
+    <p>
+      © {year} {site.business.name} ·{" "}
+      <a href={`${path(lang)}legal/`}>{ui(lang, "legal")}</a>
+    </p>
 
     {
       socials.length > 0 && (
