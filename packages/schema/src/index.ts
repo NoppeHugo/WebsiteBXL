@@ -391,6 +391,14 @@ export const ThemeConfig = z.object({
       blur: z.number().int().min(0).max(60).default(20),
       /** Apparition en fondu des sections au défilement. */
       reveal: z.boolean().default(false),
+      /**
+       * La photo du hero avance moins vite que la page.
+       *
+       * C'est ce qui donne la sensation que le contenu remonte vers le
+       * visiteur au lieu que le visiteur descende dans la page. Purement
+       * décoratif, et annulé si le système demande moins de mouvement.
+       */
+      parallax: z.boolean().default(false),
     })
     .default({}),
 });

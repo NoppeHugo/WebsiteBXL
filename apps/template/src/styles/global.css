@@ -1245,18 +1245,95 @@ body[data-glass="true"] .service-group__title {
   transform: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .reveal-target {
+/* -------------------------------------------------------------------------- */
+/* Apparition liée au défilement                                              */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Variante pilotée par la position, et non par un déclenchement.
+ *
+ * `.reveal-target` s'anime une fois, à l'entrée dans l'écran : le mouvement
+ * suit son propre rythme, indépendant de la molette. Ici, l'avancement de
+ * l'animation *est* la position de l'élément dans la fenêtre. Le contenu monte
+ * exactement au rythme du doigt ou de la molette, s'arrête quand on s'arrête,
+ * redescend quand on remonte — c'est cela qui donne la sensation que le
+ * contenu vient au visiteur plutôt que l'inverse.
+ *
+ * Rien en JavaScript : le navigateur lie l'animation au défilement lui-même.
+ * Le script se contente de poser la classe, et ne le fait que sur les
+ * navigateurs qui savent la traiter — les autres gardent l'apparition
+ * classique ci-dessus.
+ */
+.reveal-scroll {
+  animation: rise linear both;
+  animation-timeline: view();
+  /*
+   * Commence quand l'élément a franchi un cinquième de son entrée, finit
+   * quand il occupe le tiers bas de la fenêtre : le mouvement est terminé
+   * bien avant qu'on ait le temps de lire, sans quoi il gênerait la lecture
+   * au lieu de l'accompagner.
+   */
+  animation-range: entry 20% cover 32%;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(38px);
+  }
+  to {
     opacity: 1;
     transform: none;
   }
 }
 
+/*
+ * La photo du hero avance moins vite que la page : le contenu glisse
+ * par-dessus au lieu de partir avec elle. C'est la même idée à plus grande
+ * échelle, et c'est là qu'elle se ressent le plus, puisque c'est la première
+ * chose que voit le visiteur.
+ *
+ * L'image est plus haute que son cadre : sans cette réserve, la faire monter
+ * découvrirait le fond sous son bord inférieur.
+ */
+body[data-parallax="true"] .hero__media {
+  overflow: hidden;
+}
+
+body[data-parallax="true"] .hero__media img {
+  height: 118%;
+  animation: parallax linear both;
+  animation-timeline: scroll(root);
+  animation-range: 0 100svh;
+}
+
+@keyframes parallax {
+  to {
+    transform: translateY(-14%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-target,
+  .reveal-scroll {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
+  body[data-parallax="true"] .hero__media img {
+    height: 100%;
+    animation: none;
+  }
+}
+
 /* À l'impression, rien ne doit rester masqué par un effet décoratif. */
 @media print {
-  .reveal-target {
+  .reveal-target,
+  .reveal-scroll {
     opacity: 1 !important;
     transform: none !important;
+    animation: none !important;
   }
 }
 

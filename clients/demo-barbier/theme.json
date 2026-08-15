@@ -28,6 +28,7 @@
   "effects": {
     "glass": true,
     "blur": 22,
-    "reveal": true
+    "reveal": true,
+    "parallax": true
   }
 }

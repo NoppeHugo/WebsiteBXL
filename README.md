@@ -153,13 +153,14 @@ face ».
 | `fonts.uiTransform` / `.uiTracking` | — | Casse et interlettrage des boutons et de la navigation. |
 | `layout.hero` | `fullbleed` \| `split` \| `minimal` | Structure du hero. |
 | `layout.heroAlign` | `start` \| `center` | Texte du hero ancré à gauche, ou centré. |
-| `layout.gallery` | `grid` \| `mosaic` \| `strip` \| `marquee` | Disposition des photos. `marquee` fait défiler la galerie en continu (voir §3.3 quater). |
+| `layout.gallery` | `grid` \| `mosaic` \| `strip` \| `marquee` | Disposition des photos. `marquee` fait défiler la galerie en continu (voir §3.3 quinquies). |
 | `layout.nav` | `overlay` \| `solid` | Navigation par-dessus la photo, ou opaque. |
 | `radius` | `none` \| `soft` \| `round` | `round` donne cartes arrondies et boutons en pilule. |
 | `grain` | booléen | Grain photographique léger. |
 | `effects.glass` | booléen | Surfaces translucides floutées. |
 | `effects.blur` | 0–60 | Intensité du flou, en pixels. |
-| `effects.reveal` | booléen | Apparition en fondu au défilement. |
+| `effects.reveal` | booléen | Les sections montent en fondu, au rythme du défilement (§3.3 quater). |
+| `effects.parallax` | booléen | La photo du hero avance moins vite que la page (§3.3 quater). |
 
 **Style maison** (défaut de `pnpm new`) : typographie système Apple, fond noir,
 accent bleu, boutons en pilule, verre et apparition au défilement. C'est la
@@ -203,7 +204,42 @@ Trois garde-fous en découlent, tous en place : la classe qui masque est posée
 par le script (sans JavaScript, rien n'est caché), l'effet est désactivé à
 l'arrivée sur une ancre, et l'impression force l'affichage complet.
 
-### 3.3 quater Le ruban défilant
+### 3.3 quater Le contenu qui monte vers le visiteur
+
+**Décision :** l'apparition des sections et le recul de la photo du hero sont
+**liés à la position de défilement**, pas déclenchés par elle. Deux réglages :
+`effects.reveal` pour les sections, `effects.parallax` pour la photo.
+
+**Pourquoi c'est différent d'une simple animation :** une apparition
+déclenchée part à son propre rythme dès que l'élément entre à l'écran — elle se
+joue *pendant* qu'on défile, sans rapport avec le geste. Ici, l'avancement de
+l'animation **est** la position de l'élément dans la fenêtre. Le contenu monte
+au rythme exact du doigt, s'arrête quand on s'arrête, redescend quand on
+remonte. C'est ce qui donne la sensation que le contenu vient au visiteur au
+lieu que le visiteur descende dans la page. Et la photo du hero, qui avance
+moins vite que le reste, produit le même effet à plus grande échelle — là où
+il compte le plus, puisque c'est la première chose que l'on voit.
+
+**Comment, et ce que cela évite :**
+
+- **Aucun JavaScript ne calcule quoi que ce soit.** Le navigateur lie
+  l'animation au défilement (`animation-timeline`) et la compose sur le
+  processeur graphique. Le script se contente de poser une classe.
+- **Le défilement natif n'est jamais détourné.** L'autre façon d'obtenir cette
+  sensation est d'intercepter la molette pour déplacer la page soi-même, avec
+  inertie. C'est ce que font les bibliothèques du genre, et cela coûte cher :
+  élan tactile cassé sur téléphone, défilement au clavier faussé, barre de
+  défilement qui ment, et quelques dizaines de kilo-octets à charger. Pour un
+  commerce dont l'essentiel du trafic est mobile, le prix est absurde.
+- **Repli propre.** Les navigateurs sans cette liaison — Firefox à ce jour —
+  gardent l'apparition classique déclenchée à l'entrée à l'écran. Même effet,
+  moins lié au geste.
+- **Rien ne peut rester masqué.** Sur une page trop courte pour défiler, la
+  liaison est inactive et le contenu s'affiche normalement : vérifié sur les
+  mentions légales et l'annulation, sur un écran de 2 000 px de haut.
+- **Mouvement réduit demandé : tout s'arrête**, apparition comme parallaxe.
+
+### 3.3 quinquies Le ruban défilant
 
 **Décision :** `layout.gallery: "marquee"` fait défiler la galerie en continu,
 sans fin ni bouton.

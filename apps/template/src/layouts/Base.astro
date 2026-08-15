@@ -168,12 +168,12 @@ const collectScript = `(function(){
  */
 const revealScript = `(function(){
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  if (!("IntersectionObserver" in window)) return;
   var targets = document.querySelectorAll(".section__head, .service, .gallery figure, .team li, .review, .cta__title, .cta__actions, .hours, .contact__list");
   if (!targets.length) return;
 
   function revealAll() {
     for (var i = 0; i < targets.length; i++) {
+      targets[i].classList.remove("reveal-scroll");
       targets[i].setAttribute("data-revealed", "true");
     }
   }
@@ -181,6 +181,28 @@ const revealScript = `(function(){
   // Arrivée directe sur une ancre : la page ne défile pas depuis le haut, donc
   // on affiche tout plutôt que de risquer une section restée invisible.
   if (location.hash) return;
+
+  /*
+   * Deux variantes, selon ce que sait faire le navigateur.
+   *
+   * La première lie l'avancement de l'animation à la position de l'élément
+   * dans la fenêtre : le contenu monte au rythme exact du défilement. Rien
+   * n'est observé, rien n'est calculé en JavaScript — le navigateur s'en
+   * charge, sur le processeur graphique.
+   *
+   * La seconde, pour les navigateurs sans cette liaison, garde l'apparition
+   * déclenchée à l'entrée dans l'écran. Moins liée au geste, mais correcte.
+   */
+  var lie = window.CSS && CSS.supports && CSS.supports("animation-timeline", "view()");
+
+  if (lie) {
+    for (var n = 0; n < targets.length; n++) targets[n].classList.add("reveal-scroll");
+    window.addEventListener("beforeprint", revealAll);
+    window.addEventListener("hashchange", revealAll);
+    return;
+  }
+
+  if (!("IntersectionObserver" in window)) return;
 
   for (var i = 0; i < targets.length; i++) targets[i].classList.add("reveal-target");
 
@@ -373,6 +395,7 @@ const formScript = `(function(){
     data-notice={String(site.demo)}
     data-glass={String(theme.effects.glass)}
     data-reveal={String(theme.effects.reveal)}
+    data-parallax={String(theme.effects.parallax)}
   >
     <a class="skip" href="#content">{ui(lang, "skip_to_content")}</a>
     {site.demo && <p class="notice">{ui(lang, "demo_notice")}</p>}

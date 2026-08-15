@@ -64,6 +64,34 @@ describe("retour d'envoi sans JavaScript", () => {
   });
 });
 
+describe("apparition au défilement", () => {
+  it("ne masque rien tant que le script n'a pas tourné", () => {
+    /*
+     * Les deux classes qui masquent sont posées par le script, jamais écrites
+     * dans le HTML. C'est ce qui garantit qu'un script bloqué ou en échec
+     * laisse un site lisible plutôt qu'une page vide.
+     */
+    const body = source.slice(source.indexOf("<body"));
+    expect(body).not.toContain("reveal-target");
+    expect(body).not.toContain("reveal-scroll");
+  });
+
+  it("choisit la variante liée au défilement quand le navigateur sait la traiter", () => {
+    const script = source.slice(source.indexOf("const revealScript"));
+    expect(script).toContain('CSS.supports("animation-timeline", "view()")');
+    expect(script).toContain("reveal-scroll");
+    // Et garde l'ancienne pour les autres, plutôt que de les laisser sans rien.
+    expect(script).toContain("IntersectionObserver");
+    expect(script).toContain("reveal-target");
+  });
+
+  it("réaffiche tout à l'impression et au saut vers une ancre", () => {
+    const script = source.slice(source.indexOf("const revealScript"));
+    expect(script).toContain("beforeprint");
+    expect(script).toContain("hashchange");
+  });
+});
+
 describe("scripts en ligne", () => {
   it("n'utilise aucun accent grave", () => {
     /*
