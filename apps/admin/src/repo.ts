@@ -108,10 +108,18 @@ export async function commitAndPush(
 /**
  * Construit puis déploie un seul client, sur la machine hôte.
  *
- * Le travail n'est pas fait ici : l'image de la console n'embarque ni Astro ni
- * le template — `pnpm build` s'y arrêterait aussitôt — et `deploy.sh` passe par
- * ssh vers DEPLOY_HOST, où « localhost » désignerait le conteneur lui-même.
- * Tout ce qu'il faut vit sur l'hôte, la console s'y connecte et lance
+ * Le travail n'est pas fait ici, et ne peut pas l'être. Les dépendances de
+ * /srv/repo sont installées sur l'hôte — Ubuntu, donc glibc — tandis que la
+ * console tourne sur une image Alpine, en musl. Rollup et sharp chargent des
+ * binaires natifs propres à une bibliothèque C : lancé depuis le conteneur, le
+ * build s'arrête sur « Cannot find module @rollup/rollup-linux-x64-musl ».
+ * Installer un second jeu de dépendances dans l'image reviendrait à entretenir
+ * deux arborescences pour le même dépôt.
+ *
+ * S'y ajoute `deploy.sh`, qui passe par ssh vers DEPLOY_HOST : depuis un
+ * conteneur, « localhost » désigne le conteneur et non la machine.
+ *
+ * Tout ce qu'il faut vit donc sur l'hôte ; la console s'y connecte et lance
  * `scripts/publier.sh`.
  *
  * L'hôte est joint par un nom déclaré dans Compose (`extra_hosts`), qui pointe

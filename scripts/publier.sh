@@ -7,8 +7,10 @@
 # Ce script existe pour être appelé **par la console d'administration**, qui
 # tourne en conteneur et ne peut pas faire ce travail elle-même :
 #
-#   - son image n'embarque que `apps/admin` et `apps/api` ; ni Astro ni le
-#     template n'y sont installés, `pnpm build` s'y arrête aussitôt ;
+#   - les dépendances de ce dépôt sont installées sur l'hôte, en glibc, alors
+#     que l'image de la console est en musl. Rollup et sharp chargent des
+#     binaires natifs propres à une bibliothèque C : le build s'y arrête sur
+#     « Cannot find module @rollup/rollup-linux-x64-musl » ;
 #   - `scripts/deploy.sh` passe par ssh et rsync vers DEPLOY_HOST, et depuis un
 #     conteneur « localhost » désigne le conteneur, pas la machine.
 #

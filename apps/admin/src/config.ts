@@ -25,8 +25,9 @@ const Env = z.object({
    * Machine qui construit et déploie réellement les sites, au format
    * `utilisateur@hôte`.
    *
-   * La console ne peut pas s'en charger : son image n'embarque ni Astro ni le
-   * template, et « localhost » y désigne le conteneur, pas le serveur. Elle se
+   * La console ne peut pas s'en charger : les dépendances du dépôt sont
+   * installées sur l'hôte en glibc, son image tourne en musl, et les binaires
+   * natifs de rollup et sharp ne se partagent pas entre les deux. Elle se
    * connecte donc en ssh à l'hôte et y lance `scripts/publier.sh`, là où vivent
    * Node, les dépendances et /srv/sites.
    *
