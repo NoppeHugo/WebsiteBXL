@@ -44,7 +44,7 @@
     }
   },
   "hero": {
-    "image": "hero.jpg",
+    "image": "360-f-469681744-fzwt6lkxlocu4xvv8cjx6zfmwnlnlm7x.jpg",
     "headline": {
       "fr": "La coupe se prend son temps",
       "nl": "Een knipbeurt neemt de tijd",
@@ -258,81 +258,26 @@
   ],
   "team": [
     {
-      "name": "Lucas",
-      "role": {
-        "fr": "Maître barbier",
-        "nl": "Meesterbarbier",
-        "en": "Master barber"
-      },
-      "photo": "equipe-1.jpg"
+      "name": "Sophie",
+      "photo": "1000-f-170543483-lnhtmkdm84n7ijyqimmuwbdrp9czfykh.jpg"
     },
     {
-      "name": "Sofia",
-      "role": {
-        "fr": "Barbière",
-        "nl": "Barbier",
-        "en": "Barber"
-      },
-      "photo": "equipe-2.jpg"
+      "name": "Stéphane",
+      "photo": "istockphoto-1245229656-612x612.jpg"
     },
     {
-      "name": "Ahmed",
-      "role": {
-        "fr": "Barbier",
-        "nl": "Barbier",
-        "en": "Barber"
-      },
-      "photo": "equipe-3.jpg"
+      "name": "Nathalie",
+      "photo": "guide-to-becoming-a-hairdresser.jpg"
     }
   ],
   "gallery": [
     {
-      "src": "galerie-1.jpg",
-      "alt": {
-        "fr": "Le fauteuil de barbier et le miroir en laiton",
-        "nl": "De barbiersstoel en de messing spiegel",
-        "en": "The barber chair and brass mirror"
-      }
+      "src": "stylish-man-sitting-barbershop-1157-20487.jpg",
+      "alt": {}
     },
     {
-      "src": "galerie-2.jpg",
-      "alt": {
-        "fr": "Rasage traditionnel à la serviette chaude",
-        "nl": "Traditioneel scheren met warme handdoek",
-        "en": "Traditional hot-towel shave"
-      }
-    },
-    {
-      "src": "galerie-3.jpg",
-      "alt": {
-        "fr": "Les outils du barbier alignés sur le plan de travail",
-        "nl": "Het gereedschap van de barbier op de werkbank",
-        "en": "The barber's tools laid out on the bench"
-      }
-    },
-    {
-      "src": "galerie-4.jpg",
-      "alt": {
-        "fr": "Détail d'une coupe aux ciseaux",
-        "nl": "Detail van een knipbeurt met de schaar",
-        "en": "Close-up of a scissor cut"
-      }
-    },
-    {
-      "src": "galerie-5.jpg",
-      "alt": {
-        "fr": "La devanture du salon rue Dansaert",
-        "nl": "De gevel van de zaak in de Dansaertstraat",
-        "en": "The shopfront on Dansaert street"
-      }
-    },
-    {
-      "src": "galerie-6.jpg",
-      "alt": {
-        "fr": "L'espace d'attente et sa bibliothèque",
-        "nl": "De wachtruimte met boekenkast",
-        "en": "The waiting area and its bookshelf"
-      }
+      "src": "1708524316differences-between-barber-mens-hairdressersquare.jpg",
+      "alt": {}
     }
   ],
   "reviews": [
