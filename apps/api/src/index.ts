@@ -118,7 +118,19 @@ await app.register(rateLimit, {
   keyGenerator: (request) => request.ip,
 });
 
-app.get("/health", async () => {
+/*
+ * Le contrôle de santé échappe à la limitation de débit.
+ *
+ * Docker l'interroge toutes les trente secondes depuis la même adresse : il
+ * épuisait le quota à lui seul et recevait des 429 — deux cent cinquante fois
+ * relevées en production. Trois refus consécutifs suffisent à faire déclarer le
+ * conteneur malade, donc à le redémarrer, et à couper l'API pendant qu'elle se
+ * portait très bien.
+ *
+ * Le laisser passer n'ouvre rien : la route ne lit qu'une constante depuis la
+ * base et n'accepte aucun paramètre.
+ */
+app.get("/health", { config: { rateLimit: false } }, async () => {
   await sql`select 1`;
   return { ok: true };
 });
