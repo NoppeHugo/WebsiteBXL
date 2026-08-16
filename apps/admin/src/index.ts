@@ -8,6 +8,7 @@ import { readSession } from "./auth.ts";
 import { sql } from "./db.ts";
 import { authRoutes, SESSION_COOKIE } from "./routes/auth.ts";
 import { clientRoutes } from "./routes/clients.ts";
+import { contenuRoutes } from "./routes/contenu.ts";
 import { requestRoutes } from "./routes/requests.ts";
 import { reportRoutes } from "./routes/reports.ts";
 import { billingRoutes } from "./routes/billing.ts";
@@ -49,8 +50,19 @@ app.addHook("onRequest", async (request, reply) => {
 // ressource externe ni intégration dans un cadre tiers.
 app.addHook("onSend", async (_request, reply) => {
   reply.headers({
+    /*
+     * `script-src 'self'` autorise le seul script de la console, servi par
+     * `/assets/editeur.js`. Volontairement sans `unsafe-inline` : les
+     * gestionnaires écrits dans le balisage restent interdits, y compris ceux
+     * que produirait un contenu de client mal échappé.
+     *
+     * `img-src` couvre les aperçus de photos, `connect-src` l'envoi des images
+     * par l'éditeur.
+     */
     "content-security-policy":
-      "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+      "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; " +
+      "img-src 'self' data:; connect-src 'self'; form-action 'self'; " +
+      "frame-ancestors 'none'; base-uri 'none'",
     "referrer-policy": "no-referrer",
     "x-content-type-options": "nosniff",
     "x-frame-options": "DENY",
@@ -64,6 +76,7 @@ app.get("/health", async () => {
 
 authRoutes(app);
 clientRoutes(app);
+contenuRoutes(app);
 requestRoutes(app);
 reportRoutes(app);
 billingRoutes(app);

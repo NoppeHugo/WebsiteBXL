@@ -150,12 +150,113 @@ details.avance > div { padding: 0 1.2rem 1.2rem; }
 }
 .media__usage[data-usage="libre"] { opacity: 0.6; }
 .lien-site { font-size: 0.85rem; }
+
+/* --- Éditeur de contenu ------------------------------------------------- */
+
+.bloc { border: 1px solid var(--border); border-radius: 16px; padding: 1.4rem 1.5rem; margin-bottom: 1.5rem; }
+.bloc__tete { margin-bottom: 1.4rem; }
+.bloc__tete h2 { margin: 0 0 0.3rem; }
+.bloc__tete .aide { margin: 0; }
+
+.champ { margin-bottom: 1.2rem; }
+.champ__libelle { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.35rem; }
+
+/*
+ * Onglets de langue, en CSS seul : trois boutons radio masqués, et la zone
+ * correspondante affichée par le sélecteur de rang. Aucun script, donc rien à
+ * réparer si le JavaScript ne charge pas.
+ */
+.onglets { position: relative; }
+.onglet__radio { position: absolute; opacity: 0; pointer-events: none; }
+.onglet__nom {
+  display: inline-block; margin: 0 0.3rem 0.5rem 0; padding: 0.25em 0.85em;
+  font-size: 0.8rem; border-radius: 980px; border: 1px solid var(--border);
+  color: var(--muted); cursor: pointer;
+}
+/* Une pastille signale les langues déjà remplies : sans elle, il faut ouvrir
+   les trois onglets pour savoir laquelle manque. */
+.onglet__nom[data-rempli="true"]::after {
+  content: "•"; margin-left: 0.4em; color: var(--ok);
+}
+.onglet__radio:checked + .onglet__nom {
+  color: var(--text); border-color: color-mix(in srgb, var(--text) 45%, transparent);
+  background: var(--surface);
+}
+.onglet__radio:focus-visible + .onglet__nom { outline: 2px solid var(--accent); outline-offset: 2px; }
+.onglets__zones > .onglet__zone { display: none; }
+.onglets:has(.onglet__radio:nth-of-type(1):checked) .onglet__zone:nth-child(1),
+.onglets:has(.onglet__radio:nth-of-type(2):checked) .onglet__zone:nth-child(2),
+.onglets:has(.onglet__radio:nth-of-type(3):checked) .onglet__zone:nth-child(3) { display: block; }
+.onglets textarea { font-family: inherit; font-size: 1rem; }
+
+/* Emplacement de photo. */
+.photo { margin-bottom: 1.2rem; }
+.photo__zone {
+  display: flex; align-items: center; justify-content: center; position: relative;
+  min-height: 9rem; padding: 0.8rem; margin: 0; cursor: pointer;
+  border: 1px dashed color-mix(in srgb, var(--muted) 55%, transparent);
+  border-radius: 14px; background: var(--surface); text-align: center;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.photo__zone:hover { border-color: var(--muted); }
+.photo__zone[data-survol="true"] {
+  border-color: var(--accent); border-style: solid;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+.photo__zone img { max-height: 13rem; border-radius: 10px; object-fit: contain; }
+.photo__invite { color: var(--muted); font-size: 0.85rem; max-width: 16rem; }
+.photo__etat { position: absolute; inset-inline: 0.5rem; bottom: 0.5rem; font-size: 0.75rem; color: var(--muted); }
+.photo__retirer { margin-top: 0.5rem; padding: 0.3em 1em; font-size: 0.8rem; }
+.photo[data-occupe="true"] .photo__zone { opacity: 0.6; }
+
+/* Listes réordonnables. */
+.liste { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: 1rem; }
+.element { border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.element[data-saisi="true"] { opacity: 0.4; border-style: dashed; }
+.element__barre {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 1rem; border-bottom: 1px solid var(--border);
+}
+.element__poignee { cursor: grab; color: var(--muted); user-select: none; font-size: 1.1rem; }
+.element__poignee:active { cursor: grabbing; }
+.element__titre { flex: 1; font-size: 0.95rem; }
+.element__ordre { display: flex; gap: 0.35rem; }
+.element__ordre button { padding: 0.2em 0.7em; font-size: 0.85rem; }
+.element__corps { padding: 1.1rem 1rem 0.4rem; }
+.element__corps--deux { display: grid; gap: 1.2rem; }
+@media (min-width: 46rem) {
+  .element__corps--deux { grid-template-columns: 16rem 1fr; }
+}
+
+/* Sommaire des sections, collant : la page est longue, et sauter d'un bout à
+   l'autre en la parcourant est le geste le plus fréquent. */
+.sommaire {
+  position: sticky; top: 4.2rem; z-index: 5; display: flex; flex-wrap: wrap; gap: 0.4rem;
+  padding: 0.7rem 0; margin-bottom: 1.5rem;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+.sommaire a {
+  font-size: 0.82rem; text-decoration: none; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 980px; padding: 0.25em 0.85em;
+}
+.sommaire a:hover { color: var(--text); border-color: var(--muted); }
+
+/* Le chemin principal depuis la fiche client vers l'éditeur : c'est le geste
+   le plus fréquent, il ne doit pas se chercher. */
+.raccourci { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.8rem; }
+.raccourci .aide { margin: 0; }
+.btn-lien {
+  display: inline-block; text-decoration: none; background: var(--accent); color: #fff;
+  border-radius: 980px; padding: 0.6em 1.4em; font-size: 0.95rem;
+}
+.btn-lien:hover { filter: brightness(1.12); }
 `;
 
 export function layout(
   title: string,
   body: string,
-  options: { authenticated?: boolean } = {},
+  options: { authenticated?: boolean; editeur?: boolean } = {},
 ): string {
   return `<!doctype html>
 <html lang="fr">
@@ -185,6 +286,11 @@ ${
     : ""
 }
 <main>${body}</main>
+${
+  // `defer` plutôt qu'un script en tête : l'éditeur ne se branche qu'une fois
+  // la page construite, et son absence ne retarde jamais l'affichage.
+  options.editeur ? `<script src="/assets/editeur.js" defer></script>` : ""
+}
 </body>
 </html>`;
 }

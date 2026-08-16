@@ -120,6 +120,11 @@ async function editPage(
 ${message ? flash(message.kind, message.text) : ""}
 ${bandeau}
 
+<p class="raccourci">
+  <a class="btn-lien" href="/clients/${escape(slug)}/contenu">Modifier le contenu du site →</a>
+  <span class="aide">Textes, photos, galerie, équipe, avis — sans toucher au fichier.</span>
+</p>
+
 <form method="post" action="/clients/${escape(slug)}">
   <fieldset>
     <legend>Visibilité</legend>
@@ -219,7 +224,7 @@ ${
           ? `<p class="aide">Utilisée par le site : elle ne peut pas être supprimée.
              Envoyez un fichier du même nom pour la remplacer.</p>`
           : `<form method="post" action="/clients/${escape(slug)}/media/${escape(photo.name)}/delete"
-            onsubmit="return confirm('Supprimer ${escape(photo.name)} ? Cette action est définitive.')">
+            data-confirmer="Supprimer ${escape(photo.name)} ? Cette action est définitive.">
         <button class="danger">Supprimer</button>
       </form>`
       }
@@ -260,7 +265,7 @@ ${
 </details>
 
 <p style="margin-top:2rem"><a href="/">← Tous les clients</a></p>`,
-    { authenticated: true },
+    { authenticated: true, editeur: true },
   );
 }
 
