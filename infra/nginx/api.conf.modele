@@ -1,0 +1,49 @@
+# Bloc nginx de l'API — équivalent de infra/api.caddy (voir §0 bis, option 1).
+#
+# Usage :
+#   sed 's/@@DOMAINE@@/le-vrai-domaine.be/g' api.conf.modele \
+#     | sudo tee /etc/nginx/sites-available/api.le-vrai-domaine.be
+#   sudo ln -s /etc/nginx/sites-available/api.… /etc/nginx/sites-enabled/
+#   sudo nginx -t && sudo systemctl reload nginx
+#
+# Ce fichier est volontairement en HTTP seul : c'est certbot --nginx qui y
+# ajoutera le bloc TLS et la redirection, comme il l'a fait pour les quatre
+# sites déjà en place sur cette machine. Demander un certificat avant que le
+# DNS ne réponde échoue et consomme le quota Let's Encrypt (§4).
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name api.@@DOMAINE@@;
+
+    include snippets/bxl-commun.conf;
+
+    # 3020 et non 3000 : sur ce VPS, 3000 est déjà pris par un autre projet.
+    # Doit rester cohérent avec infra/docker-compose.yml (§0 bis, point 4).
+    location / {
+        proxy_pass http://127.0.0.1:3020;
+        proxy_http_version 1.1;
+
+        # L'API limite le débit par adresse grâce à `trustProxy` : sans cet
+        # en-tête, toutes les requêtes semblent venir du serveur lui-même et
+        # la limite se déclenche pour tout le monde d'un coup.
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host $host;
+
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 60s;
+    }
+
+    # Stripe signe le corps brut de la notification : la moindre
+    # retransformation invalide la signature et le webhook est rejeté.
+    location /v1/stripe/webhook {
+        proxy_pass http://127.0.0.1:3020;
+        proxy_http_version 1.1;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host $host;
+        proxy_request_buffering off;
+    }
+}

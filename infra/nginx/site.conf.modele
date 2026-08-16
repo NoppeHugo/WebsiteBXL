@@ -1,0 +1,51 @@
+# Bloc nginx d'un site client statique — équivalent de ce que produit
+# `pnpm caddy <slug>` (voir §0 bis, option 1).
+#
+# Usage :
+#   sed -e 's/@@DOMAINE@@/le-domaine-du-client.be/g' -e 's/@@SLUG@@/demo-barbier/g' \
+#       site.conf.modele | sudo tee /etc/nginx/sites-available/@@DOMAINE@@
+#
+# Le site n'est servi que sur son domaine canonique ; les alias redirigent vers
+# lui de façon permanente (bloc du bas, à supprimer s'il n'y a pas d'alias).
+# Servir le même contenu sur plusieurs adresses disperserait le référencement
+# entre elles.
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name @@DOMAINE@@;
+
+    root /srv/sites/@@SLUG@@/current;
+    index index.html;
+
+    include snippets/bxl-commun.conf;
+
+    # Les fichiers versionnés par empreinte sont immuables ; le HTML, non.
+    location /_assets/ {
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        try_files $uri =404;
+    }
+
+    location / {
+        add_header Cache-Control "public, max-age=0, must-revalidate" always;
+        try_files $uri $uri/ $uri.html /404.html;
+    }
+
+    # Caddy : « handle_errors { rewrite * /404.html } ».
+    error_page 404 /404.html;
+    location = /404.html {
+        internal;
+    }
+}
+
+# --- Alias, s'il y en a. Supprimer ce bloc sinon. ---
+#
+# La redirection conserve le chemin et la requête : un lien vers une page
+# précise ne retombe pas sur l'accueil.
+#
+# server {
+#     listen 80;
+#     listen [::]:80;
+#     server_name @@ALIAS@@;
+#     return 301 https://@@DOMAINE@@$request_uri;
+# }

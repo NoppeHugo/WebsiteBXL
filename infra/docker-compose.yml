@@ -45,10 +45,15 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       PORT: 3000
-    # Publié uniquement sur la boucle locale : c'est Caddy qui expose le
-    # service au monde, avec HTTPS et les en-têtes de sécurité.
+    # Publié uniquement sur la boucle locale : c'est le serveur web de l'hôte
+    # qui expose le service au monde, avec HTTPS et les en-têtes de sécurité.
+    #
+    # 3020 côté hôte, et non 3000 : sur ce VPS 3000 est déjà pris par un autre
+    # projet (voir §0 bis, point 4). Le port interne au conteneur reste 3000 —
+    # seule la publication change. Doit rester cohérent avec le proxy_pass de
+    # infra/nginx/api.conf.modele.
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3020:3000"
 
   admin:
     build:
