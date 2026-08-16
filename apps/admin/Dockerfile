@@ -1,13 +1,30 @@
 # Interface d'administration.
 #
-# L'image embarque git, pnpm et rsync : la console commite le contenu, lance le
-# build et déclenche le déploiement. Elle a donc besoin des mêmes outils que
+# L'image embarque git, pnpm et rsync : la console commite le contenu et
+# demande la mise en ligne. Elle a donc besoin des mêmes outils que
 # l'exploitation manuelle — sans quoi il faudrait dupliquer cette logique
 # ailleurs.
 
 FROM node:22-alpine
 
 RUN apk add --no-cache git openssh-client rsync bash && corepack enable
+
+# Un compte portant l'identité du propriétaire du dépôt sur l'hôte.
+#
+# Le conteneur tourne sous cet UID pour que git accepte d'ouvrir /repo. Mais un
+# UID sans ligne dans /etc/passwd n'a ni nom ni répertoire personnel, et ssh
+# refuse alors de démarrer : « No user exists for uid 1002 ». Le push vers
+# GitHub et la demande de publication échouaient tous deux là.
+#
+# L'UID est un argument de construction : il doit correspondre au compte
+# `deploy` de la machine, dont le numéro varie d'une installation à l'autre.
+ARG DEPLOY_UID=1002
+ARG DEPLOY_GID=1002
+RUN if ! getent group "$DEPLOY_GID" >/dev/null; then addgroup -g "$DEPLOY_GID" app; fi \
+ && if ! getent passwd "$DEPLOY_UID" >/dev/null; then \
+      adduser -D -u "$DEPLOY_UID" -G "$(getent group "$DEPLOY_GID" | cut -d: -f1)" -h /home/app app; \
+    fi \
+ && install -d -o "$DEPLOY_UID" -g "$DEPLOY_GID" /home/app
 
 WORKDIR /app
 

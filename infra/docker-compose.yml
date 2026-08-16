@@ -68,6 +68,11 @@ services:
     build:
       context: ..
       dockerfile: apps/admin/Dockerfile
+      # L'image doit connaître le compte sous lequel elle tournera : ssh exige
+      # que l'UID ait un nom et un répertoire personnel.
+      args:
+        DEPLOY_UID: ${DEPLOY_UID:-1002}
+        DEPLOY_GID: ${DEPLOY_GID:-1002}
     restart: unless-stopped
     depends_on:
       db:
@@ -87,9 +92,10 @@ services:
       NODE_ENV: production
       PORT: 4000
       REPO_PATH: /repo
-      # Sans HOME accessible, ssh et git écrivent dans un répertoire dont
-      # l'utilisateur emprunté n'est pas propriétaire, et échouent.
-      HOME: /tmp
+      # Le répertoire personnel créé dans l'image pour ce compte. Sans HOME
+      # accessible en écriture, ssh et git tentent d'écrire là où ils n'ont pas
+      # de droits, et échouent.
+      HOME: /home/app
       # La clé et les hôtes connus sont montés plus bas ; git doit se les voir
       # désigner explicitement, il ne les cherche que dans ~/.ssh.
       GIT_SSH_COMMAND: "ssh -i /ssh/id_ed25519 -o UserKnownHostsFile=/ssh/known_hosts -o IdentitiesOnly=yes"
