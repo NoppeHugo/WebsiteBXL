@@ -27,11 +27,17 @@ production assez bas pour rendre l'abonnement rentable.
 
 ### Le modèle économique
 
-| Palier | Setup | Mensuel | Contenu |
-|---|---|---|---|
-| **Essentiel** | 490 € | 25 €/mois | One-page, mobile, photos, horaires, contact, plan, fiche Google. 1 langue. |
-| **Pro** *(à pousser)* | 790 € | 39 €/mois | Multi-pages, bilingue FR/NL, réservation en ligne, séance photo complète, Google optimisé + suivi. |
-| **Signature** | 1 290 € | 59 €/mois | Trilingue (+EN), réservation avancée, mini-boutique, shooting saisonnier, modifs illimitées. |
+| Palier | Setup | Mensuel | Adresse | Contenu |
+|---|---|---|---|---|
+| **Essentiel** | 490 € | 25 €/mois | `nom.hair.be` | One-page, mobile, photos, horaires, contact, plan, fiche Google. 1 langue. |
+| **Pro** *(à pousser)* | 790 € | 39 €/mois | **son domaine** | Multi-pages, bilingue FR/NL, réservation en ligne, séance photo complète, Google optimisé + suivi. |
+| **Signature** | 1 290 € | 59 €/mois | **son domaine** | Trilingue (+EN), réservation avancée, mini-boutique, shooting saisonnier, modifs illimitées. |
+
+**Le nom de domaine est une caractéristique de palier** (§3.10). L'Essentiel
+vit sur un sous-domaine du domaine de service ; le domaine propre commence au
+Pro. Un client Essentiel qui veut le sien sans monter de palier le prend en
+option — **+5 €/mois**, achat et renouvellement compris. Personne n'est bloqué,
+et le Pro gagne un argument concret de plus.
 
 Ce que couvre le mensuel, à énoncer explicitement au client sous peine de
 résiliation : hébergement, nom de domaine, sécurité et sauvegardes, mise à jour
@@ -525,57 +531,60 @@ Réévaluation possible vers 25-30 clients avec un CMS git-based (Decap), qui se
 branche sur du statique sans backend. Le format de données est conçu pour rendre
 ce branchement trivial le jour venu.
 
-### 3.10 Noms de domaine au nom du client
+### 3.10 L'adresse du site — sous-domaine par défaut, domaine propre au Pro
 
-**Décision :** chaque client payant a **son propre domaine**, enregistré à son
-nom ; la gestion technique du DNS reste de notre côté. Un sous-domaine du
-domaine de service sert d'adresse d'attente et de démonstration.
+**Décision :** tout client démarre sur un sous-domaine du domaine de service —
+`kevincoiffure.hair.be`. Le domaine propre est une **caractéristique du palier
+Pro**, ou une option à +5 €/mois sur l'Essentiel. Quand un client en prend un,
+il est enregistré **à son nom**.
 
-**Pourquoi le domaine propre :** enregistrer les domaines à son propre nom pour
-verrouiller le client crée un conflit juridique le jour où la relation se
-termine mal — pour 12 € par an. Et c'est un **argument de vente** : « le
-domaine vous appartient, vous n'êtes pas prisonnier » rassure beaucoup et
-différencie des prestataires qui font l'inverse. Le verrouillage doit venir de
-la qualité du service, pas de la prise d'otage.
+**Pourquoi cette bascule.** La version précédente de ce document imposait le
+domaine propre à tout le monde, au motif qu'un sous-domaine enfermerait le
+client. L'argument ne tient pas : il ne vaut que si le sous-domaine est imposé
+en silence. **Annoncé comme une caractéristique de palier, ce n'est plus un
+piège mais un choix** — le commerçant sait ce qu'il prend et peut monter quand
+il veut. C'est le modèle de Shopify, Wix et Squarespace, et il fonctionne.
 
-**Pourquoi pas tout le monde en sous-domaine.** Techniquement, un seul domaine
-de service suffirait : `kevin.hair.be`, `sophie.hair.be`, un enregistrement DNS
-générique, un certificat par sous-domaine obtenu automatiquement. Rien à
-changer dans le code, et 12 € par an économisés par client. Quatre raisons de
-ne pas en faire la règle :
+Ce que la bascule apporte concrètement :
 
-1. **Ce qui se met sur une carte de visite.** `kevincoiffure.be` se dicte au
-   téléphone, se retient, se peint sur une vitrine. `kevin.hair.be` dit au
-   client final que le salon est hébergé chez quelqu'un.
-2. **La contradiction avec le discours de vente.** On ne peut pas vendre
-   « vous n'êtes pas prisonnier » et donner une adresse que le commerçant ne
-   pourra jamais emporter.
-3. **Réputation partagée.** Un seul client problématique — contenu douteux,
-   plainte, signalement — et c'est le domaine entier qui est atteint, donc tous
-   les autres avec lui.
-4. **L'adresse e-mail.** Beaucoup de commerçants veulent `contact@leur-nom.be`.
-   Impossible à proposer sérieusement sur un sous-domaine du nôtre.
+- **Un argument de vente de plus pour le Pro**, le palier qu'il faut pousser.
+  « Votre propre adresse » est compréhensible en trois secondes sur un pas de
+  porte, contrairement au bilingue ou à l'agenda.
+- **Zéro friction à la signature.** Le site est en ligne dans l'heure, sans
+  attendre l'achat d'un domaine, ni la propagation DNS, ni de savoir si le
+  commerçant possède déjà quelque chose chez un cousin webmaster.
+- **Une objection prix désamorcée.** « Ça vous économise le domaine » est une
+  phrase que le commerçant entend, même si le montant est petit.
+- **Moins d'administratif** : un domaine à surveiller au lieu de trente
+  échéances de renouvellement dispersées.
 
-L'économie, elle, est faible : 12 € par an face à un abonnement de 300 à 700 €
-par an, soit 2 à 4 %. Ce n'est pas là que se joue la marge.
+**Ce que cela coûte, et qui est assumé :**
 
-**Le sous-domaine reste utile, à sa place :** pendant la vente et la
-production. Le site est en ligne sur `kevin.hair.be` dans l'heure, montrable au
-prospect avant qu'aucun domaine ne soit acheté, sans attendre la propagation
-DNS de qui que ce soit. Le jour où le vrai domaine arrive, il devient `domain`
-et le sous-domaine passe dans `aliases` — où il **redirige** de façon
-permanente, en conservant le chemin. Personne ne perd son signet, et le
-référencement ne se disperse pas entre deux adresses.
+- **Réputation partagée.** Un client problématique atteint le domaine entier.
+  Peu probable sur des coiffeurs, mais c'est le vrai risque, et il n'a pas de
+  parade technique — seulement le choix des clients.
+- **L'adresse e-mail.** `contact@kevincoiffure.be` reste impossible tant que le
+  commerçant n'a pas son domaine. À utiliser comme argument de montée en
+  gamme plutôt que de le subir.
+- **Une migration à faire proprement** le jour où un client passe au Pro. C'est
+  prévu : voir ci-dessous.
+
+**La migration ne casse rien.** Le nouveau domaine devient `domain`, l'ancien
+sous-domaine passe dans `aliases`, et `pnpm caddy` produit une **redirection
+permanente** qui conserve le chemin. Les signets des clients du salon
+continuent de fonctionner, et le référencement se transfère au lieu de se
+disperser entre deux adresses.
 
 ```json
 {
   "domain": "kevincoiffure.be",
-  "aliases": ["kevin.hair.be", "www.kevincoiffure.be"]
+  "aliases": ["kevincoiffure.hair.be", "www.kevincoiffure.be"]
 }
 ```
 
-`pnpm caddy <slug>` produit les deux blocs : le site sur le domaine canonique,
-la redirection permanente pour tous les alias.
+**Le domaine reste au nom du commerçant** quand il en prend un. Le verrouiller
+à son propre nom crée un conflit juridique le jour où la relation se termine
+mal, pour 12 € par an. Le verrouillage doit venir de la qualité du service.
 
 ### 3.11 Suspension pour impayé, prévue dès le départ
 
@@ -802,6 +811,8 @@ semaine.
 | « Trop cher » | L'abonnement sert précisément à baisser le coût de départ ; le setup est payable en plusieurs fois. |
 | « Pas le temps » | Je fais tout, vous ne touchez à rien. |
 | « J'ai déjà un site » | Question test : il est comment sur téléphone ? On peut le regarder ensemble. |
+| « C'est quoi cette adresse, `.hair.be` ? » | C'est votre adresse, comme une boîte aux lettres dans un immeuble bien tenu — et ça vous économise l'achat et la gestion d'un domaine. Si vous en voulez un à votre nom, c'est le pack Pro, ou 5 € de plus par mois. |
+| « Je veux mon propre nom de domaine » | Parfait, c'est compris dans le Pro. *(Ne pas brader : c'est l'argument le plus compréhensible pour faire monter d'un palier.)* |
 
 ### Preuve sociale plutôt que démo fictive
 

@@ -125,11 +125,12 @@ zone DNS.
 | A | `api` | `<IP>` | l'API |
 | A | `admin` | `<IP>` | l'interface d'administration |
 | A | `demo` | `<IP>` | le site de démonstration |
-| A | `*` | `<IP>` | *(facultatif)* les sous-domaines clients — voir §7 |
+| A | `*` | `<IP>` | **les sous-domaines clients** — voir §7 |
 
-Un enregistrement générique `*` évite d'en créer un par client. Il n'est pas
-obligatoire : un enregistrement nominatif par sous-domaine fonctionne aussi, et
-laisse une trace plus lisible de ce qui existe.
+L'enregistrement générique `*` est important dans ce modèle : la plupart des
+clients vivent sur un sous-domaine (`kevincoiffure.hair.be`), et sans lui il
+faudrait retourner chez le registrar à chaque signature. Avec lui, un nouveau
+client ne demande plus aucune action DNS.
 
 **Vérifier**, depuis n'importe où, avant d'aller plus loin :
 
@@ -283,24 +284,28 @@ mot de passe et code à six chiffres.
 
 ### 7.1 Choisir son adresse
 
-Deux possibilités, détaillées en §3.10 du README :
-
-- **Sous-domaine du domaine de service** — `kevin.hair.be`. Immédiat, gratuit,
-  parfait pour montrer le site pendant la vente.
-- **Domaine propre au client** — `kevincoiffure.be`. C'est ce qui se met sur
-  une carte de visite et sur la vitrine.
-
-Les deux s'écrivent de la même façon dans `clients/<slug>/site.json` :
+Règle commerciale, détaillée en §3.10 du README : **sous-domaine par défaut**,
+domaine propre à partir du palier Pro.
 
 ```json
+// Essentiel — le cas courant
+{ "domain": "kevincoiffure.hair.be", "aliases": [] }
+
+// Pro, ou Essentiel avec l'option domaine
 {
   "domain": "kevincoiffure.be",
-  "aliases": ["kevin.hair.be", "www.kevincoiffure.be"]
+  "aliases": ["kevincoiffure.hair.be", "www.kevincoiffure.be"]
 }
 ```
 
 `domain` est l'adresse canonique — celle qui figure dans les balises de la page
-et dans les données structurées. Les `aliases` redirigent vers elle.
+et dans les données structurées. Les `aliases` redirigent vers elle de façon
+permanente, en conservant le chemin.
+
+**Quand un client passe au domaine propre**, ne pas supprimer l'ancien
+sous-domaine : le déplacer dans `aliases`. Les clients du salon l'ont peut-être
+en signet, et la redirection transfère le référencement au lieu de le
+disperser. Puis reconstruire, redéployer, et régénérer le bloc Caddy.
 
 ### 7.2 Enregistrer le commerce et construire
 
@@ -337,7 +342,21 @@ ssh root@<IP> 'caddy validate --config /etc/caddy/Caddyfile && systemctl reload 
 ```
 
 **Vérifier :** `https://<domaine du client>` s'affiche en HTTPS, dans les
-langues activées.
+langues activées. Si le client a des alias, vérifier aussi qu'ils redirigent :
+
+```bash
+curl -sI https://<alias> | head -3   # 301, avec « location: https://<domaine> »
+```
+
+> **Piste d'amélioration, à décider avec l'exploitant.** Tant que les clients
+> vivent sur des sous-domaines, ces quatre commandes pourraient disparaître :
+> un unique bloc `*.hair.be` servant `/srv/sites/{labels.2}/current` mettrait
+> un nouveau site en ligne au seul déploiement de ses fichiers, sans toucher au
+> serveur. Cela demande un certificat générique — donc soit une compilation de
+> Caddy avec le module DNS du registrar, soit l'émission à la demande, qui
+> exige elle-même un point de contrôle pour éviter qu'un inconnu pointant son
+> DNS vers l'IP ne déclenche des demandes de certificat. Ni l'un ni l'autre
+> n'est fait aujourd'hui : ne pas improviser ici.
 
 ---
 
