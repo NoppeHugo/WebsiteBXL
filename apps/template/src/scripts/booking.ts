@@ -135,6 +135,26 @@ if (root) {
 
   /* ---------------------------------------------------------------- jours */
 
+  /**
+   * La date du jour, chez le salon.
+   *
+   * Elle était auparavant calculée à la construction du site et déposée dans
+   * `data-today` : une page bâtie le 1er du mois et consultée le 15 demandait
+   * les disponibilités à partir du 1er, donc quinze jours révolus, et le
+   * visiteur ne voyait plus une seule case libre. Rien ne signalait la panne —
+   * ni erreur, ni journal : simplement un agenda vide, chez tous les clients à
+   * la fois, à mesure que leur dernière publication s'éloignait.
+   *
+   * Le fuseau est celui du commerce, pas celui du visiteur : les créneaux sont
+   * ceux d'un salon bruxellois, et quelqu'un qui consulte depuis Montréal doit
+   * voir la même journée que lui. `en-CA` produit directement AAAA-MM-JJ.
+   */
+  function aujourdhui(): string {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Brussels" }).format(
+      new Date(),
+    );
+  }
+
   async function loadAvailability(): Promise<void> {
     const mine = ++ticket;
     daysBox.dataset.state = "loading";
@@ -144,7 +164,7 @@ if (root) {
       const url = new URL(root!.dataset.availability!);
       url.searchParams.set("tenantId", root!.dataset.tenant!);
       url.searchParams.set("serviceId", fieldService.value);
-      url.searchParams.set("day", root!.dataset.today!);
+      url.searchParams.set("day", aujourdhui());
       url.searchParams.set("days", String(DAYS_AHEAD));
 
       const response = await fetch(url, { headers: { Accept: "application/json" } });
@@ -166,6 +186,9 @@ if (root) {
   function renderDays(): void {
     daysBox.textContent = "";
     daysBox.dataset.state = "";
+
+    // Un seul jour est présélectionné, le premier ouvert de la bande.
+    let premierLibre = false;
 
     for (const entry of availability) {
       const date = new Date(`${entry.day}T12:00:00Z`);
@@ -194,24 +217,45 @@ if (root) {
 
       button.append(weekday, number, note);
 
-      if (free) {
-        button.addEventListener("click", () => {
-          for (const other of daysBox.querySelectorAll(".rdv__day")) {
-            other.removeAttribute("aria-pressed");
-          }
-          button.setAttribute("aria-pressed", "true");
+      const choisir = ({ defiler }: { defiler: boolean }) => {
+        for (const other of daysBox.querySelectorAll(".rdv__day")) {
+          other.removeAttribute("aria-pressed");
+        }
+        button.setAttribute("aria-pressed", "true");
 
-          chosen.day = entry.day;
-          chosen.slot = "";
-          fieldSlot.value = "";
-          markDone("time", "");
-          updateRecap();
+        chosen.day = entry.day;
+        chosen.slot = "";
+        fieldSlot.value = "";
+        markDone("time", "");
+        updateRecap();
 
+        // Au clic seulement : un défilement déclenché tout seul au chargement
+        // déplacerait la page sous les yeux du visiteur.
+        if (defiler) {
           button.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-          markDone("day", fmt.long.format(date));
-          renderSlots(entry);
-          openStep("time");
-        });
+        }
+        markDone("day", fmt.long.format(date));
+        renderSlots(entry);
+        openStep("time");
+      };
+
+      if (free) {
+        button.addEventListener("click", () => choisir({ defiler: true }));
+
+        /*
+         * Le premier jour ouvert est choisi d'office, et ses heures s'affichent.
+         *
+         * Sans cela, un salon fermé le jour de la visite présentait une bande
+         * dont les premières cases étaient grisées, aucune heure nulle part, et
+         * rien pour indiquer qu'il fallait faire défiler jusqu'au premier jour
+         * ouvert. Le formulaire passait pour cassé — c'est précisément ce qui a
+         * été rapporté, un dimanche, chez un barbier fermé le dimanche et le
+         * lundi.
+         */
+        if (!premierLibre) {
+          premierLibre = true;
+          choisir({ defiler: false });
+        }
       }
 
       daysBox.append(button);

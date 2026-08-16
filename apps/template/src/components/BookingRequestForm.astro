@@ -23,8 +23,11 @@ const endpoint = apiEndpoint("/v1/booking-requests");
  * ferme, alors que le salon confirme manuellement en v1.
  */
 
-// Date minimale : aujourd'hui. Calculée au build, donc figée à la date de
-// publication ; le serveur revalide de toute façon la date reçue.
+// Date minimale : aujourd'hui. Calculée au build, elle est déjà périmée le
+// lendemain de la publication — le sélecteur laisserait alors choisir une date
+// révolue, que le serveur refuserait ensuite sans que le visiteur comprenne
+// pourquoi. Le script en bas de composant la remet à jour dans le navigateur ;
+// cette valeur-ci ne sert plus qu'aux rares visites sans JavaScript.
 const today = new Date().toISOString().slice(0, 10);
 
 const periods = [
@@ -156,6 +159,25 @@ const returnUrl = Astro.site
     };
     sync();
     select.addEventListener("change", sync);
+  }
+
+  /*
+   * Remet la date minimale à aujourd'hui, dans le fuseau du commerce.
+   *
+   * L'attribut `min` rendu au build porte la date de construction du site :
+   * dès le lendemain, le sélecteur accepte une date passée, et la demande est
+   * refusée par le serveur pour une raison que le visiteur ne peut pas deviner.
+   * `en-CA` produit directement le AAAA-MM-JJ attendu par un `input[type=date]`.
+   */
+  const champDate = document.querySelector<HTMLInputElement>('input[name="preferredDate"]');
+  if (champDate) {
+    const aujourdhui = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Brussels",
+    }).format(new Date());
+    champDate.min = aujourdhui;
+    // Une date déjà saisie et devenue caduque — page laissée ouverte toute une
+    // nuit, champ prérempli par le navigateur — est effacée plutôt que soumise.
+    if (champDate.value && champDate.value < aujourdhui) champDate.value = "";
   }
 </script>
 

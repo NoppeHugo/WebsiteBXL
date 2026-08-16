@@ -32,7 +32,6 @@ const bookUrl = apiEndpoint("/v1/appointments");
  * et `<noscript>` le rappelle.
  */
 
-const today = new Date().toISOString().slice(0, 10);
 const returnUrl = Astro.site ? new URL(path(lang), Astro.site).href : undefined;
 
 const services = site.services.map((service) => ({
@@ -50,7 +49,6 @@ const services = site.services.map((service) => ({
       data-live-booking
       data-availability={availabilityUrl}
       data-tenant={site.tenantId}
-      data-today={today}
       data-lang={lang}
       data-business={site.business.name}
       data-address={`${site.business.address.street}, ${site.business.address.postalCode} ${site.business.address.city}`}
