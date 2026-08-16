@@ -186,7 +186,11 @@ enregistrer.
 
 ```bash
 # Toujours en tant que deploy :
-git clone git@github.com:NoppeHugo/WebsiteBXL.git /srv/repo
+# La branche de travail est aussi la branche par défaut du dépôt : un clone
+# simple récupère bien tout. La nommer explicitement évite toute surprise si
+# une autre branche par défaut apparaissait un jour.
+git clone -b claude/brussels-showcase-sites-strategy-821fen \
+  git@github.com:NoppeHugo/WebsiteBXL.git /srv/repo
 cd /srv/repo
 git config user.email "admin@<domaine>"
 git config user.name "Interface BXL"
@@ -281,6 +285,38 @@ mot de passe et code à six chiffres.
 ---
 
 ## 7. Premier site en ligne
+
+### 7.0 Le premier site à mettre en ligne est la démonstration
+
+Le dépôt ne contient aujourd'hui **qu'un seul client** : `demo-barbier`, le
+site de démonstration. C'est lui qu'il faut mettre en ligne en premier — c'est
+l'outil de vente, montré sur un téléphone en porte-à-porte.
+
+Dans son état actuel il **n'est pas déployable**, et c'est voulu : son domaine
+est `demo-barbier.local` et son statut est `draft`. `./scripts/deploy.sh`
+refuse tout site qui n'est pas en `live`.
+
+⛔ **STOP — demander le vrai sous-domaine de démonstration à l'exploitant**
+(par exemple `demo.hair.be`), puis modifier `clients/demo-barbier/site.json` :
+
+```json
+{
+  "domain": "demo.hair.be",
+  "status": "live",
+  "demo": true
+}
+```
+
+**Ne pas retirer `"demo": true`.** C'est ce drapeau qui affiche le bandeau
+« site de démonstration — commerce fictif » et qui interdit l'indexation. Un
+site de démonstration référencé par Google concurrencerait les vrais clients
+sur les mêmes recherches. `pnpm check` le rappelle par un avertissement — cet
+avertissement est normal ici.
+
+Committer et pousser ce changement : le serveur travaille depuis le dépôt.
+
+**Vérifier :** `pnpm check` ne signale aucune **erreur** (les avertissements
+sur la fiche Google et sur la démonstration en ligne sont attendus).
 
 ### 7.1 Choisir son adresse
 

@@ -103,8 +103,19 @@ for (const slug of slugs) {
     if (site.services.length === 0) {
       report.warnings.push("aucune prestation : la section tarifs sera absente");
     }
+    /*
+     * Un site de démonstration a vocation à être en ligne — c'est l'outil de
+     * vente, montré sur un téléphone en porte-à-porte. Ce n'est donc pas une
+     * erreur, seulement un rappel : le drapeau `demo` doit rester posé, car
+     * c'est lui qui affiche le bandeau « commerce fictif » et interdit
+     * l'indexation. Un site de démonstration référencé par Google
+     * concurrencerait les vrais clients sur les mêmes recherches.
+     */
     if (site.status === "live" && site.demo) {
-      report.errors.push("un site marqué « demo » ne doit pas être en statut « live »");
+      report.warnings.push(
+        "site de démonstration en ligne : bandeau « commerce fictif » affiché" +
+          " et indexation refusée — vérifier que c'est bien voulu",
+      );
     }
 
     // Les mentions légales sont une obligation pour tout site commercial belge.
