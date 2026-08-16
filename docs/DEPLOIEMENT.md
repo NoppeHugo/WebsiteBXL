@@ -12,6 +12,10 @@ humaine. Ne rien inventer à ces endroits-là : une clé d'API fabriquée, un mo
 de passe deviné ou un nom de domaine supposé produisent une panne silencieuse
 qui se découvre en clientèle.
 
+⚠️ **Si le serveur héberge déjà des sites, lire d'abord le §0 bis.** Plusieurs
+étapes de cette procédure sont écrites pour une machine neuve et casseraient
+l'existant telles quelles.
+
 Rien de tout ceci n'a jamais tourné sur une vraie machine. Le code est testé
 (138 tests, types vérifiés), les fichiers de configuration sont validés, mais
 la première exécution réelle est celle-ci. **S'attendre à des surprises est
@@ -41,6 +45,65 @@ le fournisseur permet d'agrandir plus tard.
 **Trois sous-domaines de service** à prévoir sur le domaine de service — par
 exemple `api.hair.be`, `admin.hair.be`, et un pour la démonstration. Ils sont
 distincts des domaines clients (voir §7).
+
+---
+
+## 0 bis. Serveur qui héberge déjà quelque chose
+
+Cette procédure ajoute un projet à une machine. Elle ne doit **rien** casser de
+ce qui tourne déjà. Trois étapes sont dangereuses telles quelles, et une
+quatrième mérite attention.
+
+### Faire l'état des lieux d'abord
+
+```bash
+ss -lntp                      # qui écoute quoi
+systemctl list-units --type=service --state=running | head -40
+docker ps 2>/dev/null         # conteneurs existants
+ufw status verbose            # pare-feu : actif ? quelles règles ?
+ls /etc/caddy/ /etc/nginx/sites-enabled/ /etc/apache2/sites-enabled/ 2>/dev/null
+```
+
+`infra/setup-vps.sh` commence lui aussi par cet état des lieux et l'affiche
+avant de toucher à quoi que ce soit. **Le lire avant de continuer.**
+
+### Les quatre points de vigilance
+
+**1. Un autre serveur web sur les ports 80 et 443.** Deux serveurs web ne
+partagent pas un port. Si nginx ou Apache tourne, `setup-vps.sh` **s'arrête de
+lui-même** et expose les trois issues possibles :
+
+- garder le serveur en place et lui faire servir les sites de ce projet — ils
+  sont purement statiques, un bloc par domaine avec
+  `root /srv/sites/<slug>/current` suffit. C'est le chemin le plus sûr sur une
+  machine en production ; les fichiers produits par `pnpm caddy` ne servent
+  alors pas, il faut écrire leur équivalent ;
+- migrer l'existant vers Caddy — propre à terme, mais cela veut dire
+  reconfigurer et retester tous les sites déjà en ligne, ce qui n'est pas un
+  travail de soir de mise en ligne ;
+- prendre un second VPS pour ce projet. 4 à 8 €/mois, aucun risque pour
+  l'existant, sauvegardes isolées. ⛔ **C'est la recommandation par défaut si
+  les sites déjà en place rapportent de l'argent.**
+
+**2. Le pare-feu.** Activer UFW avec seulement 22, 80 et 443 ouverts coupe tout
+le reste — messagerie, panneau d'administration, port applicatif exotique —
+sans prévenir. `setup-vps.sh` **ajoute les règles mais n'active plus rien** par
+défaut. Si le pare-feu est déjà actif, il n'y touche pas.
+
+**3. Le `Caddyfile` existant.** Le §5 dit de copier `infra/Caddyfile` vers
+`/etc/caddy/Caddyfile`. ⛔ **Si ce fichier existe et contient déjà des sites,
+ne pas l'écraser.** Voir la variante au §5.
+
+**4. Les ports 3000, 4000 et 5432.** L'API, l'interface d'administration et la
+base s'y attendent. S'ils sont pris, les changer dans `infra/docker-compose.yml`
+et dans `infra/api.caddy` / `infra/admin.caddy` — les trois doivent rester
+cohérents.
+
+### Ce qui ne pose aucun problème
+
+Docker (les conteneurs de ce projet sont regroupés sous le nom `bxl`),
+Postgres en conteneur (il n'expose rien à l'extérieur, même si un Postgres
+tourne déjà sur la machine), `/srv/sites`, et l'utilisateur `deploy`.
 
 ---
 
@@ -100,13 +163,26 @@ fenêtre, sans fermer la session root en cours**. Se verrouiller dehors est
 l'erreur classique de cette étape, et elle se répare au prix d'une console de
 secours chez le fournisseur.
 
-Une fois la connexion `deploy` confirmée :
+⛔ **Sur un serveur déjà en service, le durcissement SSH qui suit est
+facultatif — et à ne faire qu'en connaissance de cause.** Couper la connexion
+par mot de passe casse tout ce qui s'y appuie encore : un script de sauvegarde,
+un client SFTP, un outil de déploiement d'un autre projet. Vérifier d'abord, et
+demander à l'exploitant :
+
+```bash
+grep -E '^(PermitRootLogin|PasswordAuthentication)' /etc/ssh/sshd_config
+last -20                      # qui se connecte, et comment
+```
+
+Si c'est déjà durci, il n'y a rien à faire. Sinon, une fois la connexion
+`deploy` confirmée :
 
 ```bash
 # Sur le serveur, en root :
+cp /etc/ssh/sshd_config /etc/ssh/sshd_config.avant-bxl
 sed -i 's/^#*PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
 sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
-sshd -t && systemctl restart ssh
+sshd -t && systemctl reload ssh    # « reload » : les sessions ouvertes survivent
 ```
 
 **Vérifier :** `ssh deploy@<IP>` fonctionne toujours ; `ssh root@<IP>` est
@@ -147,21 +223,58 @@ d'échecs, et cinq tentatives ratées imposent une heure d'attente.
 
 ## 5. Configuration de Caddy
 
+**Serveur neuf, ou `/etc/caddy/Caddyfile` encore par défaut :**
+
 ```bash
 # Depuis le poste :
 scp infra/Caddyfile root@<IP>:/etc/caddy/Caddyfile
+```
 
+⛔ **Serveur qui sert déjà des sites avec Caddy — NE PAS écraser.** Sauvegarder
+d'abord, puis fusionner à la main :
+
+```bash
+# Sur le serveur :
+cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.avant-bxl
+```
+
+Il faut alors reprendre trois choses du `infra/Caddyfile` de ce dépôt, sans
+toucher au reste :
+
+1. le bloc global `{ ... }` — n'en garder **qu'un seul** dans le fichier ; si
+   un `email` y est déjà défini, laisser celui qui existe ;
+2. le fragment `(commun)` en entier — c'est lui qui porte la compression, les
+   en-têtes de sécurité, la politique de cache et la page 404 ;
+3. la dernière ligne, `import /etc/caddy/sites/*.caddy`, qui charge les blocs
+   des clients.
+
+Les blocs de sites déjà présents restent inchangés.
+
+**Puis, dans les deux cas :**
+
+```bash
 # Sur le serveur :
 systemctl daemon-reload
 caddy validate --config /etc/caddy/Caddyfile   # doit répondre « Valid configuration »
-systemctl reload caddy
+systemctl reload caddy                          # « reload », jamais « restart » :
+                                                # aucune coupure pour les sites en place
 ```
 
 **Vérifier :** `systemctl status caddy` est `active (running)`, et
 `journalctl -u caddy -n 30` ne montre aucune erreur.
 
-À ce stade aucun site n'est encore servi : le `Caddyfile` importe
-`/etc/caddy/sites/*.caddy`, qui est vide. C'est normal.
+À ce stade aucun site **de ce projet** n'est encore servi : le `Caddyfile`
+importe `/etc/caddy/sites/*.caddy`, qui est vide. C'est normal.
+
+⛔ **Sur un serveur partagé, vérifier ici que les sites existants répondent
+toujours** avant d'aller plus loin :
+
+```bash
+curl -sI https://<un site déjà en ligne> | head -1   # doit rester 200
+```
+
+Si quelque chose est cassé, revenir en arrière tout de suite :
+`cp /etc/caddy/Caddyfile.avant-bxl /etc/caddy/Caddyfile && systemctl reload caddy`.
 
 ---
 
