@@ -13,11 +13,17 @@ WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/schema/package.json ./packages/schema/
+# @bxl/admin dépend de @bxl/api (rapports, facturation, avis de rendez-vous,
+# transport des courriels). Son manifeste doit être présent AVANT l'installation
+# pour que pnpm résolve la dépendance de l'espace de travail ; ses sources
+# doivent l'être après, puisqu'elles s'exécutent telles quelles.
+COPY apps/api/package.json ./apps/api/
 COPY apps/admin/package.json ./apps/admin/
 
 RUN pnpm install --frozen-lockfile --filter @bxl/admin...
 
 COPY packages/schema ./packages/schema
+COPY apps/api ./apps/api
 COPY apps/admin ./apps/admin
 
 WORKDIR /app/apps/admin
