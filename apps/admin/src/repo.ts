@@ -105,19 +105,48 @@ export async function commitAndPush(
   return run("git", ["push"], { timeoutMs: 120_000 });
 }
 
-/** Construit puis déploie un seul client. */
+/**
+ * Construit puis déploie un seul client, sur la machine hôte.
+ *
+ * Le travail n'est pas fait ici : l'image de la console n'embarque ni Astro ni
+ * le template — `pnpm build` s'y arrêterait aussitôt — et `deploy.sh` passe par
+ * ssh vers DEPLOY_HOST, où « localhost » désignerait le conteneur lui-même.
+ * Tout ce qu'il faut vit sur l'hôte, la console s'y connecte et lance
+ * `scripts/publier.sh`.
+ *
+ * L'hôte est joint par un nom déclaré dans Compose (`extra_hosts`), qui pointe
+ * la passerelle du réseau Docker : son adresse change d'une machine à l'autre
+ * et ne peut donc pas être écrite en dur.
+ */
 export async function publish(slug: string): Promise<CommandResult> {
-  const build = await run("pnpm", ["build", slug], {
-    env: config.PUBLIC_API_URL ? { PUBLIC_API_URL: config.PUBLIC_API_URL } : {},
-    timeoutMs: 600_000,
-  });
-  if (!build.ok) return { ok: false, output: `build échoué :\n${build.output}` };
-
-  const deploy = await run("./scripts/deploy.sh", [slug], { timeoutMs: 600_000 });
-  if (!deploy.ok) {
-    return { ok: false, output: `${build.output}\ndéploiement échoué :\n${deploy.output}` };
+  if (!config.PUBLISH_HOST) {
+    return {
+      ok: false,
+      output:
+        "PUBLISH_HOST n'est pas défini : la console ne sait pas à quelle machine " +
+        "confier la construction. Renseignez-le dans .env (voir §6.3 de la procédure).",
+    };
   }
-  return { ok: true, output: `${build.output}\n${deploy.output}` };
+
+  return run(
+    "ssh",
+    [
+      "-i",
+      config.SSH_KEY,
+      // La passerelle Docker n'a pas d'empreinte stable d'une machine à
+      // l'autre ; la vérification stricte bloquerait la première publication
+      // sur une question que personne ne voit. La liaison ne quitte pas la
+      // machine, contrairement à celle vers GitHub, qui reste vérifiée.
+      "-o",
+      "StrictHostKeyChecking=accept-new",
+      "-o",
+      "BatchMode=yes",
+      config.PUBLISH_HOST,
+      `${config.REPO_PATH}/scripts/publier.sh`,
+      slug,
+    ],
+    { timeoutMs: 600_000 },
+  );
 }
 
 /** Récupère les derniers changements avant d'éditer, pour éviter un conflit. */

@@ -1,11 +1,9 @@
 import { createReadStream } from "node:fs";
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import { WEEKDAYS, type Weekday } from "@bxl/schema";
 import { clients, client, readSiteRaw, writeSite, commitAndPush, publish, pull } from "../repo.ts";
 import { config } from "../config.ts";
 import { logPublish, etatPublication } from "../db.ts";
 import { layout, flash, escape, STATUTS, statutLisible, depuis } from "../views.ts";
-import { parseSlots, formatSlots } from "../hours.ts";
 import {
   listMedia,
   mediaPath,
@@ -15,13 +13,16 @@ import {
 } from "../media.ts";
 
 /*
- * Édition du contenu.
+ * Fiche d'un client : réglages et publication.
  *
- * Le formulaire structuré ne touche que ce qui change souvent et n'est pas
- * traduit : statut, coordonnées, horaires, tarifs et durées. Les libellés
- * traduits ne sont modifiables que par l'éditeur JSON — un champ simplifié qui
- * écraserait les versions néerlandaise et anglaise ferait perdre du travail
- * facturé, silencieusement.
+ * Cette page ne règle que ce qui n'est pas du contenu — la visibilité du site,
+ * sa mise en ligne, la bibliothèque de photos et le fichier brut. Textes,
+ * coordonnées, horaires, galerie, équipe, avis et tarifs vivent dans l'éditeur
+ * de contenu (`routes/contenu.ts`).
+ *
+ * La séparation est nette exprès : les mêmes champs présents des deux côtés
+ * laissaient croire à deux réglages distincts, et l'on ne savait plus lequel
+ * faisait foi.
  */
 
 function adminId(request: FastifyRequest): number {
@@ -54,24 +55,6 @@ async function editPage(
   const photos = listMedia(config.REPO_PATH, slug);
   const usages = usagesPhotos(site);
   const etat = await etatPublication(slug);
-
-  const hoursFields = WEEKDAYS.map(
-    (day) => `<label>${day}
-      <input type="text" name="hours.${day}" value="${escape(formatSlots(site.hours[day]))}"
-             placeholder="09:00-18:00 (vide = fermé)">
-    </label>`,
-  ).join("");
-
-  const serviceRows = site.services
-    .map(
-      (service, index) => `<tr>
-      <td>${escape(service.name[site.languages.default] ?? service.id)}
-        <div class="muted">${escape(service.id)}</div></td>
-      <td><input type="number" name="services.${index}.durationMin" value="${service.durationMin}" min="5" max="600" step="5"></td>
-      <td><input type="number" name="services.${index}.price" value="${service.price ?? ""}" min="0" step="1" placeholder="sur devis"></td>
-    </tr>`,
-    )
-    .join("");
 
   /*
    * Le bandeau d'état répond, avant toute chose, à « ce que je vois est-il en
@@ -147,40 +130,8 @@ ${bandeau}
     </p>
   </fieldset>
 
-  <fieldset>
-    <legend>Coordonnées</legend>
-    <div class="row">
-      <label>Téléphone<input type="text" name="phone" value="${escape(site.business.phone)}"></label>
-      <label>E-mail<input type="email" name="email" value="${escape(site.business.email ?? "")}"></label>
-    </div>
-    <p class="aide">Ces coordonnées apparaissent sur le site et reçoivent les demandes.</p>
-  </fieldset>
-
-  <fieldset>
-    <legend>Horaires</legend>
-    <div class="row">${hoursFields}</div>
-    <p class="aide">
-      Un créneau par jour : <code>09:00-18:00</code>. Plusieurs créneaux se
-      séparent par une virgule : <code>09:00-12:30, 13:30-18:00</code>.
-      Laisser vide ferme la journée.
-    </p>
-  </fieldset>
-
-  ${
-    site.services.length > 0
-      ? `<fieldset>
-    <legend>Tarifs et durées</legend>
-    <table>
-      <thead><tr><th>Prestation</th><th>Durée (min)</th><th>Prix (€)</th></tr></thead>
-      <tbody>${serviceRows}</tbody>
-    </table>
-    <p class="muted">Les libellés traduits se modifient dans l'éditeur JSON ci-dessous.</p>
-  </fieldset>`
-      : ""
-  }
-
   <div class="actions">
-    <button type="submit">Enregistrer les modifications</button>
+    <button type="submit">Enregistrer</button>
   </div>
   <p class="aide">
     Enregistrer conserve vos changements, sans rien changer au site public.
@@ -247,11 +198,11 @@ ${
   <summary>Édition avancée — contenu et traductions</summary>
   <div>
     <p class="aide">
-      Tout le contenu du site, y compris les textes en néerlandais et en
-      anglais, que le formulaire ci-dessus ne touche pas volontairement : un
-      champ simplifié écraserait les traductions sans prévenir.
-      Le format est vérifié à l'enregistrement — une erreur est refusée, elle
-      ne casse pas le site.
+      Le fichier de configuration complet. Tout ce qui se modifie couramment se
+      trouve dans <a href="/clients/${escape(slug)}/contenu">l'éditeur de contenu</a> ;
+      ceci ne sert qu'aux réglages qu'aucun formulaire n'expose, et de recours
+      si une section refuse un contenu. Le format est vérifié à l'enregistrement
+      — une erreur est refusée, elle ne casse pas le site.
     </p>
     <form method="post" action="/clients/${escape(slug)}/json">
       <label>site.json
@@ -318,8 +269,8 @@ export function clientRoutes(app: FastifyInstance): void {
         `<h1>Clients</h1>
 <p class="intro">
   ${liste.length === 0 ? "Aucun client pour l'instant." : `${liste.length} commerce(s).`}
-  Ouvrez une fiche pour modifier les horaires, les tarifs, les photos, puis
-  mettre le site à jour.
+  Ouvrez une fiche pour modifier le contenu du site, ses photos, et le mettre
+  à jour.
 </p>
 <div class="cartes">${cartes.join("")}</div>`,
         { authenticated: true },
@@ -341,25 +292,13 @@ export function clientRoutes(app: FastifyInstance): void {
       const body = request.body ?? {};
       const raw = readSiteRaw(slug);
 
-      raw.status = body.status;
-      const business = raw.business as Record<string, unknown>;
-      business.phone = body.phone;
-      if (body.email) business.email = body.email;
-      else delete business.email;
-
-      const hours: Record<string, unknown> = {};
-      for (const day of WEEKDAYS) {
-        hours[day] = parseSlots(body[`hours.${day}`] ?? "");
-      }
-      raw.hours = hours;
-
-      const services = (raw.services as Array<Record<string, unknown>>) ?? [];
-      services.forEach((service, index) => {
-        const duration = body[`services.${index}.durationMin`];
-        const price = body[`services.${index}.price`];
-        if (duration) service.durationMin = Number(duration);
-        service.price = price === "" || price === undefined ? null : Number(price);
-      });
+      /*
+       * Cette fiche ne règle plus que la visibilité. Coordonnées, horaires et
+       * tarifs sont passés dans l'éditeur de contenu, et les écrire encore ici
+       * les remettrait à ce que ce formulaire n'envoie plus : un téléphone
+       * vide, et sept journées fermées.
+       */
+      if (body.status) raw.status = body.status;
 
       const written = writeSite(slug, raw);
       if (!written.ok) {

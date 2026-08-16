@@ -116,6 +116,47 @@ ${texteTraduit("business.description", "Description", b.description, {
   );
 }
 
+/* ----------------------------------------------------------------- horaires */
+
+export function sectionHoraires(
+  slug: string,
+  site: Site,
+  formatSlots: (creneaux: unknown) => string,
+): string {
+  const jours: Array<[string, string]> = [
+    ["monday", "Lundi"],
+    ["tuesday", "Mardi"],
+    ["wednesday", "Mercredi"],
+    ["thursday", "Jeudi"],
+    ["friday", "Vendredi"],
+    ["saturday", "Samedi"],
+    ["sunday", "Dimanche"],
+  ];
+
+  const champs = jours
+    .map(
+      ([cle, nom]) => `<label>${nom}
+      <input type="text" name="hours.${cle}"
+             value="${escape(formatSlots(site.hours[cle as keyof typeof site.hours]))}"
+             placeholder="fermé">
+    </label>`,
+    )
+    .join("");
+
+  return section(
+    slug,
+    "horaires",
+    "Horaires",
+    "Les heures d'ouverture affichées sur le site. Elles servent aussi à calculer les créneaux de réservation : une journée fermée ici ne propose aucun rendez-vous.",
+    `<div class="row">${champs}</div>
+<p class="aide">
+  Un créneau par jour : <code>09:00-18:00</code>. Plusieurs créneaux se séparent
+  par une virgule : <code>09:00-12:30, 13:30-18:00</code>. Laisser vide ferme la
+  journée.
+</p>`,
+  );
+}
+
 /* ------------------------------------------------------------------ galerie */
 
 export function sectionGalerie(slug: string, site: Site, defaut: Language): string {

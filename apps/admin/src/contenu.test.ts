@@ -128,6 +128,26 @@ describe("présentation", () => {
   });
 });
 
+describe("horaires", () => {
+  it("lit les créneaux d'une journée", () => {
+    const raw = siteComplet() as Record<string, any>;
+    appliquerSection(raw, "horaires", { "hours.tuesday": "09:30-12:30, 13:30-18:00" });
+    expect(raw.hours.tuesday).toEqual([
+      { open: "09:30", close: "12:30" },
+      { open: "13:30", close: "18:00" },
+    ]);
+  });
+
+  it("ferme les journées absentes du formulaire", () => {
+    // Une case vidée doit fermer la journée : la traiter comme « inchangée »
+    // rendrait impossible de fermer un jour depuis la console.
+    const raw = siteComplet() as Record<string, any>;
+    appliquerSection(raw, "horaires", { "hours.tuesday": "09:00-18:00" });
+    expect(raw.hours.wednesday).toEqual([]);
+    expect(raw.hours.sunday).toEqual([]);
+  });
+});
+
 describe("galerie", () => {
   it("reconstruit les photos dans l'ordre reçu", () => {
     const raw = siteComplet();
@@ -233,7 +253,7 @@ describe("prestations", () => {
       "services.0.durationMin": "30",
       "services.0.price": "",
     });
-    expect(raw.services[0].price).toBeNull();
+    expect(raw.services[0]!.price).toBeNull();
   });
 
   it("retient « à partir de »", () => {
@@ -244,7 +264,7 @@ describe("prestations", () => {
       "services.0.price": "28",
       "services.0.priceFrom": "1",
     });
-    expect(raw.services[0].priceFrom).toBe(true);
+    expect(raw.services[0]!.priceFrom).toBe(true);
   });
 
   it("n'invente pas de prestation quand l'identifiant est inconnu", () => {

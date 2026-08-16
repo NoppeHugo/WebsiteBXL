@@ -72,11 +72,29 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # Le conteneur emprunte l'identité du compte qui possède le dépôt sur
+    # l'hôte. Sans cela il tourne en root, et git refuse d'ouvrir un dépôt
+    # appartenant à quelqu'un d'autre : « detected dubious ownership ». Toutes
+    # les écritures de la console échouaient alors — enregistrer, pousser,
+    # rafraîchir — sans que le service paraisse en panne.
+    user: "${DEPLOY_UID:-1002}:${DEPLOY_GID:-1002}"
+    # `host-gateway` donne au conteneur un nom pour joindre la machine qui
+    # l'héberge : c'est par là que passe la publication (voir repo.ts).
+    extra_hosts:
+      - "hote:host-gateway"
     environment:
       DATABASE_URL: postgres://bxl:${POSTGRES_PASSWORD}@db:5432/bxl
       NODE_ENV: production
       PORT: 4000
       REPO_PATH: /repo
+      # Sans HOME accessible, ssh et git écrivent dans un répertoire dont
+      # l'utilisateur emprunté n'est pas propriétaire, et échouent.
+      HOME: /tmp
+      # La clé et les hôtes connus sont montés plus bas ; git doit se les voir
+      # désigner explicitement, il ne les cherche que dans ~/.ssh.
+      GIT_SSH_COMMAND: "ssh -i /ssh/id_ed25519 -o UserKnownHostsFile=/ssh/known_hosts -o IdentitiesOnly=yes"
+      SSH_KEY: /ssh/id_ed25519
+      PUBLISH_HOST: ${PUBLISH_HOST:-}
       SESSION_SECRET: ${SESSION_SECRET:?secret de session requis}
       PUBLIC_API_URL: ${PUBLIC_API_URL:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
@@ -95,8 +113,14 @@ services:
       # Le clone du dépôt sur le VPS : la console y écrit les site.json,
       # commite et pousse. Git reste la source de vérité du contenu.
       - ${REPO_PATH:?chemin du dépôt requis}:/repo
-      # Clé SSH en lecture seule, pour pousser vers GitHub et déployer.
-      - ${SSH_KEY_PATH:?clé SSH requise}:/root/.ssh/id_ed25519:ro
+      # Clé SSH en lecture seule : elle sert à pousser vers GitHub et à
+      # demander une publication à l'hôte. Déposée dans /ssh et non dans
+      # /root/.ssh — le conteneur ne tourne plus en root, et /root lui est
+      # devenu inaccessible.
+      - ${SSH_KEY_PATH:?clé SSH requise}:/ssh/id_ed25519:ro
+      # Empreinte de github.com, pour que le push ne bute pas sur une question
+      # d'hôte inconnu à laquelle personne ne peut répondre.
+      - ${SSH_KNOWN_HOSTS:-/home/deploy/.ssh/known_hosts}:/ssh/known_hosts:ro
     ports:
       - "127.0.0.1:4000:4000"
 

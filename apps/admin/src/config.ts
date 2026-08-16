@@ -21,6 +21,23 @@ const Env = z.object({
   /** Durée de vie d'une session, en heures. */
   SESSION_HOURS: z.coerce.number().int().positive().default(12),
 
+  /**
+   * Machine qui construit et déploie réellement les sites, au format
+   * `utilisateur@hôte`.
+   *
+   * La console ne peut pas s'en charger : son image n'embarque ni Astro ni le
+   * template, et « localhost » y désigne le conteneur, pas le serveur. Elle se
+   * connecte donc en ssh à l'hôte et y lance `scripts/publier.sh`, là où vivent
+   * Node, les dépendances et /srv/sites.
+   *
+   * Vide, le bouton « Mettre en ligne » explique ce qui manque au lieu de
+   * lancer une commande qui échouerait sans dire pourquoi.
+   */
+  PUBLISH_HOST: z.string().default(""),
+
+  /** Clé lue par ssh et par git, dans le conteneur. */
+  SSH_KEY: z.string().default("/ssh/id_ed25519"),
+
   /** Injecté dans les builds déclenchés depuis la console. */
   PUBLIC_API_URL: z.string().default(""),
   STRIPE_SECRET_KEY: z.string().optional(),

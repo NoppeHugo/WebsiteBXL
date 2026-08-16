@@ -1,4 +1,5 @@
-import { LANGUAGES } from "@bxl/schema";
+import { LANGUAGES, WEEKDAYS } from "@bxl/schema";
+import { parseSlots } from "./hours.ts";
 
 /**
  * Application des champs de l'éditeur sur `site.json`.
@@ -80,6 +81,7 @@ function poserTraduit(
 export const SECTIONS = [
   "accueil",
   "presentation",
+  "horaires",
   "galerie",
   "equipe",
   "avis",
@@ -129,6 +131,17 @@ export function appliquerSection(
       for (const reseau of ["instagram", "facebook", "tiktok"]) {
         poser(social, reseau, champs[`business.social.${reseau}`]);
       }
+      return;
+    }
+
+    case "horaires": {
+      const heures: Record<string, unknown> = {};
+      for (const jour of WEEKDAYS) {
+        // Un jour absent du formulaire est fermé, pas inchangé : c'est ainsi
+        // qu'une case vidée ferme réellement la journée.
+        heures[jour] = parseSlots(champs[`hours.${jour}`] ?? "");
+      }
+      raw.hours = heures;
       return;
     }
 

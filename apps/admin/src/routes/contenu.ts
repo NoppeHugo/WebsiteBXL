@@ -4,11 +4,13 @@ import { config } from "../config.ts";
 import { logPublish, etatPublication } from "../db.ts";
 import { layout, flash, escape, depuis } from "../views.ts";
 import { saveMedia, MAX_UPLOAD_BYTES } from "../media.ts";
+import { formatSlots } from "../hours.ts";
 import { appliquerSection, estSection, type Champs } from "../contenu.ts";
 import { EDITEUR_JS } from "../views/editeur-js.ts";
 import {
   sectionAccueil,
   sectionPresentation,
+  sectionHoraires,
   sectionGalerie,
   sectionEquipe,
   sectionAvis,
@@ -31,6 +33,7 @@ function adminId(request: FastifyRequest): number {
 const TITRES: Record<string, string> = {
   accueil: "Accueil",
   presentation: "Le commerce",
+  horaires: "Horaires",
   galerie: "Galerie",
   equipe: "Équipe",
   avis: "Avis",
@@ -80,6 +83,7 @@ ${bandeau}
 
 ${sectionAccueil(slug, site, defaut)}
 ${sectionPresentation(slug, site, defaut)}
+${sectionHoraires(slug, site, formatSlots as (c: unknown) => string)}
 ${sectionGalerie(slug, site, defaut)}
 ${sectionEquipe(slug, site, defaut)}
 ${sectionAvis(slug, site, defaut)}
