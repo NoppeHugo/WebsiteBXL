@@ -339,6 +339,16 @@ cp .env.example .env
 chmod 600 .env
 ```
 
+**Docker Compose lit le `.env` du dossier qui contient le `docker-compose.yml`**,
+pas celui de la racine du dépôt. Sans le lien ci-dessous, le fichier écrit à
+l'instant n'est jamais lu, et Compose s'arrête sur
+`required variable MAIL_FROM is missing a value` alors que la valeur y est bien.
+Un lien plutôt qu'une copie : un seul fichier de secrets à tenir à jour.
+
+```bash
+ln -s ../.env /srv/repo/infra/.env
+```
+
 ### 6.3 Démarrer les services
 
 ```bash
@@ -626,4 +636,6 @@ mise en ligne rapide.
 | 2026-08-16 | 6.1 | `scripts/deploy.sh` passe par `ssh $DEPLOY_HOST` + `rsync` même vers la machine locale. | Clé SSH **locale** `deploy` → `deploy@localhost` (sans rapport avec GitHub, rien d'exposé). `DEPLOY_HOST=deploy@localhost`. |
 | 2026-08-16 | 6.2 | L'exploitant ne prend pas Resend et veut passer par une adresse Gmail. Le projet ne connaissait que `log` et `resend`. | Driver `smtp` ajouté à `mail-transport.ts` (nodemailer, import dynamique, connexion réutilisée), variables `SMTP_*` dans les deux configurations, validation au démarrage, 5 tests. `EMAIL_DRIVER` et `RESEND_API_KEY` ne sont plus exigés par Compose : c'est l'application qui vérifie que le driver choisi a ce qu'il lui faut. 143 tests, types vérifiés. |
 | 2026-08-16 | 6.2 | ⚠️ **Limites de Gmail à connaître avant la mise en clientèle** : l'expéditeur est réécrit avec l'adresse du compte (le client verra l'adresse Gmail, sauf alias vérifié dans Gmail), plafond de 500 envois par jour, et un **mot de passe d'application** est obligatoire (validation en deux étapes requise). | Accepté pour démarrer. Bascule vers Resend possible sans réécrire quoi que ce soit — les deux drivers coexistent. |
+| 2026-08-16 | 6.2 | `MAIL_FROM` non quoté dans `.env.example` : `scripts/deploy.sh` fait `source .env`, où `<` est lu comme une redirection. La lecture du fichier échoue alors **en entier**, et le déploiement s'arrête sur « DEPLOY_HOST non défini » — un message sans rapport avec la cause. | Guillemets ajoutés dans `.env.example`, et contrôle `source` ajouté avant tout démarrage. |
+| 2026-08-16 | 6.3 | Compose lit le `.env` du dossier du `docker-compose.yml`, pas celui de la racine. La procédure fait écrire `/srv/repo/.env` puis lance Compose depuis `/srv/repo/infra` : le fichier n'était jamais lu, avec l'erreur trompeuse `required variable MAIL_FROM is missing a value` alors que la valeur était bien présente. | Lien `infra/.env → ../.env`, et §6.2 complété. Un lien plutôt qu'une copie : un seul fichier de secrets, pas de version oubliée qui diverge. |
 | 2026-08-16 | 5 | Le §5 (Caddyfile) ne s'applique pas. | Remplacé par `infra/nginx/` : `bxl-commun.conf` (fragment `(commun)`), `api.conf.modele`, `admin.conf.modele`, `site.conf.modele` (équivalent de `pnpm caddy`). Modèles en HTTP seul — c'est certbot qui ajoute le TLS, comme pour les 4 sites déjà en place. |
