@@ -527,15 +527,55 @@ ce branchement trivial le jour venu.
 
 ### 3.10 Noms de domaine au nom du client
 
-**Décision :** chaque domaine est enregistré au nom du commerçant ; la gestion
-technique du DNS reste de notre côté.
+**Décision :** chaque client payant a **son propre domaine**, enregistré à son
+nom ; la gestion technique du DNS reste de notre côté. Un sous-domaine du
+domaine de service sert d'adresse d'attente et de démonstration.
 
-**Pourquoi :** enregistrer les domaines à son propre nom pour verrouiller le
-client crée un conflit juridique le jour où la relation se termine mal — pour
-12 € par an. Et c'est un **argument de vente** : « le domaine vous appartient,
-vous n'êtes pas prisonnier » rassure beaucoup et différencie des prestataires
-qui font l'inverse. Le verrouillage doit venir de la qualité du service, pas de
-la prise d'otage.
+**Pourquoi le domaine propre :** enregistrer les domaines à son propre nom pour
+verrouiller le client crée un conflit juridique le jour où la relation se
+termine mal — pour 12 € par an. Et c'est un **argument de vente** : « le
+domaine vous appartient, vous n'êtes pas prisonnier » rassure beaucoup et
+différencie des prestataires qui font l'inverse. Le verrouillage doit venir de
+la qualité du service, pas de la prise d'otage.
+
+**Pourquoi pas tout le monde en sous-domaine.** Techniquement, un seul domaine
+de service suffirait : `kevin.hair.be`, `sophie.hair.be`, un enregistrement DNS
+générique, un certificat par sous-domaine obtenu automatiquement. Rien à
+changer dans le code, et 12 € par an économisés par client. Quatre raisons de
+ne pas en faire la règle :
+
+1. **Ce qui se met sur une carte de visite.** `kevincoiffure.be` se dicte au
+   téléphone, se retient, se peint sur une vitrine. `kevin.hair.be` dit au
+   client final que le salon est hébergé chez quelqu'un.
+2. **La contradiction avec le discours de vente.** On ne peut pas vendre
+   « vous n'êtes pas prisonnier » et donner une adresse que le commerçant ne
+   pourra jamais emporter.
+3. **Réputation partagée.** Un seul client problématique — contenu douteux,
+   plainte, signalement — et c'est le domaine entier qui est atteint, donc tous
+   les autres avec lui.
+4. **L'adresse e-mail.** Beaucoup de commerçants veulent `contact@leur-nom.be`.
+   Impossible à proposer sérieusement sur un sous-domaine du nôtre.
+
+L'économie, elle, est faible : 12 € par an face à un abonnement de 300 à 700 €
+par an, soit 2 à 4 %. Ce n'est pas là que se joue la marge.
+
+**Le sous-domaine reste utile, à sa place :** pendant la vente et la
+production. Le site est en ligne sur `kevin.hair.be` dans l'heure, montrable au
+prospect avant qu'aucun domaine ne soit acheté, sans attendre la propagation
+DNS de qui que ce soit. Le jour où le vrai domaine arrive, il devient `domain`
+et le sous-domaine passe dans `aliases` — où il **redirige** de façon
+permanente, en conservant le chemin. Personne ne perd son signet, et le
+référencement ne se disperse pas entre deux adresses.
+
+```json
+{
+  "domain": "kevincoiffure.be",
+  "aliases": ["kevin.hair.be", "www.kevincoiffure.be"]
+}
+```
+
+`pnpm caddy <slug>` produit les deux blocs : le site sur le domaine canonique,
+la redirection permanente pour tous les alias.
 
 ### 3.11 Suspension pour impayé, prévue dès le départ
 
@@ -936,7 +976,9 @@ PUBLIC_API_URL=https://api.exemple.be pnpm build salon-marie
 - ✅ Vérification des types du monorepo (`pnpm typecheck`) — Node exécute les
   `.ts` sans jamais les relire, ce contrôle est donc le seul qui les regarde.
 - Mise en ligne sur le VPS : images Docker, Caddy, sauvegardes, supervision.
-  Rien de tout cela n'a encore tourné sur une vraie machine.
+  Rien de tout cela n'a encore tourné sur une vraie machine. La procédure
+  complète, pas à pas, est dans **`docs/DEPLOIEMENT.md`** — avec la liste de ce
+  qui n'a jamais été essayé et qu'il faut vérifier ce jour-là.
 - Deuxième niche (métiers de bouche) avec ses propres variantes de template.
 - Envisager un CMS git-based si le volume le justifie.
 
@@ -962,7 +1004,7 @@ cp .env.example .env      # renseigner DEPLOY_HOST une fois le VPS prêt
 | `pnpm check` | Valide tous les clients sans construire : format, photos manquantes, traductions absentes. |
 | `pnpm typecheck` | Relit les types du code Node et du template. Node n'effectue aucune vérification à l'exécution : sans cette commande, personne ne les regarde. |
 | `pnpm test` | Suite de tests (vitest). |
-| `pnpm caddy <slug>` | Génère le bloc Caddy du client depuis son domaine et ses alias. |
+| `pnpm caddy <slug>` | Génère le bloc Caddy du client : le site sur son domaine, une redirection permanente pour chaque alias. |
 | `pnpm placeholders <slug>` | Régénère les visuels de remplacement. |
 | `pnpm tenant <slug> --email …` | Enregistre le commerce auprès de l'API et génère son `tenantId`. |
 | `pnpm api` | Lance l'API de réservation en local. |

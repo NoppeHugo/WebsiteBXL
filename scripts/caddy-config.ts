@@ -26,14 +26,36 @@ if (slugs.length === 0) {
   fail("usage : pnpm caddy <slug> [--out <dossier>]  |  pnpm caddy --all --out <dossier>");
 }
 
-function block(slug: string, domains: string[]): string {
+/**
+ * Bloc Caddy d'un client.
+ *
+ * Le site n'est servi que sur son domaine canonique ; les alias redirigent
+ * vers lui de façon permanente. Servir le même contenu sur plusieurs adresses
+ * disperserait le référencement entre elles, et laisserait un client donner
+ * une adresse dont on voudrait plus tard qu'elle ne soit plus la sienne —
+ * typiquement le sous-domaine de service utilisé pendant la vente, une fois
+ * le vrai domaine acheté.
+ *
+ * La redirection conserve le chemin et la requête : un lien vers une page
+ * précise ne retombe pas sur l'accueil.
+ */
+function block(slug: string, domain: string, aliases: string[]): string {
+  const redirect =
+    aliases.length === 0
+      ? ""
+      : `
+${aliases.join(", ")} {
+	redir https://${domain}{uri} permanent
+}
+`;
+
   return `# Généré par \`pnpm caddy ${slug}\` — ne pas modifier à la main.
-${domains.join(", ")} {
+${domain} {
 	import commun
 	root * /srv/sites/${slug}/current
 	file_server
 }
-`;
+${redirect}`;
 }
 
 for (const slug of slugs) {
@@ -45,7 +67,7 @@ for (const slug of slugs) {
   }
 
   const domains = [site.domain, ...site.aliases];
-  const content = block(slug, domains);
+  const content = block(slug, site.domain, site.aliases);
 
   if (outDir) {
     mkdirSync(outDir, { recursive: true });
