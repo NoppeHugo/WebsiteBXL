@@ -15,6 +15,9 @@ const mail = {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  // Le driver `smtp` charge nodemailer par un import dynamique : sans vider le
+  // cache des modules, le doublure d'un test resservirait au suivant.
+  vi.resetModules();
 });
 
 describe("mode log", () => {
@@ -76,5 +79,77 @@ describe("mode resend", () => {
     await expect(
       createMailer({ driver: "resend", apiKey: "mauvaise" })(mail),
     ).rejects.toThrow(/401/);
+  });
+});
+
+describe("mode smtp", () => {
+  const smtp = {
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    user: "salon@gmail.com",
+    pass: "mot-de-passe-application",
+  };
+
+  it("refuse de se construire sans paramètres de connexion", () => {
+    // Sans cela, l'absence de configuration ne se verrait qu'au premier
+    // courriel — c'est-à-dire au premier client, en production.
+    expect(() => createMailer({ driver: "smtp" })).toThrow(/smtp/);
+  });
+
+  it("ouvre la connexion avec les paramètres reçus et transmet le courriel", async () => {
+    const sendMail = vi.fn().mockResolvedValue({});
+    const createTransport = vi.fn().mockReturnValue({ sendMail });
+    vi.doMock("nodemailer", () => ({ default: { createTransport } }));
+
+    await createMailer({ driver: "smtp", smtp, from: "Salon <salon@gmail.com>" })(mail);
+
+    expect(createTransport).toHaveBeenCalledWith({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: { user: smtp.user, pass: smtp.pass },
+    });
+    expect(sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: "Salon <salon@gmail.com>",
+        to: "sophie@exemple.be",
+        subject: "Rendez-vous confirmé",
+      }),
+    );
+  });
+
+  it("n'ouvre qu'une seule connexion pour plusieurs courriels", async () => {
+    // Une session TLS par courriel serait payée à chaque confirmation.
+    const sendMail = vi.fn().mockResolvedValue({});
+    const createTransport = vi.fn().mockReturnValue({ sendMail });
+    vi.doMock("nodemailer", () => ({ default: { createTransport } }));
+
+    const envoyer = createMailer({ driver: "smtp", smtp });
+    await envoyer(mail);
+    await envoyer(mail);
+
+    expect(createTransport).toHaveBeenCalledTimes(1);
+    expect(sendMail).toHaveBeenCalledTimes(2);
+  });
+
+  it("n'invente pas de champ de réponse quand il n'y en a pas", async () => {
+    const sendMail = vi.fn().mockResolvedValue({});
+    vi.doMock("nodemailer", () => ({
+      default: { createTransport: () => ({ sendMail }) },
+    }));
+
+    await createMailer({ driver: "smtp", smtp })(mail);
+
+    expect("replyTo" in sendMail.mock.calls[0]![0]).toBe(false);
+  });
+
+  it("échoue bruyamment quand le relais refuse", async () => {
+    const sendMail = vi.fn().mockRejectedValue(new Error("535 authentification refusée"));
+    vi.doMock("nodemailer", () => ({
+      default: { createTransport: () => ({ sendMail }) },
+    }));
+
+    await expect(createMailer({ driver: "smtp", smtp })(mail)).rejects.toThrow(/535/);
   });
 });

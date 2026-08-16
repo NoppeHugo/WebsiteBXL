@@ -11,13 +11,28 @@ const Env = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL est requis"),
 
   /**
-   * `resend` envoie réellement, `log` écrit dans la sortie standard.
-   * `log` sert au développement — jamais en production, d'où le contrôle
-   * ci-dessous.
+   * `resend` et `smtp` envoient réellement, `log` écrit dans la sortie
+   * standard. `log` sert au développement — jamais en production, d'où le
+   * contrôle ci-dessous.
    */
-  EMAIL_DRIVER: z.enum(["resend", "log"]).default("log"),
+  EMAIL_DRIVER: z.enum(["resend", "smtp", "log"]).default("log"),
   RESEND_API_KEY: z.string().optional(),
   MAIL_FROM: z.string().default("Réservations <noreply@example.be>"),
+
+  /**
+   * Relais SMTP, quand `EMAIL_DRIVER=smtp`. Pour Gmail :
+   * `smtp.gmail.com`, port 465, et un **mot de passe d'application** —
+   * le mot de passe du compte est refusé, et la validation en deux étapes
+   * doit être active pour pouvoir en créer un.
+   *
+   * Le chiffrement se déduit du port : 465 ouvre une session TLS d'emblée,
+   * les autres (587 en tête) montent en TLS par STARTTLS. Une variable de
+   * plus serait une occasion de plus de se tromper.
+   */
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(465),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
 
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 
@@ -65,4 +80,20 @@ if (config.NODE_ENV === "production" && config.EMAIL_DRIVER === "log") {
 
 if (config.EMAIL_DRIVER === "resend" && !config.RESEND_API_KEY) {
   throw new Error("EMAIL_DRIVER=resend nécessite RESEND_API_KEY");
+}
+
+if (config.EMAIL_DRIVER === "smtp") {
+  const manquants = (
+    [
+      ["SMTP_HOST", config.SMTP_HOST],
+      ["SMTP_USER", config.SMTP_USER],
+      ["SMTP_PASS", config.SMTP_PASS],
+    ] as const
+  )
+    .filter(([, valeur]) => !valeur)
+    .map(([nom]) => nom);
+
+  if (manquants.length > 0) {
+    throw new Error(`EMAIL_DRIVER=smtp nécessite ${manquants.join(", ")}`);
+  }
 }

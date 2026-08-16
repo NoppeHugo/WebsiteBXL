@@ -39,8 +39,17 @@ services:
     environment:
       DATABASE_URL: postgres://bxl:${POSTGRES_PASSWORD}@db:5432/bxl
       NODE_ENV: production
-      EMAIL_DRIVER: resend
-      RESEND_API_KEY: ${RESEND_API_KEY:?clé Resend requise}
+      # `resend` ou `smtp`. Ce n'est plus Compose qui exige la clé Resend :
+      # avec un relais SMTP elle n'existe pas, et un `:?` ici empêcherait le
+      # service de démarrer pour une valeur dont il n'a pas besoin. C'est
+      # `apps/api/src/config.ts` qui vérifie, au démarrage, que le driver
+      # choisi dispose bien de ce qu'il lui faut — et `log` y reste refusé.
+      EMAIL_DRIVER: ${EMAIL_DRIVER:-resend}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
       MAIL_FROM: ${MAIL_FROM:?expéditeur requis}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
@@ -77,6 +86,10 @@ services:
       # client non prévenu se déplace pour rien.
       EMAIL_DRIVER: ${EMAIL_DRIVER:-resend}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
       MAIL_FROM: ${MAIL_FROM:-}
     volumes:
       # Le clone du dépôt sur le VPS : la console y écrit les site.json,

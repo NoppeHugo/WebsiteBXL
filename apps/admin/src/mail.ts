@@ -12,4 +12,13 @@ export const sendMail = createMailer({
   driver: config.EMAIL_DRIVER,
   apiKey: config.RESEND_API_KEY,
   from: config.MAIL_FROM,
+  smtp: config.SMTP_HOST
+    ? {
+        host: config.SMTP_HOST,
+        port: config.SMTP_PORT,
+        secure: config.SMTP_PORT === 465,
+        user: config.SMTP_USER ?? "",
+        pass: config.SMTP_PASS ?? "",
+      }
+    : undefined,
 });

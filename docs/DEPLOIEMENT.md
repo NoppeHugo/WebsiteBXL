@@ -324,8 +324,10 @@ cp .env.example .env
 |---|---|
 | `POSTGRES_PASSWORD` | à générer : `openssl rand -base64 32` |
 | `SESSION_SECRET` | à générer : `openssl rand -base64 48` |
-| `RESEND_API_KEY` | fournie par l'exploitant |
-| `MAIL_FROM` | ex. `Réservations <no-reply@<domaine>>` — le domaine doit être vérifié chez Resend |
+| `EMAIL_DRIVER` | `resend` ou `smtp` — `log` est refusé au démarrage en production |
+| `RESEND_API_KEY` | fournie par l'exploitant, si `EMAIL_DRIVER=resend` |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | si `EMAIL_DRIVER=smtp`. Gmail : `smtp.gmail.com`, port 465, et un **mot de passe d'application** — le mot de passe du compte est refusé |
+| `MAIL_FROM` | ex. `Réservations <no-reply@<domaine>>`. Avec Resend, le domaine doit être vérifié. **Avec Gmail, l'expéditeur est réécrit** avec l'adresse du compte, sauf alias vérifié dans Gmail |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | fournies par l'exploitant |
 | `PUBLIC_API_URL` | `https://api.<domaine>` |
 | `PUBLIC_ADMIN_URL` | `https://admin.<domaine>` |
@@ -619,4 +621,9 @@ mise en ligne rapide.
 | 2026-08-16 | 2 | Node de l'hôte en v18 alors que le dépôt exige `>=22`, et pnpm absent. | Node système **non** touché (d'autres projets pourraient s'en servir) : pnpm/Node 22 à installer pour le seul utilisateur de déploiement. |
 | 2026-08-16 | 3 | Durcissement SSH : `PasswordAuthentication no` déjà en place. | Rien à faire, conformément au §3. `sshd_config` non modifié. |
 | 2026-08-16 | 4 | Domaine de service fourni : `hairbxl.be` (zone chez Hostinger, NS `apollo`/`athena.dns-parking.com`). La zone existe et répond en interrogation directe des NS, **mais le domaine n'est pas encore délégué au registre `.be`** : `dig +trace` ne renvoie que des NSEC3. Aucun certificat n'est demandable tant que ce n'est pas propagé. | Attente de la délégation. Enregistrements A à créer par l'exploitant pendant ce temps ; le socle (§2) ne dépend pas du DNS et peut se faire en parallèle. |
+| 2026-08-16 | 2 | Socle passé. `deploy` créé (groupes `deploy`, `users`, `docker`), `/srv/sites` en place, fragment nginx déposé, règles UFW confirmées sans activation. `nginx -t` valide et les 4 sites toujours en 200. Avertissement `protocol options redefined for [::]:443` sur `rappl.be:15` : **préexistant**, sans effet, non corrigé. | Sauvegarde `/root/nginx-avant-bxl.tgz` faite avant toute chose. |
+| 2026-08-16 | 6.1 | **Dette assumée : pas de deploy key GitHub pour l'instant** (choix de l'exploitant). `/srv/repo` est donc peuplé depuis le clone local, ce qui n'en a pas besoin. | ⚠️ Tant que la clé n'est pas déclarée sur GitHub **avec accès en écriture**, la console d'administration modifiera les fichiers clients **sans pouvoir les enregistrer** — aucune erreur visible, travail perdu au déploiement suivant. À vérifier par `git -C /srv/repo push --dry-run` avant tout usage réel de la console. |
+| 2026-08-16 | 6.1 | `scripts/deploy.sh` passe par `ssh $DEPLOY_HOST` + `rsync` même vers la machine locale. | Clé SSH **locale** `deploy` → `deploy@localhost` (sans rapport avec GitHub, rien d'exposé). `DEPLOY_HOST=deploy@localhost`. |
+| 2026-08-16 | 6.2 | L'exploitant ne prend pas Resend et veut passer par une adresse Gmail. Le projet ne connaissait que `log` et `resend`. | Driver `smtp` ajouté à `mail-transport.ts` (nodemailer, import dynamique, connexion réutilisée), variables `SMTP_*` dans les deux configurations, validation au démarrage, 5 tests. `EMAIL_DRIVER` et `RESEND_API_KEY` ne sont plus exigés par Compose : c'est l'application qui vérifie que le driver choisi a ce qu'il lui faut. 143 tests, types vérifiés. |
+| 2026-08-16 | 6.2 | ⚠️ **Limites de Gmail à connaître avant la mise en clientèle** : l'expéditeur est réécrit avec l'adresse du compte (le client verra l'adresse Gmail, sauf alias vérifié dans Gmail), plafond de 500 envois par jour, et un **mot de passe d'application** est obligatoire (validation en deux étapes requise). | Accepté pour démarrer. Bascule vers Resend possible sans réécrire quoi que ce soit — les deux drivers coexistent. |
 | 2026-08-16 | 5 | Le §5 (Caddyfile) ne s'applique pas. | Remplacé par `infra/nginx/` : `bxl-commun.conf` (fragment `(commun)`), `api.conf.modele`, `admin.conf.modele`, `site.conf.modele` (équivalent de `pnpm caddy`). Modèles en HTTP seul — c'est certbot qui ajoute le TLS, comme pour les 4 sites déjà en place. |

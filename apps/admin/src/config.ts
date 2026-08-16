@@ -31,9 +31,15 @@ const Env = z.object({
    * annule un rendez-vous : sans cela, le client se présenterait devant une
    * porte fermée. Mêmes valeurs que pour l'API.
    */
-  EMAIL_DRIVER: z.enum(["log", "resend"]).default("log"),
+  EMAIL_DRIVER: z.enum(["log", "resend", "smtp"]).default("log"),
   RESEND_API_KEY: z.string().optional(),
   MAIL_FROM: z.string().default("no-reply@example.com"),
+
+  /** Relais SMTP — voir `apps/api/src/config.ts` pour le détail. */
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(465),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
 });
 
 const parsed = Env.safeParse(process.env);
@@ -49,6 +55,9 @@ export const isProduction = config.NODE_ENV === "production";
 
 if (config.EMAIL_DRIVER === "resend" && !config.RESEND_API_KEY) {
   throw new Error("EMAIL_DRIVER=resend nécessite RESEND_API_KEY");
+}
+if (config.EMAIL_DRIVER === "smtp" && !(config.SMTP_HOST && config.SMTP_USER && config.SMTP_PASS)) {
+  throw new Error("EMAIL_DRIVER=smtp nécessite SMTP_HOST, SMTP_USER et SMTP_PASS");
 }
 if (isProduction && config.EMAIL_DRIVER === "log") {
   throw new Error(
