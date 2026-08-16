@@ -506,8 +506,14 @@ body[data-glass="true"] .nav[data-menu="open"] {
  * dessus, ce qui creuse la page au lieu de la faire glisser d'un bloc.
  *
  * L'agrandissement n'est pas décoratif : sans lui, déplacer l'image
- * découvrirait le fond en haut ou en bas du cadre. 12 % de marge pour 6 % de
- * déplacement de part et d'autre, donc jamais de bord vide.
+ * découvrirait le fond en haut ou en bas du cadre. Il faut donc au moins deux
+ * fois l'amplitude — 30 % de marge pour 14 % de déplacement de part et
+ * d'autre, et jamais de bord vide.
+ *
+ * Pourquoi 14 % et non 6 % : le hero occupe tout l'écran dès le chargement,
+ * donc la première moitié de la course — celle où l'élément « entre » par le
+ * bas — est déjà consommée avant le premier défilement. Seule la seconde
+ * moitié se voit réellement, et une amplitude timide y devient invisible.
  *
  * Deux implémentations pour un seul effet. Celle-ci ne coûte rien : le
  * navigateur anime hors du fil principal, et rien ne s'exécute au défilement.
@@ -524,10 +530,10 @@ body[data-glass="true"] .nav[data-menu="open"] {
 
     @keyframes hero-parallaxe {
       from {
-        transform: translateY(-6%) scale(1.12);
+        transform: translateY(-14%) scale(1.3);
       }
       to {
-        transform: translateY(6%) scale(1.12);
+        transform: translateY(14%) scale(1.3);
       }
     }
   }
@@ -537,7 +543,7 @@ body[data-glass="true"] .nav[data-menu="open"] {
    l'agrandissement doit être en place dès le départ, sinon l'image saute d'un
    cran au premier mouvement. */
 .hero__media[data-parallaxe] img {
-  transform: scale(1.12);
+  transform: scale(1.3);
   will-change: transform;
 }
 
