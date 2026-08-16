@@ -342,9 +342,27 @@ if (root) {
     const ready = Boolean(fieldService.value && fieldSlot.value);
     submit.disabled = !ready;
 
-    recap.textContent = ready
-      ? `${chosen.serviceName} · ${fmt.full.format(new Date(chosen.slot))} · ${chosen.price}`
-      : "";
+    /*
+     * Un bouton grisé qui n'explique rien est un cul-de-sac : on clique, rien
+     * ne se passe, et pas même une erreur dans la console pour mettre sur la
+     * voie. Il dit donc ce qui lui manque — d'autant qu'avec la présélection du
+     * premier jour ouvert, le formulaire paraît plus rempli qu'il ne l'est,
+     * l'heure restant à choisir.
+     */
+    if (!ready) {
+      const manque = !fieldService.value
+        ? root!.dataset.labelNeedService ?? ""
+        : root!.dataset.labelNeedSlot ?? "";
+      recap.textContent = manque;
+      recap.dataset.state = "manque";
+      submit.title = manque;
+    } else {
+      recap.dataset.state = "";
+      submit.removeAttribute("title");
+      recap.textContent = `${chosen.serviceName} · ${fmt.full.format(
+        new Date(chosen.slot),
+      )} · ${chosen.price}`;
+    }
   }
 
   /* ------------------------------------------------------------ confirmation */
@@ -413,6 +431,9 @@ if (root) {
     openStep("service");
   });
 
+  // Dit dès l'ouverture ce qu'il reste à faire, plutôt que d'attendre un clic
+  // sur un bouton grisé qui ne répondra pas.
+  updateRecap();
   openStep("service", false);
 }
 

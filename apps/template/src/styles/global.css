@@ -1910,6 +1910,12 @@ body[data-glass="true"] .rdv {
   display: none;
 }
 
+/* Ce qui reste à faire, dit sous le bouton plutôt que laissé à deviner. Rendu
+   discret : c'est un rappel, pas une erreur — rien n'a encore été mal fait. */
+.rdv__recap[data-state="manque"] {
+  font-style: italic;
+}
+
 .rdv__confirm {
   font: inherit;
   font-size: var(--step-0);
