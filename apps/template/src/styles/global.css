@@ -501,6 +501,46 @@ body[data-glass="true"] .nav[data-menu="open"] {
   );
 }
 
+/*
+ * Parallaxe du hero : la photo défile plus lentement que le texte posé
+ * dessus, ce qui creuse la page au lieu de la faire glisser d'un bloc.
+ *
+ * L'agrandissement n'est pas décoratif : sans lui, déplacer l'image
+ * découvrirait le fond en haut ou en bas du cadre. 12 % de marge pour 6 % de
+ * déplacement de part et d'autre, donc jamais de bord vide.
+ *
+ * Deux implémentations pour un seul effet. Celle-ci ne coûte rien : le
+ * navigateur anime hors du fil principal, et rien ne s'exécute au défilement.
+ * Les navigateurs qui l'ignorent reçoivent le repli de Hero.astro, lequel se
+ * tait de lui-même dès que cette règle s'applique.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .hero__media img {
+      animation: hero-parallaxe linear both;
+      animation-timeline: view();
+      animation-range: entry 0% exit 100%;
+    }
+
+    @keyframes hero-parallaxe {
+      from {
+        transform: translateY(-6%) scale(1.12);
+      }
+      to {
+        transform: translateY(6%) scale(1.12);
+      }
+    }
+  }
+}
+
+/* Le repli JavaScript pose cet attribut avant de rien déplacer :
+   l'agrandissement doit être en place dès le départ, sinon l'image saute d'un
+   cran au premier mouvement. */
+.hero__media[data-parallaxe] img {
+  transform: scale(1.12);
+  will-change: transform;
+}
+
 .hero__content {
   padding-block: clamp(4rem, 12vh, 8rem);
 }

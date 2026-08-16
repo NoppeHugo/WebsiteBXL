@@ -17,7 +17,7 @@ const variant = theme.layout.hero;
 ---
 
 <section class={`hero hero--${variant}`} data-align={theme.layout.heroAlign}>
-  <div class="hero__media">
+  <div class="hero__media" data-hero-media>
     <Image
       src={image}
       alt={t(site.business.tagline, lang) || site.business.name}
@@ -62,3 +62,65 @@ const variant = theme.layout.hero;
     </div>
   </div>
 </section>
+
+<script>
+  /*
+   * Parallaxe du hero — repli pour les navigateurs sans `animation-timeline`,
+   * Safari en tête. Là où le CSS suffit, ce script ne fait rien du tout : il
+   * sort à la première ligne, et aucun écouteur n'est posé.
+   *
+   * Pourquoi ne pas s'en remettre au seul CSS : le site se montre sur un
+   * téléphone, en clientèle. Un effet qui disparaît précisément sur l'appareil
+   * de la démonstration ne sert à rien.
+   *
+   * Le déplacement est calculé dans requestAnimationFrame et jamais dans
+   * l'écouteur de défilement : lire une position force un recalcul de mise en
+   * page, et le faire à chaque cran de molette suffit à saccader la page.
+   */
+  const media = document.querySelector<HTMLElement>("[data-hero-media]");
+
+  if (media && !CSS.supports("animation-timeline: view()")) {
+    const doux = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    let enAttente = false;
+
+    const placer = () => {
+      enAttente = false;
+      const { top, height } = media.getBoundingClientRect();
+      // Progression de l'image dans la fenêtre, de -1 (juste sous le bord bas)
+      // à 1 (sortie par le haut). 0 quand elle occupe le centre.
+      const vue = window.innerHeight || 1;
+      const avancement = (top + height / 2 - vue / 2) / ((vue + height) / 2);
+      const borne = Math.max(-1, Math.min(1, avancement));
+      const img = media.querySelector("img");
+      if (img) img.style.transform = `translateY(${(-borne * 6).toFixed(2)}%) scale(1.12)`;
+    };
+
+    const auProchainRendu = () => {
+      if (enAttente) return;
+      enAttente = true;
+      requestAnimationFrame(placer);
+    };
+
+    const activer = () => {
+      media.setAttribute("data-parallaxe", "");
+      placer();
+      addEventListener("scroll", auProchainRendu, { passive: true });
+      addEventListener("resize", auProchainRendu, { passive: true });
+    };
+
+    const desactiver = () => {
+      media.removeAttribute("data-parallaxe");
+      const img = media.querySelector("img");
+      if (img) img.style.transform = "";
+      removeEventListener("scroll", auProchainRendu);
+      removeEventListener("resize", auProchainRendu);
+    };
+
+    // Une préférence d'accessibilité peut changer en cours de visite : la
+    // respecter une fois au chargement ne suffit pas.
+    const appliquer = () => (doux.matches ? desactiver() : activer());
+    doux.addEventListener("change", appliquer);
+    appliquer();
+  }
+</script>
