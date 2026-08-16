@@ -3,8 +3,8 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { WEEKDAYS, type Weekday } from "@bxl/schema";
 import { clients, client, readSiteRaw, writeSite, commitAndPush, publish, pull } from "../repo.ts";
 import { config } from "../config.ts";
-import { logPublish } from "../db.ts";
-import { layout, flash, escape } from "../views.ts";
+import { logPublish, etatPublication } from "../db.ts";
+import { layout, flash, escape, STATUTS, statutLisible, depuis } from "../views.ts";
 import { parseSlots, formatSlots } from "../hours.ts";
 import {
   listMedia,
@@ -28,10 +28,32 @@ function adminId(request: FastifyRequest): number {
   return (request as FastifyRequest & { adminId: number }).adminId;
 }
 
-function editPage(slug: string, message?: { kind: "ok" | "error"; text: string }): string {
+/**
+ * Où chaque photo est utilisée dans le site.
+ *
+ * Même source que le refus de suppression plus bas : dire à l'écran ce que le
+ * serveur refusera de toute façon évite de découvrir l'interdiction en la
+ * heurtant.
+ */
+function usagesPhotos(site: ReturnType<typeof client>["site"]): Map<string, string> {
+  const usages = new Map<string, string>();
+  if (site.hero.image) usages.set(site.hero.image, "Photo d'accueil");
+  site.gallery.forEach((photo, index) => usages.set(photo.src, `Galerie ${index + 1}`));
+  site.team.forEach((membre) => {
+    if (membre.photo) usages.set(membre.photo, `Équipe — ${membre.name}`);
+  });
+  return usages;
+}
+
+async function editPage(
+  slug: string,
+  message?: { kind: "ok" | "error"; text: string },
+): Promise<string> {
   const loaded = client(slug);
   const site = loaded.site;
   const photos = listMedia(config.REPO_PATH, slug);
+  const usages = usagesPhotos(site);
+  const etat = await etatPublication(slug);
 
   const hoursFields = WEEKDAYS.map(
     (day) => `<label>${day}
@@ -51,30 +73,73 @@ function editPage(slug: string, message?: { kind: "ok" | "error"; text: string }
     )
     .join("");
 
+  /*
+   * Le bandeau d'état répond, avant toute chose, à « ce que je vois est-il en
+   * ligne ? ». Deux boutons nommés « Enregistrer » et « Publier en ligne » se
+   * ressemblent trop pour que la distinction se devine : on enregistre, on lit
+   * « enregistré », et le site continue d'afficher l'ancien horaire.
+   */
+  const bandeau =
+    site.status !== "live"
+      ? `<div class="etat" data-etat="brouillon">
+    <div class="etat__texte">
+      <b>${escape(statutLisible(site.status))}</b>
+      <span>${escape(STATUTS[site.status as keyof typeof STATUTS]?.aide ?? "")}</span>
+    </div>
+  </div>`
+      : etat.enAttente
+        ? `<div class="etat" data-etat="attente">
+    <div class="etat__texte">
+      <b>Modifications non publiées</b>
+      <span>Enregistré ${escape(depuis(etat.derniereModification))} ·
+        dernière mise en ligne ${escape(depuis(etat.derniereMiseEnLigne))}.
+        Le site public affiche encore la version précédente.</span>
+    </div>
+    <form method="post" action="/clients/${escape(slug)}/publish">
+      <button type="submit">Mettre en ligne</button>
+    </form>
+  </div>`
+        : `<div class="etat" data-etat="enligne">
+    <div class="etat__texte">
+      <b>En ligne et à jour</b>
+      <span>Dernière mise en ligne ${escape(depuis(etat.derniereMiseEnLigne))}.</span>
+    </div>
+    <a class="lien-site" href="https://${escape(site.domain)}" target="_blank" rel="noopener">
+      Voir le site ↗
+    </a>
+  </div>`;
+
   return layout(
     site.business.name,
     `<h1>${escape(site.business.name)}</h1>
-<p class="muted">${escape(site.domain)} · palier ${escape(site.plan)} ·
-   <span class="badge" data-status="${escape(site.status)}">${escape(site.status)}</span></p>
+<p class="intro">
+  ${escape(site.domain)} · palier ${escape(site.plan)} ·
+  <a href="https://${escape(site.domain)}" target="_blank" rel="noopener">voir le site ↗</a>
+</p>
 
 ${message ? flash(message.kind, message.text) : ""}
+${bandeau}
 
 <form method="post" action="/clients/${escape(slug)}">
   <fieldset>
-    <legend>Publication</legend>
+    <legend>Visibilité</legend>
     <div class="row">
-      <label>Statut
+      <label>État du site
         <select name="status">
-          ${["draft", "live", "suspended"]
+          ${(["draft", "live", "suspended"] as const)
             .map(
               (s) =>
-                `<option value="${s}"${s === site.status ? " selected" : ""}>${s}</option>`,
+                `<option value="${s}"${s === site.status ? " selected" : ""}>${STATUTS[s].nom}</option>`,
             )
             .join("")}
         </select>
       </label>
     </div>
-    <p class="muted">« suspended » remplace le site par une page d'indisponibilité, sans le supprimer.</p>
+    <p class="aide">
+      ${(["draft", "live", "suspended"] as const)
+        .map((s) => `<b>${STATUTS[s].nom}</b> — ${STATUTS[s].aide}`)
+        .join("<br>")}
+    </p>
   </fieldset>
 
   <fieldset>
@@ -83,11 +148,17 @@ ${message ? flash(message.kind, message.text) : ""}
       <label>Téléphone<input type="text" name="phone" value="${escape(site.business.phone)}"></label>
       <label>E-mail<input type="email" name="email" value="${escape(site.business.email ?? "")}"></label>
     </div>
+    <p class="aide">Ces coordonnées apparaissent sur le site et reçoivent les demandes.</p>
   </fieldset>
 
   <fieldset>
     <legend>Horaires</legend>
     <div class="row">${hoursFields}</div>
+    <p class="aide">
+      Un créneau par jour : <code>09:00-18:00</code>. Plusieurs créneaux se
+      séparent par une virgule : <code>09:00-12:30, 13:30-18:00</code>.
+      Laisser vide ferme la journée.
+    </p>
   </fieldset>
 
   ${
@@ -104,41 +175,58 @@ ${message ? flash(message.kind, message.text) : ""}
   }
 
   <div class="actions">
-    <button type="submit">Enregistrer</button>
+    <button type="submit">Enregistrer les modifications</button>
   </div>
+  <p class="aide">
+    Enregistrer conserve vos changements, sans rien changer au site public.
+    C'est « Mettre en ligne » qui les rend visibles.
+  </p>
 </form>
 
 <form method="post" action="/clients/${escape(slug)}/publish">
   <div class="actions">
-    <button type="submit" class="secondary">Publier en ligne</button>
+    <button type="submit" class="secondary">Mettre en ligne</button>
   </div>
-  <p class="muted">Construit le site et le déploie. Refusé si le statut n'est pas « live ».</p>
+  <p class="aide">
+    Reconstruit le site avec le contenu enregistré et le déploie. Quelques
+    dizaines de secondes. Refusé tant que l'état n'est pas « ${STATUTS.live.nom} ».
+  </p>
 </form>
 
 <h2>Photos</h2>
-<p class="muted">
+<p class="aide">
   ${escape(String(photos.length))} fichier(s). Les images sont réduites et
-  converties à l'envoi : inutile de les préparer avant.
+  converties à l'envoi : inutile de les préparer avant. Pour remplacer une
+  photo utilisée par le site, envoyez un fichier portant le même nom.
 </p>
 
 ${
   photos.length > 0
     ? `<div class="media-grid">${photos
-        .map(
-          (photo) => `<figure class="media">
+        .map((photo) => {
+          const usage = usages.get(photo.name);
+          return `<figure class="media">
       <img src="/clients/${escape(slug)}/media/${escape(photo.name)}" alt="" loading="lazy">
+      <span class="media__usage" data-usage="${usage ? "utilise" : "libre"}">${escape(
+        usage ?? "Non utilisée",
+      )}</span>
       <figcaption>
         <span>${escape(photo.name)}</span>
         <span class="muted">${Math.round(photo.bytes / 1024)} ko</span>
       </figcaption>
-      <form method="post" action="/clients/${escape(slug)}/media/${escape(photo.name)}/delete"
-            onsubmit="return confirm('Supprimer ${escape(photo.name)} ?')">
+      ${
+        usage
+          ? `<p class="aide">Utilisée par le site : elle ne peut pas être supprimée.
+             Envoyez un fichier du même nom pour la remplacer.</p>`
+          : `<form method="post" action="/clients/${escape(slug)}/media/${escape(photo.name)}/delete"
+            onsubmit="return confirm('Supprimer ${escape(photo.name)} ? Cette action est définitive.')">
         <button class="danger">Supprimer</button>
-      </form>
-    </figure>`,
-        )
+      </form>`
+      }
+    </figure>`;
+        })
         .join("")}</div>`
-    : ""
+    : `<p class="aide">Aucune photo pour l'instant.</p>`
 }
 
 <form method="post" action="/clients/${escape(slug)}/media" enctype="multipart/form-data">
@@ -146,17 +234,30 @@ ${
     <input type="file" name="photos" accept="image/*" multiple required>
   </label>
   <div class="actions"><button type="submit">Envoyer</button></div>
+  <p class="aide">Jusqu'à 30 fichiers à la fois. Les photos envoyées n'apparaissent
+    sur le site qu'après « Mettre en ligne ».</p>
 </form>
 
-<h2>Édition avancée</h2>
-<form method="post" action="/clients/${escape(slug)}/json">
-  <label>site.json
-    <textarea name="json" rows="24" spellcheck="false">${escape(
-      JSON.stringify(readSiteRaw(slug), null, 2),
-    )}</textarea>
-  </label>
-  <div class="actions"><button type="submit" class="secondary">Enregistrer le JSON</button></div>
-</form>
+<details class="avance">
+  <summary>Édition avancée — contenu et traductions</summary>
+  <div>
+    <p class="aide">
+      Tout le contenu du site, y compris les textes en néerlandais et en
+      anglais, que le formulaire ci-dessus ne touche pas volontairement : un
+      champ simplifié écraserait les traductions sans prévenir.
+      Le format est vérifié à l'enregistrement — une erreur est refusée, elle
+      ne casse pas le site.
+    </p>
+    <form method="post" action="/clients/${escape(slug)}/json">
+      <label>site.json
+        <textarea name="json" rows="24" spellcheck="false">${escape(
+          JSON.stringify(readSiteRaw(slug), null, 2),
+        )}</textarea>
+      </label>
+      <div class="actions"><button type="submit" class="secondary">Enregistrer le JSON</button></div>
+    </form>
+  </div>
+</details>
 
 <p style="margin-top:2rem"><a href="/">← Tous les clients</a></p>`,
     { authenticated: true },
@@ -165,35 +266,57 @@ ${
 
 export function clientRoutes(app: FastifyInstance): void {
   app.get("/", async (_request, reply) => {
-    const rows = clients()
-      .map((slug) => {
+    const liste = clients();
+
+    const cartes = await Promise.all(
+      liste.map(async (slug) => {
         try {
           const { site } = client(slug);
-          return `<tr>
-            <td><a href="/clients/${escape(slug)}">${escape(site.business.name)}</a>
-              <div class="muted">${escape(slug)}</div></td>
-            <td>${escape(site.domain)}</td>
-            <td>${escape(site.plan)}</td>
-            <td><span class="badge" data-status="${escape(site.status)}">${escape(site.status)}</span></td>
-          </tr>`;
+          const etat = await etatPublication(slug);
+          // Le point d'attention est porté jusqu'à la liste : sans cela, il
+          // faut ouvrir chaque client pour savoir lequel attend une mise en
+          // ligne — c'est-à-dire ne jamais le savoir.
+          const attention =
+            site.status === "live" && etat.enAttente
+              ? `<div class="carte__pied">⬤ Modifications non publiées</div>`
+              : site.status === "live"
+                ? `<div class="carte__pied">En ligne · ${escape(depuis(etat.derniereMiseEnLigne))}</div>`
+                : "";
+
+          return `<a class="carte" href="/clients/${escape(slug)}">
+            <div class="carte__titre">
+              <b>${escape(site.business.name)}</b>
+              <span class="badge" data-status="${escape(site.status)}">${escape(
+                statutLisible(site.status),
+              )}</span>
+            </div>
+            <div class="carte__ligne">${escape(site.domain)}</div>
+            <div class="carte__ligne">palier ${escape(site.plan)}</div>
+            ${attention}
+          </a>`;
         } catch (error) {
           // Un client au fichier invalide doit rester visible : c'est
           // justement celui qu'il faut aller réparer.
-          return `<tr><td>${escape(slug)}</td><td colspan="3" class="muted">illisible : ${escape(
-            error instanceof Error ? error.message.split("\n")[0] : error,
-          )}</td></tr>`;
+          return `<a class="carte" href="/clients/${escape(slug)}">
+            <div class="carte__titre"><b>${escape(slug)}</b></div>
+            <div class="carte__ligne">Fichier illisible : ${escape(
+              error instanceof Error ? error.message.split("\n")[0] : error,
+            )}</div>
+          </a>`;
         }
-      })
-      .join("");
+      }),
+    );
 
     return reply.type("text/html").send(
       layout(
         "Clients",
         `<h1>Clients</h1>
-<table>
-  <thead><tr><th>Commerce</th><th>Domaine</th><th>Palier</th><th>Statut</th></tr></thead>
-  <tbody>${rows}</tbody>
-</table>`,
+<p class="intro">
+  ${liste.length === 0 ? "Aucun client pour l'instant." : `${liste.length} commerce(s).`}
+  Ouvrez une fiche pour modifier les horaires, les tarifs, les photos, puis
+  mettre le site à jour.
+</p>
+<div class="cartes">${cartes.join("")}</div>`,
         { authenticated: true },
       ),
     );
@@ -203,7 +326,7 @@ export function clientRoutes(app: FastifyInstance): void {
     // On récupère l'état du dépôt avant d'afficher : éditer une version
     // périmée produirait un conflit au moment de pousser.
     await pull();
-    return reply.type("text/html").send(editPage(request.params.slug));
+    return reply.type("text/html").send(await editPage(request.params.slug));
   });
 
   app.post<{ Params: { slug: string }; Body: Record<string, string> }>(
@@ -238,14 +361,14 @@ export function clientRoutes(app: FastifyInstance): void {
         return reply
           .code(400)
           .type("text/html")
-          .send(editPage(slug, { kind: "error", text: written.errors.join(" · ") }));
+          .send(await editPage(slug, { kind: "error", text: written.errors.join(" · ") }));
       }
 
       const pushed = await commitAndPush(slug, `contenu(${slug}) : mise à jour depuis la console`);
       await logPublish(adminId(request), slug, "save", pushed.output.slice(0, 500));
 
       return reply.type("text/html").send(
-        editPage(slug, {
+        await editPage(slug, {
           kind: pushed.ok ? "ok" : "error",
           text: pushed.ok
             ? "Enregistré et poussé. Utilisez « Publier en ligne » pour mettre à jour le site."
@@ -265,7 +388,7 @@ export function clientRoutes(app: FastifyInstance): void {
         parsed = JSON.parse(request.body?.json ?? "");
       } catch (error) {
         return reply.code(400).type("text/html").send(
-          editPage(slug, {
+          await editPage(slug, {
             kind: "error",
             text: `JSON invalide : ${(error as Error).message}`,
           }),
@@ -277,14 +400,14 @@ export function clientRoutes(app: FastifyInstance): void {
         return reply
           .code(400)
           .type("text/html")
-          .send(editPage(slug, { kind: "error", text: written.errors.join(" · ") }));
+          .send(await editPage(slug, { kind: "error", text: written.errors.join(" · ") }));
       }
 
       const pushed = await commitAndPush(slug, `contenu(${slug}) : édition JSON depuis la console`);
       await logPublish(adminId(request), slug, "save", "json");
 
       return reply.type("text/html").send(
-        editPage(slug, {
+        await editPage(slug, {
           kind: pushed.ok ? "ok" : "error",
           text: pushed.ok ? "JSON enregistré et poussé." : pushed.output.slice(0, 300),
         }),
@@ -300,7 +423,7 @@ export function clientRoutes(app: FastifyInstance): void {
       await logPublish(adminId(request), slug, "publish", result.output.slice(0, 1000));
 
       return reply.type("text/html").send(
-        editPage(slug, {
+        await editPage(slug, {
           kind: result.ok ? "ok" : "error",
           text: result.ok
             ? "Site publié."
@@ -349,7 +472,7 @@ export function clientRoutes(app: FastifyInstance): void {
       }
 
       return reply.type("text/html").send(
-        editPage(slug, {
+        await editPage(slug, {
           kind: errors.length > 0 ? "error" : "ok",
           text:
             errors.length > 0
@@ -377,7 +500,7 @@ export function clientRoutes(app: FastifyInstance): void {
       ];
       if (used.includes(name)) {
         return reply.code(400).type("text/html").send(
-          editPage(slug, {
+          await editPage(slug, {
             kind: "error",
             text: `${name} est utilisée par le site. Retirez-la d'abord du contenu.`,
           }),
@@ -391,7 +514,7 @@ export function clientRoutes(app: FastifyInstance): void {
       }
 
       return reply.type("text/html").send(
-        editPage(slug, {
+        await editPage(slug, {
           kind: removed ? "ok" : "error",
           text: removed ? `${name} supprimée.` : "fichier introuvable",
         }),

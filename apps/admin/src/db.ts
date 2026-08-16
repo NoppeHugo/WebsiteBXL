@@ -52,6 +52,48 @@ export async function logPublish(
   `;
 }
 
+export interface EtatPublication {
+  derniereModification: Date | null;
+  derniereMiseEnLigne: Date | null;
+  /** Vrai si le contenu enregistré est plus récent que ce qui est servi. */
+  enAttente: boolean;
+}
+
+/**
+ * Ce qui est enregistré est-il en ligne ?
+ *
+ * C'est la question que se pose quiconque ouvre la console, et à laquelle rien
+ * ne répondait : enregistrer écrit dans git, mettre en ligne reconstruit le
+ * site, et les deux boutons se ressemblaient. On pouvait donc corriger un
+ * horaire, voir « enregistré », et laisser le site afficher l'ancien pendant
+ * des semaines.
+ */
+export async function etatPublication(slug: string): Promise<EtatPublication> {
+  const lignes = await sql<{ action: string; created_at: Date }[]>`
+    select action, max(created_at) as created_at
+      from publish_log
+     where slug = ${slug}
+       and action in ('save', 'publish')
+     group by action
+  `;
+
+  const quand = (action: string) =>
+    lignes.find((l) => l.action === action)?.created_at ?? null;
+
+  const derniereModification = quand("save");
+  const derniereMiseEnLigne = quand("publish");
+
+  return {
+    derniereModification,
+    derniereMiseEnLigne,
+    // Jamais publié mais déjà modifié compte comme en attente : c'est le cas
+    // d'un client qu'on prépare et qu'on oublie de mettre en ligne.
+    enAttente:
+      derniereModification !== null &&
+      (derniereMiseEnLigne === null || derniereModification > derniereMiseEnLigne),
+  };
+}
+
 export interface BookingRow {
   id: string;
   slug: string;

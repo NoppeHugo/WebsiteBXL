@@ -93,6 +93,63 @@ fieldset { border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1
 .tile span { font-size: 0.78rem; color: var(--muted); }
 input[type="file"] { padding: 0.5em; background: var(--surface); }
 legend { color: var(--muted); font-size: 0.85rem; padding: 0 0.4rem; }
+
+/* --- Repères de lecture ------------------------------------------------ */
+
+/* Chaque page dit ce qu'elle permet de faire. Un intitulé seul oblige à
+   ouvrir pour savoir, et c'est ce qui rendait la console opaque. */
+.intro { color: var(--muted); margin: -0.9rem 0 1.8rem; max-width: 46rem; }
+
+/* L'état de publication, en tête de fiche : c'est la première question que
+   se pose quiconque ouvre un client. */
+.etat {
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  padding: 1rem 1.2rem; border-radius: 14px; margin-bottom: 1.8rem;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.etat[data-etat="attente"] { border-color: color-mix(in srgb, #ff9f0a 55%, transparent); }
+.etat[data-etat="enligne"] { border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+.etat__texte { flex: 1 1 16rem; }
+.etat__texte b { display: block; font-size: 1.02rem; margin-bottom: 0.15rem; }
+.etat__texte span { color: var(--muted); font-size: 0.85rem; }
+.etat form { margin: 0; }
+
+/* Liste des clients : une carte porte plus qu'une ligne de tableau, et se
+   manipule au pouce sur un téléphone. */
+.cartes { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); }
+.carte {
+  display: block; padding: 1.2rem 1.3rem; border-radius: 14px;
+  border: 1px solid var(--border); background: var(--surface);
+  text-decoration: none; color: inherit; transition: border-color 0.2s;
+}
+.carte:hover { border-color: color-mix(in srgb, var(--text) 30%, transparent); }
+.carte__titre { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem; }
+.carte__titre b { font-size: 1.05rem; letter-spacing: -0.01em; }
+.carte__ligne { color: var(--muted); font-size: 0.85rem; }
+.carte__pied { margin-top: 0.9rem; font-size: 0.8rem; color: var(--muted); }
+
+/* Aide contextuelle : la phrase qui évite d'avoir à deviner un format. */
+.aide { color: var(--muted); font-size: 0.82rem; margin-top: 0.35rem; }
+
+/* Ce qui peut casser le site est replié : accessible, mais pas sur le chemin
+   de quelqu'un qui vient corriger un horaire. */
+details.avance { border: 1px solid var(--border); border-radius: 14px; margin-top: 2rem; }
+details.avance > summary {
+  cursor: pointer; padding: 1rem 1.2rem; font-weight: 600; list-style: none;
+}
+details.avance > summary::-webkit-details-marker { display: none; }
+details.avance > summary::before { content: "▸ "; color: var(--muted); }
+details.avance[open] > summary::before { content: "▾ "; }
+details.avance > div { padding: 0 1.2rem 1.2rem; }
+
+/* Une photo dit à quoi elle sert, et si elle est verrouillée. */
+.media__usage {
+  font-size: 0.72rem; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 980px;
+  padding: 0.1em 0.6em; align-self: flex-start;
+}
+.media__usage[data-usage="libre"] { opacity: 0.6; }
+.lien-site { font-size: 0.85rem; }
 `;
 
 export function layout(
@@ -134,4 +191,43 @@ ${
 
 export function flash(kind: "ok" | "error", message: string): string {
   return `<p class="flash" data-kind="${kind}">${escape(message)}</p>`;
+}
+
+/**
+ * Les statuts sont stockés en anglais dans `site.json` — c'est un format de
+ * données, il n'a pas à changer. Mais « draft » affiché tel quel dans une
+ * console française oblige à connaître la convention interne pour se servir de
+ * l'outil.
+ */
+export const STATUTS = {
+  draft: {
+    nom: "Brouillon",
+    aide: "En préparation. Le site n'est pas accessible au public.",
+  },
+  live: {
+    nom: "En ligne",
+    aide: "Visible de tous, à l'adresse du commerce.",
+  },
+  suspended: {
+    nom: "Suspendu",
+    aide: "Remplacé par une page d'indisponibilité. Rien n'est supprimé, le retour en ligne est immédiat.",
+  },
+} as const;
+
+export function statutLisible(statut: string): string {
+  return STATUTS[statut as keyof typeof STATUTS]?.nom ?? statut;
+}
+
+/** « il y a 3 minutes », « hier », « le 4 mars ». */
+export function depuis(date: Date | null): string {
+  if (!date) return "jamais";
+  const minutes = Math.round((Date.now() - date.getTime()) / 60000);
+  if (minutes < 1) return "à l'instant";
+  if (minutes < 60) return `il y a ${minutes} min`;
+  const heures = Math.round(minutes / 60);
+  if (heures < 24) return `il y a ${heures} h`;
+  const jours = Math.round(heures / 24);
+  if (jours === 1) return "hier";
+  if (jours < 7) return `il y a ${jours} jours`;
+  return `le ${date.toLocaleDateString("fr-BE", { day: "numeric", month: "long" })}`;
 }
