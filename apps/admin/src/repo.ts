@@ -150,7 +150,8 @@ export async function publish(slug: string): Promise<CommandResult> {
       "-o",
       "BatchMode=yes",
       config.PUBLISH_HOST,
-      `${config.REPO_PATH}/scripts/publier.sh`,
+      // Chemin côté hôte : la commande s'exécute là-bas, pas dans le conteneur.
+      `${config.PUBLISH_REPO}/scripts/publier.sh`,
       slug,
     ],
     { timeoutMs: 600_000 },

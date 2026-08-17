@@ -39,6 +39,17 @@ const Env = z.object({
   /** Clé lue par ssh et par git, dans le conteneur. */
   SSH_KEY: z.string().default("/ssh/id_ed25519"),
 
+  /**
+   * Chemin du dépôt **sur la machine hôte**, distinct de `REPO_PATH`.
+   *
+   * Les deux désignent le même dossier vu de deux endroits : `/repo` dans le
+   * conteneur, `/srv/repo` sur la machine. La commande de publication part en
+   * ssh et s'exécute donc là-bas — lui donner le chemin du conteneur la faisait
+   * échouer sur « No such file or directory », en désignant un chemin qui
+   * n'existe que de ce côté-ci.
+   */
+  PUBLISH_REPO: z.string().default("/srv/repo"),
+
   /** Injecté dans les builds déclenchés depuis la console. */
   PUBLIC_API_URL: z.string().default(""),
   STRIPE_SECRET_KEY: z.string().optional(),

@@ -101,6 +101,8 @@ services:
       GIT_SSH_COMMAND: "ssh -i /ssh/id_ed25519 -o UserKnownHostsFile=/ssh/known_hosts -o IdentitiesOnly=yes"
       SSH_KEY: /ssh/id_ed25519
       PUBLISH_HOST: ${PUBLISH_HOST:-}
+      # Le même dépôt, vu depuis l'hôte : c'est là que tourne la publication.
+      PUBLISH_REPO: ${REPO_PATH:?chemin du dépôt requis}
       SESSION_SECRET: ${SESSION_SECRET:?secret de session requis}
       PUBLIC_API_URL: ${PUBLIC_API_URL:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
