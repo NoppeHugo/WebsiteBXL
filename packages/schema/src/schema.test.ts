@@ -43,6 +43,16 @@ describe("SiteConfig", () => {
     expect(result.services).toEqual([]);
   });
 
+  it("connaît l'état intermédiaire « preview »", () => {
+    /*
+     * Sans lui, un site créé en clientèle n'avait que deux issues : rester
+     * invisible — donc rien à montrer au commerçant — ou passer « live », et
+     * offrir à Google un brouillon signé du nom du salon.
+     */
+    expect(SiteConfig.parse(validSite({ status: "preview" })).status).toBe("preview");
+    expect(SiteConfig.safeParse(validSite({ status: "en-ligne" })).success).toBe(false);
+  });
+
   it("refuse une langue par défaut absente des langues disponibles", () => {
     const result = SiteConfig.safeParse(
       validSite({ languages: { default: "en", available: ["fr", "nl"] } }),

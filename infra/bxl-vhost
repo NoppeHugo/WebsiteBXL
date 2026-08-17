@@ -1,0 +1,234 @@
+#!/usr/bin/env bash
+#
+# Publie un site client dans nginx, et lui obtient un certificat.
+#
+#   bxl-vhost <slug> <domaine>
+#
+# ─── Pourquoi ce fichier ne vit pas dans le dépôt ───────────────────────────
+#
+# Il s'exécute en root, appelé par sudo depuis le compte `deploy`. Or `deploy`
+# possède /srv/repo en écriture, et la console d'administration écrit dedans :
+# une règle sudo pointant vers un script du dépôt donnerait root à quiconque
+# obtient la console. L'installation le recopie donc dans /usr/local/sbin,
+# appartenant à root et inaccessible en écriture à `deploy`.
+#
+# La copie doit être refaite après toute modification de ce fichier :
+#   sudo bash infra/installer-vhost.sh
+#
+# ─── Ce que cette machine héberge déjà ──────────────────────────────────────
+#
+# Des sites clients en production, sans rapport avec ce projet. Un site déjà en
+# ligne qui tombe coûte infiniment plus cher qu'une mise en ligne reportée.
+# D'où, à chaque étape qui touche à nginx :
+#
+#   - relevé de l'état de tous les hôtes servis AVANT toute modification ;
+#   - `nginx -t` avant chaque rechargement, `reload` et jamais `restart` ;
+#   - même relevé APRÈS, et retour arrière immédiat au moindre écart.
+#
+# Et deux refus : jamais écraser un fichier de configuration existant, jamais
+# poser un nom de domaine déjà servi par un autre bloc.
+#
+set -euo pipefail
+
+SLUG="${1:-}"
+DOMAINE="${2:-}"
+
+if [[ -z "$SLUG" || -z "$DOMAINE" ]]; then
+	echo "usage : bxl-vhost <slug> <domaine>" >&2
+	exit 1
+fi
+
+# ─── Validation ─────────────────────────────────────────────────────────────
+#
+# Ces deux valeurs finissent dans un fichier de configuration nginx et sur une
+# ligne de commande certbot. Tout ce qui n'est pas un identifiant ou un nom de
+# domaine ordinaire est refusé, sans tentative de nettoyage : une valeur
+# corrigée en silence n'est plus celle que l'appelant croit avoir donnée.
+
+if [[ ! "$SLUG" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+	echo "identifiant refusé : « $SLUG »" >&2
+	exit 1
+fi
+if [[ ! "$DOMAINE" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$ ]]; then
+	echo "domaine refusé : « $DOMAINE »" >&2
+	exit 1
+fi
+if (( ${#DOMAINE} > 253 )); then
+	echo "domaine trop long : « $DOMAINE »" >&2
+	exit 1
+fi
+
+DISPONIBLE="/etc/nginx/sites-available/$DOMAINE"
+ACTIVE="/etc/nginx/sites-enabled/$DOMAINE"
+RACINE="/srv/sites/$SLUG/current"
+MODELE="/usr/local/share/bxl/site.conf.modele"
+
+if [[ ! -e "$RACINE" ]]; then
+	echo "$RACINE n'existe pas : déployer le site avant de le publier." >&2
+	exit 1
+fi
+if [[ ! -f "$MODELE" ]]; then
+	echo "modèle absent : $MODELE — relancer infra/installer-vhost.sh" >&2
+	exit 1
+fi
+
+# ─── Relevé de l'existant ───────────────────────────────────────────────────
+
+# Tous les noms servis par nginx, tels que nginx les voit lui-même : lire les
+# fichiers un à un raterait les inclusions.
+hotes_servis() {
+	# `|| true` : `grep` sort en échec quand il ne retient rien, et `pipefail`
+	# ferait alors échouer tout le script sur une liste simplement vide.
+	{
+		nginx -T 2>/dev/null |
+			sed -n 's/^[[:space:]]*server_name[[:space:]]\+\(.*\);[[:space:]]*$/\1/p' |
+			tr ' ' '\n' |
+			grep -vE '^(_|\*|$)' |
+			sort -u
+	} || true
+}
+
+etat_des_hotes() {
+	local hote code
+	while read -r hote; do
+		[[ -z "$hote" ]] && continue
+		code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 8 "https://$hote" || echo 000)"
+		echo "$hote $code"
+	done
+}
+
+# Un hôte déjà en panne avant notre passage ne doit pas nous faire reculer :
+# c'est l'écart qui compte, pas la valeur absolue.
+compare_etats() {
+	local avant="$1" apres="$2" hote code_avant code_apres ecarts=0
+	while read -r hote code_avant; do
+		code_apres="$(awk -v h="$hote" '$1 == h { print $2 }' "$apres")"
+		if [[ "$code_avant" != "000" && ("$code_apres" == "000" || -z "$code_apres") ]]; then
+			echo "    ✗ $hote : $code_avant → ${code_apres:-aucune réponse}" >&2
+			ecarts=$((ecarts + 1))
+		fi
+	done <"$avant"
+	return "$ecarts"
+}
+
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+
+echo "relevé des sites déjà servis"
+hotes_servis >"$TMP/hotes"
+etat_des_hotes <"$TMP/hotes" >"$TMP/avant"
+printf '  %s hôte(s) : %s\n' \
+	"$(wc -l <"$TMP/avant")" \
+	"$(awk '{ printf "%s(%s) ", $1, $2 }' "$TMP/avant")"
+
+# ─── Refus d'écrasement ─────────────────────────────────────────────────────
+
+DEJA_EN_PLACE=0
+if [[ -e "$DISPONIBLE" ]]; then
+	# Relancer l'installation après un échec au certificat doit pouvoir
+	# aboutir. Mais seulement si le bloc en place est bien le nôtre et sert
+	# bien ce site : sinon c'est la configuration de quelqu'un d'autre.
+	if grep -qF "root $RACINE;" "$DISPONIBLE"; then
+		echo "bloc déjà en place pour $DOMAINE → $RACINE, conservé tel quel"
+		DEJA_EN_PLACE=1
+	else
+		echo "$DISPONIBLE existe déjà et ne sert pas $RACINE — rien n'a été modifié." >&2
+		echo "Vérifier à la main : ce fichier appartient à un autre site." >&2
+		exit 1
+	fi
+elif grep -qxF "$DOMAINE" "$TMP/hotes"; then
+	echo "$DOMAINE est déjà servi par un autre bloc nginx — rien n'a été modifié." >&2
+	exit 1
+fi
+
+# ─── Pose du bloc ───────────────────────────────────────────────────────────
+
+restaurer() {
+	echo "  retour arrière" >&2
+	rm -f "$ACTIVE"
+	# Le fichier n'est retiré que si c'est nous qui venons de l'écrire : celui
+	# qui était là avant notre passage ne nous appartient pas.
+	if [[ "$DEJA_EN_PLACE" -eq 0 ]]; then
+		rm -f "$DISPONIBLE"
+	fi
+	if nginx -t >/dev/null 2>&1; then
+		systemctl reload nginx
+		echo "  configuration précédente rétablie" >&2
+	else
+		echo "  ATTENTION : nginx -t échoue même après retrait. Intervenir." >&2
+	fi
+	return 0
+}
+
+if [[ "$DEJA_EN_PLACE" -eq 0 ]]; then
+	echo "écriture de $DISPONIBLE"
+	# Les deux valeurs sont validées plus haut ; aucune ne peut contenir de
+	# caractère spécial pour sed.
+	sed -e "s|@@DOMAINE@@|$DOMAINE|g" -e "s|@@SLUG@@|$SLUG|g" "$MODELE" >"$DISPONIBLE"
+	chmod 644 "$DISPONIBLE"
+fi
+
+ln -sfn "$DISPONIBLE" "$ACTIVE"
+
+echo "contrôle de la configuration"
+if ! nginx -t 2>&1 | sed 's/^/  /'; then
+	restaurer
+	echo "nginx a refusé la configuration — rien n'est en ligne." >&2
+	exit 1
+fi
+
+# `reload` et jamais `restart` : le rechargement remplace les processus de
+# travail sans fermer la socket d'écoute, donc sans couper une seule requête
+# des sites déjà servis.
+systemctl reload nginx
+echo "  nginx rechargé"
+
+etat_des_hotes <"$TMP/hotes" >"$TMP/apres"
+if ! compare_etats "$TMP/avant" "$TMP/apres"; then
+	restaurer
+	echo "des sites déjà en ligne ne répondent plus — retour arrière effectué." >&2
+	exit 1
+fi
+echo "  les sites déjà en ligne répondent toujours"
+
+# ─── Certificat ─────────────────────────────────────────────────────────────
+#
+# `--nginx` : certbot ajoute lui-même le bloc TLS et la redirection au fichier
+# qu'on vient d'écrire, exactement comme pour les sites déjà en place.
+#
+# Pas de `-m` ni de `--agree-tos` : le compte Let's Encrypt de cette machine
+# existe déjà, avec son adresse. Les repasser inviterait à en inventer une, et
+# une adresse fausse fait disparaître les avertissements d'expiration — on
+# l'apprendrait le jour où un certificat expire chez un client.
+
+if [[ -d "/etc/letsencrypt/live/$DOMAINE" ]]; then
+	echo "certificat déjà présent pour $DOMAINE"
+else
+	echo "demande du certificat"
+	if certbot --nginx -d "$DOMAINE" --cert-name "$DOMAINE" \
+		--non-interactive --redirect --keep-until-expiring 2>&1 | sed 's/^/  /'; then
+		echo "  certificat obtenu"
+	else
+		# Le site reste servi en HTTP : il fonctionne, il est simplement sans
+		# chiffrement. Le retirer ferait perdre les quatre étapes précédentes
+		# pour un problème qui se règle en relançant.
+		echo >&2
+		echo "ÉCHEC de la demande de certificat. Le site est en ligne en HTTP seul." >&2
+		echo "Causes habituelles : le DNS de $DOMAINE ne pointe pas encore ici," >&2
+		echo "ou le quota Let's Encrypt de la semaine est atteint." >&2
+		echo "Relancer plus tard : sudo bxl-vhost $SLUG $DOMAINE" >&2
+		exit 2
+	fi
+fi
+
+# certbot recharge nginx lui-même : dernier contrôle après son passage.
+etat_des_hotes <"$TMP/hotes" >"$TMP/final"
+if ! compare_etats "$TMP/avant" "$TMP/final"; then
+	restaurer
+	echo "des sites déjà en ligne ne répondent plus après le certificat." >&2
+	exit 1
+fi
+
+CODE="$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "https://$DOMAINE" || echo 000)"
+echo "https://$DOMAINE répond $CODE"
+echo "les sites déjà en ligne répondent toujours"

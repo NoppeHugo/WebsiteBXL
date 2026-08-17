@@ -38,9 +38,15 @@ fi
 
 # Refuse de déployer un site non validé : c'est le second garde-fou du
 # monorepo, après le contrôle en intégration continue.
-if ! grep -q '"status": *"live"' "$REPO_ROOT/clients/$SLUG/site.json"; then
-	echo "clients/$SLUG/site.json n'est pas en statut « live » — déploiement annulé." >&2
-	echo "Passer status à \"live\" (ou \"suspended\" pour couper le site) puis relancer." >&2
+#
+# `preview` est accepté au même titre que `live` : c'est l'état d'un site créé
+# en clientèle, qu'il faut pouvoir montrer à son adresse sur-le-champ. Il se
+# déploie donc, mais le template y pose `noindex` — voir le commentaire du
+# champ `status` dans packages/schema.
+if ! grep -qE '"status": *"(live|preview)"' "$REPO_ROOT/clients/$SLUG/site.json"; then
+	echo "clients/$SLUG/site.json n'est ni « live » ni « preview » — déploiement annulé." >&2
+	echo "Passer status à \"preview\" (visible, non référencé), \"live\", ou \"suspended\"" >&2
+	echo "pour couper le site, puis relancer." >&2
 	exit 1
 fi
 

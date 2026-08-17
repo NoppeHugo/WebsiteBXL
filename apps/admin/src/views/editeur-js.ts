@@ -282,6 +282,57 @@ export const EDITEUR_JS = String.raw`
     if (question && !confirm(question)) evenement.preventDefault();
   });
 
+  /* --------------------------------------------- création d'un client */
+
+  /*
+   * L'adresse du site se déduit du nom du commerce pendant la frappe, tant
+   * qu'on ne l'a pas corrigée à la main. Même translittération que côté
+   * serveur — qui reste seul juge : ceci n'est qu'un confort, et le formulaire
+   * s'envoie aussi bien sans.
+   */
+  const source = $(document, "[data-slug-source]");
+  const cible = $(document, "[data-slug-cible]");
+  if (source && cible) {
+    let touchee = cible.value !== "";
+    cible.addEventListener("input", () => {
+      touchee = true;
+    });
+    source.addEventListener("input", () => {
+      if (touchee) return;
+      cible.value = source.value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/ß/gi, "ss")
+        .replace(/œ/gi, "oe")
+        .replace(/æ/gi, "ae")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 40)
+        .replace(/-+$/g, "");
+    });
+  }
+
+  /*
+   * Un bouton marqué « data-lent » se verrouille à l'envoi et dit ce qu'il
+   * fait. La création d'un site prend une minute pleine, pendant laquelle rien
+   * ne bouge : sans cela on reclique, et deux créations du même client se
+   * chevauchent.
+   *
+   * Le verrouillage est posé après l'envoi (setTimeout à 0) : désactiver un
+   * bouton avant que le navigateur n'ait relevé le formulaire lui ferait
+   * oublier le bouton, et certains serveurs perdent alors le nom du bouton
+   * cliqué.
+   */
+  document.addEventListener("submit", (evenement) => {
+    const bouton = $(evenement.target, "button[data-lent]");
+    if (!bouton || evenement.defaultPrevented) return;
+    setTimeout(() => {
+      bouton.disabled = true;
+      bouton.textContent = bouton.dataset.lent;
+    }, 0);
+  });
+
   /* ------------------------------------------------------------- démarrage */
 
   for (const liste of $$(document, "[data-liste]")) brancherListe(liste);

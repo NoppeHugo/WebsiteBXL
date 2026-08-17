@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { client, readSiteRaw, writeSite, commitAndPush, pull } from "../repo.ts";
+import { projeterCommerce } from "../tenant.ts";
 import { config } from "../config.ts";
 import { logPublish, etatPublication } from "../db.ts";
 import { layout, flash, escape, depuis } from "../views.ts";
@@ -167,6 +168,27 @@ export function contenuRoutes(app: FastifyInstance): void {
       return retour(
         `erreur=${encodeURIComponent(
           `${TITRES[section]} — non enregistré : ${written.errors.join(" · ")}`.slice(0, 300),
+        )}`,
+      );
+    }
+
+    /*
+     * La base reçoit la même chose que git, dans la foulée.
+     *
+     * Les horaires, les prestations, les fermetures et l'équipe y sont
+     * recopiés : l'agenda les lit à chaque requête et n'a pas accès au dépôt.
+     * Tant que ce report n'existait pas, fermer le lundi dans l'éditeur
+     * changeait le site sans changer la réservation — qui continuait
+     * d'accepter le lundi.
+     */
+    const base = await projeterCommerce(client(slug).site);
+    if (!base.ok) {
+      return retour(
+        `erreur=${encodeURIComponent(
+          `${TITRES[section]} enregistré, mais la réservation n'a pas été mise à jour : ${base.message}`.slice(
+            0,
+            300,
+          ),
         )}`,
       );
     }

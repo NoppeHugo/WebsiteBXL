@@ -92,6 +92,20 @@ describe("apparition au défilement", () => {
   });
 });
 
+describe("indexation", () => {
+  it("n'ouvre à Google que le statut « live », et aucun autre", () => {
+    /*
+     * Écrit en négatif — « tout sauf live » — et non en énumérant les états à
+     * refuser. Un état ajouté au schéma est alors couvert d'office : quand
+     * `preview` est apparu, aucune ligne n'a eu à changer ici. Une liste
+     * l'aurait laissé passer, et un site en préparation, portant le nom du
+     * commerçant et « À compléter » sous le titre, serait devenu son premier
+     * résultat de recherche.
+     */
+    expect(source).toContain('site.status !== "live"');
+  });
+});
+
 describe("scripts en ligne", () => {
   it("n'utilise aucun accent grave", () => {
     /*

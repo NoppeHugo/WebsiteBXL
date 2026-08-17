@@ -6,6 +6,7 @@ import { client, commitAndPush, pull } from "../repo.ts";
 import { config } from "../config.ts";
 import { logPublish } from "../db.ts";
 import { layout, flash, escape } from "../views.ts";
+import { grilleStyles, grillePalettes } from "../views/apparence-choix.ts";
 
 /**
  * Choix de l'apparence : un style et une couleur.
@@ -24,41 +25,6 @@ function adminId(request: FastifyRequest): number {
   return (request as FastifyRequest & { adminId: number }).adminId;
 }
 
-/**
- * Vignette d'un style : un titre, un filet, un bouton.
- *
- * Rendue avec les vraies polices et les vraies couleurs, pas une capture : elle
- * suit donc automatiquement toute modification d'un style, et pèse le poids
- * d'un peu de balisage.
- */
-function vignette(styleId: string, paletteId: string): string {
-  const style = STYLES[styleId]!.style;
-  const palette = PALETTES[paletteId]!.palette;
-  const rayon = { none: "0", soft: "10px", round: "18px" }[style.radius];
-
-  return `<span class="vignette" style="
-    background:${palette.bg};
-    color:${palette.text};
-    border-color:${palette.border};
-  ">
-    <span class="vignette__titre" style="
-      font-family:${style.fonts.display};
-      font-weight:${style.fonts.displayWeight};
-      letter-spacing:${style.fonts.displayTracking};
-      text-transform:${style.fonts.displayTransform};
-    ">Aa</span>
-    <span class="vignette__filet" style="background:${palette.border}"></span>
-    <span class="vignette__btn" style="
-      background:${palette.accent};
-      color:${palette.accentText};
-      border-radius:${rayon};
-      font-family:${style.fonts.body};
-      text-transform:${style.fonts.uiTransform};
-      letter-spacing:${style.fonts.uiTracking};
-    ">Réserver</span>
-  </span>`;
-}
-
 function pageApparence(
   slug: string,
   message?: { kind: "ok" | "error"; text: string },
@@ -75,41 +41,8 @@ function pageApparence(
   const styleActif = actif.style ?? "";
   const paletteActive = actif.palette ?? "";
 
-  const styles = Object.entries(STYLES)
-    .map(
-      ([id, s]) => `<label class="choix${id === styleActif ? " est-actif" : ""}">
-    <input type="radio" name="style" value="${escape(id)}"${
-      id === styleActif ? " checked" : ""
-    } required>
-    ${vignette(id, paletteActive || "blanc")}
-    <span class="choix__texte">
-      <b>${escape(s.nom)}${
-        id === styleActif ? ` <span class="marque">appliqué</span>` : ""
-      }</b>
-      <span>${escape(s.pour)}</span>
-    </span>
-  </label>`,
-    )
-    .join("");
-
-  const palettes = Object.entries(PALETTES)
-    .map(
-      ([id, p]) => `<label class="teinte${id === paletteActive ? " est-actif" : ""}">
-    <input type="radio" name="palette" value="${escape(id)}"${
-      id === paletteActive ? " checked" : ""
-    } required>
-    <span class="teinte__pastilles">
-      <span style="background:${p.palette.bg}"></span>
-      <span style="background:${p.palette.surface}"></span>
-      <span style="background:${p.palette.accent}"></span>
-      <span style="background:${p.palette.text}"></span>
-    </span>
-    <b>${escape(p.nom)}${
-      id === paletteActive ? ` <span class="marque">appliquée</span>` : ""
-    }</b>
-  </label>`,
-    )
-    .join("");
+  const styles = grilleStyles(styleActif, paletteActive);
+  const palettes = grillePalettes(paletteActive);
 
   return layout(
     `Apparence — ${site.business.name}`,

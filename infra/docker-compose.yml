@@ -104,6 +104,10 @@ services:
       # Le même dépôt, vu depuis l'hôte : c'est là que tourne la publication.
       PUBLISH_REPO: ${REPO_PATH:?chemin du dépôt requis}
       SESSION_SECRET: ${SESSION_SECRET:?secret de session requis}
+      # Domaine des sous-domaines clients. Vide, il se déduit de
+      # PUBLIC_ADMIN_URL : une variable de moins à renseigner, donc une
+      # occasion d'oubli de moins.
+      SERVICE_DOMAIN: ${SERVICE_DOMAIN:-}
       PUBLIC_API_URL: ${PUBLIC_API_URL:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       PUBLIC_ADMIN_URL: ${PUBLIC_ADMIN_URL:-}

@@ -326,6 +326,41 @@ details.avance > div { padding: 0 1.2rem 1.2rem; }
 .teinte input { position: absolute; opacity: 0; pointer-events: none; }
 .teinte__pastilles { display: flex; height: 2.2rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
 .teinte__pastilles span { flex: 1; }
+
+/* --- Création d'un client ------------------------------------------------ */
+
+/*
+ * L'adresse du site se lit d'un bloc : ce que l'on tape, et le domaine qui
+ * suit. Deux champs séparés laisseraient croire que le second se modifie, et
+ * un champ unique préchargé du domaine ferait taper par-dessus.
+ */
+.champ-suffixe {
+  display: flex; align-items: stretch; gap: 0;
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+}
+.champ-suffixe input { border: 0; border-radius: 0; margin: 0; flex: 1; min-width: 0; }
+.champ-suffixe input:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+.champ-suffixe .suffixe {
+  display: flex; align-items: center; padding: 0 0.9rem; white-space: nowrap;
+  background: var(--surface); color: var(--muted); font-size: 0.9rem;
+  border-left: 1px solid var(--border);
+}
+
+.cases { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0.4rem 0 0.6rem; }
+.case {
+  display: flex; align-items: center; gap: 0.5rem; margin: 0; cursor: pointer;
+  border: 1px solid var(--border); border-radius: 980px;
+  padding: 0.45em 1em; font-size: 0.9rem;
+}
+.case:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.case input { margin: 0; }
+
+/*
+ * Le bouton dit qu'il travaille et se verrouille. La création prend une
+ * minute : sans retour, on la relance, et deux créations simultanées du même
+ * client s'écrasent l'une l'autre à mi-chemin.
+ */
+button[data-lent][disabled] { opacity: 1; cursor: progress; }
 `;
 
 export function layout(
@@ -384,6 +419,10 @@ export const STATUTS = {
   draft: {
     nom: "Brouillon",
     aide: "En préparation. Le site n'est pas accessible au public.",
+  },
+  preview: {
+    nom: "En préparation",
+    aide: "En ligne à son adresse, montrable au commerçant — mais refusé à Google, pour qu'un brouillon ne devienne pas le premier résultat au nom du salon.",
   },
   live: {
     nom: "En ligne",

@@ -166,11 +166,23 @@ export const SiteConfig = z
 
     /**
      * `draft`     : en préparation, non déployé.
+     * `preview`   : déployé et visible à son adresse, mais **jamais indexé**.
      * `live`      : en ligne.
      * `suspended` : impayé — déploie la page « site temporairement
      *               indisponible » au lieu du site (cf. README §3.11).
+     *
+     * `preview` existe pour la vente. En clientèle, on crée le site du
+     * commerce et on le montre sur-le-champ à son adresse : il doit donc être
+     * déployé. Mais son contenu est encore celui du squelette — « À compléter »
+     * sous le nom du commerçant, et pas de mentions légales. Indexé dans cet
+     * état, il devient le premier résultat pour le nom du salon, et le
+     * commerçant découvre des semaines plus tard que Google montre un
+     * brouillon.
+     *
+     * Sans cet état intermédiaire, il n'y avait que deux choix : rien à
+     * montrer, ou un brouillon référencé.
      */
-    status: z.enum(["draft", "live", "suspended"]).default("draft"),
+    status: z.enum(["draft", "preview", "live", "suspended"]).default("draft"),
     plan: z.enum(["essentiel", "pro", "signature"]),
 
     /** Signale un site de démonstration : `noindex` et bandeau de démo. */

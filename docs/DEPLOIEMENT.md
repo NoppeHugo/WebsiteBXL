@@ -521,6 +521,129 @@ curl -sI https://<alias> | head -3   # 301, avec « location: https://<domaine> 
 
 ---
 
+## 7 bis. Ajouter un client, en clientèle
+
+Tout le §7 décrit la mise en ligne **à la main**, depuis un poste, avec un accès
+root au serveur. C'est ce qu'il faut connaître le jour où quelque chose casse.
+Ce n'est pas ce qu'on fait chez un commerçant.
+
+Chez lui, tout passe par la console : **Clients → + Nouveau client**.
+
+### 7 bis.1 Installation préalable, une seule fois
+
+Poser le bloc nginx d'un client et lui obtenir un certificat demande root. La
+console n'a pas root et ne doit pas l'avoir : un seul utilitaire, précis, lui
+est ouvert.
+
+```bash
+# Sur le serveur, en root :
+sudo bash /srv/repo/infra/installer-vhost.sh
+```
+
+Il installe `/usr/local/sbin/bxl-vhost`, le modèle de bloc nginx dans
+`/usr/local/share/bxl/`, et une règle sudo autorisant `deploy` à lancer ce seul
+programme sans mot de passe.
+
+> **Pourquoi une copie hors du dépôt.** `deploy` possède `/srv/repo` en
+> écriture, et la console y écrit à chaque enregistrement. Une règle sudo
+> pointant vers un script du dépôt donnerait donc root à quiconque obtient la
+> console : un défaut de l'interface deviendrait un défaut du serveur entier.
+> La copie appartient à root ; la console peut la lancer, pas la réécrire.
+>
+> **À relancer après toute modification** de `infra/bxl-vhost` ou de
+> `infra/nginx/site.conf.modele` : ce qui s'exécute est la copie.
+
+**Vérifier :**
+
+```bash
+sudo -u deploy sudo -n /usr/local/sbin/bxl-vhost
+# → « usage : bxl-vhost <slug> <domaine> » : le compte peut le lancer,
+#   et l'utilitaire refuse un appel vide.
+
+bash /srv/repo/infra/bxl-vhost.test.sh
+# → 23 réussite(s), 0 échec(s). N'appelle rien sur le réseau et n'écrit que
+#   dans un dossier temporaire : sans danger sur la machine de production.
+```
+
+Le DNS doit par ailleurs accepter n'importe quel sous-domaine du domaine de
+service — un enregistrement générique `*`. C'est déjà le cas ici (§4).
+
+### 7 bis.2 Sur place, avec le commerçant
+
+Le formulaire ne demande que ce que le commerçant a sous la main : nom, type,
+téléphone, e-mail, adresse, palier, langues, puis un style et une couleur —
+choisis avec lui, c'est ce qui emporte la décision.
+
+Environ une minute plus tard, le site est en ligne à
+`https://<identifiant>.<domaine de service>`, avec son certificat.
+
+Ce qui s'est passé pendant cette minute :
+
+| Où | Quoi |
+| --- | --- |
+| Console | `site.json` et `theme.json` écrits, commerce enregistré en base, commit poussé |
+| Hôte | visuels de remplacement, construction, déploiement |
+| Hôte, en root | bloc nginx, certificat Let's Encrypt |
+
+### 7 bis.3 L'état « En préparation »
+
+Le site naît en `preview` : **visible à son adresse, refusé à Google.**
+
+C'est le point important. Un site créé en clientèle porte encore le squelette —
+« À compléter » sous le nom du commerçant, pas de prestations, pas de mentions
+légales. Mis en `live` d'emblée, il deviendrait le premier résultat de
+recherche pour le nom du salon, dans cet état, et le commerçant le découvrirait
+des semaines plus tard.
+
+La fiche du client affiche en permanence ce qu'il reste à remplir. Quand tout y
+est, passer l'état sur **En ligne** et republier : le site entre alors dans
+`sitemap.xml`, `robots.txt` s'ouvre, et la balise `noindex` disparaît.
+
+### 7 bis.4 Ce que le squelette ne contient pas, et pourquoi
+
+Ni prestation, ni tarif, ni horaire, ni photo du salon. Ce n'est pas un manque :
+c'est un refus. Un tarif inventé qui passe en ligne engage le commerçant sur un
+prix qu'il ne pratique pas ; un horaire inventé fait accepter des rendez-vous un
+jour de fermeture. Aucun des deux ne produit d'erreur — seulement un client
+mécontent, des semaines plus tard.
+
+Ces informations se saisissent dans l'éditeur, pendant la visite, en les
+demandant. C'est de toute façon la conversation à avoir.
+
+La photothèque, elle, arrive garnie : dix visuels abstraits, utilisables tels
+quels le temps d'organiser la séance photo.
+
+### 7 bis.5 Passer au domaine propre
+
+Le sous-domaine ne se supprime pas : il se déplace dans `aliases` (§7.1). Une
+fois le DNS du client dirigé vers le serveur :
+
+```bash
+sudo /usr/local/sbin/bxl-vhost <slug> <domaine-du-client.be>
+```
+
+Le certificat est demandé au passage. Si le DNS ne pointe pas encore ici, la
+commande échoue proprement et le laisse en HTTP — il suffit de la relancer.
+
+### 7 bis.6 Si la création échoue en cours de route
+
+Rien n'est défait automatiquement, et c'est délibéré : supprimer un dossier, une
+ligne en base et un commit sont trois façons d'effacer autre chose que ce qu'on
+croit. Le message dit où l'on s'est arrêté.
+
+| Message | Ce qui reste à faire |
+| --- | --- |
+| « l'enregistrement en base a échoué » | Les fichiers existent. Vérifier que `bxl-db` tourne, puis recréer le client sous le même identifiant après avoir supprimé son dossier. |
+| « l'envoi vers GitHub a échoué » | Le client existe et fonctionne. `git -C /srv/repo push` depuis le serveur. |
+| « sa mise en ligne a échoué » | Le client existe. Ouvrir sa fiche et relancer « Mettre en ligne ». |
+| « ÉCHEC de la demande de certificat » | Le site est servi en HTTP. Relancer `sudo /usr/local/sbin/bxl-vhost <slug> <domaine>`. |
+
+Dans tous les cas, les sites déjà en ligne sont intacts : `bxl-vhost` relève
+leur état avant d'agir, le vérifie après, et revient en arrière au moindre
+écart.
+
+---
+
 ## 8. Sauvegardes
 
 Les sites se reconstruisent depuis git ; **la base, non**. Elle contient les
@@ -651,3 +774,6 @@ mise en ligne rapide.
 | 2026-08-16 | — | Doublons signalés par l'exploitant : coordonnées, horaires et tarifs figuraient sur la fiche client **et** dans l'éditeur. | Règle établie — la fiche pour la visibilité, la publication et la bibliothèque de photos ; l'éditeur pour tout le contenu. Le nettoyage a révélé que le gestionnaire de la fiche écrivait encore des champs que son formulaire n'envoyait plus : enregistrer les réglages aurait vidé le téléphone et **fermé les sept journées de la semaine**. |
 | 2026-08-16 | 6.3 | **Trois pannes empilées empêchaient la console d'enregistrer et de publier**, toutes muettes, aucune liée à la deploy key. (1) Le conteneur tournait en root alors que `/repo` appartient à `deploy` : git refusait le dépôt (`dubious ownership`) et toutes les écritures échouaient. (2) Une fois l'UID emprunté, `ssh` s'arrêtait sur `No user exists for uid 1002` — un UID sans ligne dans `/etc/passwd` n'a ni nom ni répertoire personnel. (3) Le build ne peut pas tourner dans le conteneur : dépendances installées sur l'hôte en **glibc**, image en **musl**, et les binaires natifs de rollup et sharp ne se partagent pas. | (1) `user:` dans Compose. (2) Compte créé dans l'image, UID en argument de construction. (3) Le build et le déploiement reviennent à l'hôte, via `scripts/publier.sh` appelé en ssh (`extra_hosts: hote:host-gateway`). **Chaîne vérifiée de bout en bout** : push réel vers GitHub, puis publication complète en **7 secondes** — 10 pages, 19 images retraitées. |
 | 2026-08-16 | 5 | Le §5 (Caddyfile) ne s'applique pas. | Remplacé par `infra/nginx/` : `bxl-commun.conf` (fragment `(commun)`), `api.conf.modele`, `admin.conf.modele`, `site.conf.modele` (équivalent de `pnpm caddy`). Modèles en HTTP seul — c'est certbot qui ajoute le TLS, comme pour les 4 sites déjà en place. |
+| 2026-08-17 | 7 bis | **Ajout d'un client ramené à un formulaire.** Il fallait six commandes dont deux en root, sur une session serveur : autant dire, au retour, le lendemain. La console fait maintenant tout : fichiers, enregistrement en base, commit poussé, puis — sur l'hôte — visuels, construction, déploiement, bloc nginx et certificat. Une minute. | Le bloc nginx demande root : utilitaire `bxl-vhost` **copié hors du dépôt** dans `/usr/local/sbin` par `infra/installer-vhost.sh`, seul programme autorisé par sudo. Une règle pointant vers `/srv/repo` aurait donné root à quiconque obtient la console, qui écrit dans ce dépôt à chaque enregistrement. 23 contrôles automatisés (`infra/bxl-vhost.test.sh`) : refus d'injection, relevé avant/après des sites de production, retour arrière. |
+| 2026-08-17 | 7 bis | Un site créé en clientèle n'avait que deux issues : rester invisible — donc rien à montrer — ou passer « live », et livrer à Google un brouillon signé du nom du commerçant. | Statut **`preview`** ajouté au schéma : déployé et visible à son adresse, `noindex` et absent du sitemap. La fiche du client liste en permanence ce qu'il reste à remplir avant le passage en « live ». Le test d'indexation est écrit en négatif (« tout sauf live ») : un état ajouté plus tard sera couvert d'office. |
+| 2026-08-17 | — | **Défaut trouvé en chemin, sans rapport avec la demande.** Les horaires, prestations, fermetures et équipe modifiés dans l'éditeur partaient dans git et s'affichaient sur le site, mais **la base n'était jamais mise à jour** : seul `pnpm tenant`, lancé à la main, la remplissait. L'agenda ne lit que la base. Fermer le lundi dans la console changeait donc le site sans changer la réservation, qui continuait d'accepter le lundi — sans le moindre signal, jusqu'au client devant une porte close. | Projection extraite dans `@bxl/api/tenant-sync`, appelée par le CLI **et** par la console après chaque enregistrement de contenu, chaque édition JSON et chaque création. Un échec de report est désormais dit à l'écran au lieu de passer inaperçu. |

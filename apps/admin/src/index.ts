@@ -8,6 +8,7 @@ import { readSession } from "./auth.ts";
 import { sql } from "./db.ts";
 import { authRoutes, SESSION_COOKIE } from "./routes/auth.ts";
 import { clientRoutes } from "./routes/clients.ts";
+import { nouveauRoutes } from "./routes/nouveau.ts";
 import { contenuRoutes } from "./routes/contenu.ts";
 import { apparenceRoutes } from "./routes/apparence.ts";
 import { requestRoutes } from "./routes/requests.ts";
@@ -76,6 +77,12 @@ app.get("/health", async () => {
 });
 
 authRoutes(app);
+/*
+ * Avant `clientRoutes` : `/clients/nouveau` et `/clients/:slug` se
+ * ressemblent. Le routeur de Fastify donne bien la priorité au chemin fixe,
+ * quel que soit l'ordre — mais l'ordre de lecture, lui, dit l'intention.
+ */
+nouveauRoutes(app);
 clientRoutes(app);
 contenuRoutes(app);
 apparenceRoutes(app);

@@ -118,6 +118,19 @@ for (const slug of slugs) {
       );
     }
 
+    /*
+     * `preview` est un état de passage : le site est en ligne à son adresse
+     * pour être montré, mais il porte encore le squelette. Le rappeler évite
+     * qu'il y reste — un site jamais passé en « live » n'est jamais référencé,
+     * et le commerçant ne comprendra pas pourquoi on ne le trouve pas.
+     */
+    if (site.status === "preview") {
+      report.warnings.push(
+        "statut « preview » : visible à son adresse mais refusé à Google —" +
+          " passer en « live » quand le contenu est prêt",
+      );
+    }
+
     // Les mentions légales sont une obligation pour tout site commercial belge.
     // Bloquant à la mise en ligne, tolérable sur un brouillon.
     if (site.status === "live" && !site.legal) {

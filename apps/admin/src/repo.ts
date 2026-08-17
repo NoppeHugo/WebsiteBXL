@@ -158,6 +158,51 @@ export async function publish(slug: string): Promise<CommandResult> {
   );
 }
 
+/**
+ * Installe un client tout juste créé : visuels, bloc nginx, certificat, mise
+ * en ligne.
+ *
+ * Même mécanique que `publish`, et pour les mêmes raisons : le travail se fait
+ * sur l'hôte. S'y ajoute ici l'écriture d'un bloc nginx et la demande d'un
+ * certificat, qui demandent root — le script hôte passe par un utilitaire
+ * installé hors du dépôt, lui seul autorisé par sudo (voir infra/bxl-vhost).
+ *
+ * Le seul argument transmis est l'identifiant, et il est revalidé ici avant
+ * l'envoi. Ce qu'on écrit là part dans une commande interprétée par un shell
+ * distant : un nom de commerce libre, avec ses apostrophes et ses espaces, y
+ * serait une porte ouverte. Tout le reste — nom, adresse, téléphone — est déjà
+ * dans le `site.json` que le script hôte relit sur place.
+ */
+export async function installerSite(slug: string): Promise<CommandResult> {
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) {
+    return { ok: false, output: `identifiant refusé : « ${slug} »` };
+  }
+  if (!config.PUBLISH_HOST) {
+    return {
+      ok: false,
+      output:
+        "PUBLISH_HOST n'est pas défini : la console ne sait pas à quelle machine " +
+        "confier l'installation. Renseignez-le dans .env (voir §6.3 de la procédure).",
+    };
+  }
+
+  return run(
+    "ssh",
+    [
+      "-i",
+      config.SSH_KEY,
+      "-o",
+      "StrictHostKeyChecking=accept-new",
+      "-o",
+      "BatchMode=yes",
+      config.PUBLISH_HOST,
+      `${config.PUBLISH_REPO}/scripts/nouveau-site.sh`,
+      slug,
+    ],
+    { timeoutMs: 600_000 },
+  );
+}
+
 /** Récupère les derniers changements avant d'éditer, pour éviter un conflit. */
 export async function pull(): Promise<CommandResult> {
   return run("git", ["pull", "--rebase"], { timeoutMs: 120_000 });

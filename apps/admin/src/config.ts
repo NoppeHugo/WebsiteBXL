@@ -50,6 +50,16 @@ const Env = z.object({
    */
   PUBLISH_REPO: z.string().default("/srv/repo"),
 
+  /**
+   * Domaine de service, sous lequel vivent les sous-domaines des clients.
+   *
+   * Vide, il est déduit de `PUBLIC_ADMIN_URL` en retirant son premier label :
+   * `https://admin.hairbxl.be` donne `hairbxl.be`. La déduction évite une
+   * variable de plus à renseigner sur le serveur — chacune est une occasion
+   * d'oubli, et un oubli ici ne se voit qu'au moment de créer un client.
+   */
+  SERVICE_DOMAIN: z.string().default(""),
+
   /** Injecté dans les builds déclenchés depuis la console. */
   PUBLIC_API_URL: z.string().default(""),
   STRIPE_SECRET_KEY: z.string().optional(),
@@ -81,6 +91,26 @@ if (!parsed.success) {
 
 export const config = parsed.data;
 export const isProduction = config.NODE_ENV === "production";
+
+/**
+ * Domaine sous lequel sont créés les sous-domaines des nouveaux clients.
+ *
+ * Vide et sans `PUBLIC_ADMIN_URL` exploitable, la création de client demande
+ * le domaine complet plutôt que d'en fabriquer un : un domaine deviné qui ne
+ * résout pas produit un certificat refusé et un site injoignable.
+ */
+export function domaineDeService(): string {
+  if (config.SERVICE_DOMAIN) return config.SERVICE_DOMAIN.toLowerCase();
+  try {
+    const hote = new URL(config.PUBLIC_ADMIN_URL).hostname;
+    const labels = hote.split(".");
+    // `admin.hairbxl.be` → `hairbxl.be`. En dessous de trois labels il n'y a
+    // pas de sous-domaine à retirer, et retirer quand même donnerait `be`.
+    return labels.length >= 3 ? labels.slice(1).join(".") : hote;
+  } catch {
+    return "";
+  }
+}
 
 if (config.EMAIL_DRIVER === "resend" && !config.RESEND_API_KEY) {
   throw new Error("EMAIL_DRIVER=resend nécessite RESEND_API_KEY");

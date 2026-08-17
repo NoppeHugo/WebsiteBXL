@@ -63,6 +63,9 @@ for (const slug of slugs) {
     if (client.site.status === "draft") {
       warn("statut « draft » — construit pour prévisualisation, à ne pas déployer");
     }
+    if (client.site.status === "preview") {
+      warn("statut « preview » — déployable, mais noindex : à passer en « live » avant la vraie mise en ligne");
+    }
     if (client.site.status === "suspended") {
       warn("statut « suspended » — génère la page « site indisponible »");
     }

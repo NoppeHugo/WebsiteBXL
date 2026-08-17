@@ -4,6 +4,8 @@ import { clients, client, readSiteRaw, writeSite, commitAndPush, publish, pull }
 import { config } from "../config.ts";
 import { logPublish, etatPublication } from "../db.ts";
 import { layout, flash, escape, STATUTS, statutLisible, depuis } from "../views.ts";
+import { resteAFaire } from "../nouveau.ts";
+import { projeterCommerce } from "../tenant.ts";
 import {
   listMedia,
   mediaPath,
@@ -62,8 +64,32 @@ async function editPage(
    * ressemblent trop pour que la distinction se devine : on enregistre, on lit
    * « enregistré », et le site continue d'afficher l'ancien horaire.
    */
+  /*
+   * En préparation, le bandeau ne se contente pas de nommer l'état : il liste
+   * ce qui manque. Un site créé en clientèle est joli tout de suite, et rien
+   * dans son apparence ne rappelle qu'il est invisible pour Google — sans
+   * cette liste, il y reste des semaines.
+   */
+  const manque = site.status === "preview" ? resteAFaire(site) : [];
+
   const bandeau =
-    site.status !== "live"
+    site.status === "preview"
+      ? `<div class="etat" data-etat="attente">
+    <div class="etat__texte">
+      <b>${escape(STATUTS.preview.nom)} — invisible pour Google</b>
+      <span>${escape(STATUTS.preview.aide)}</span>
+      ${
+        manque.length > 0
+          ? `<span>Reste à faire avant la vraie mise en ligne :
+             ${manque.map((m) => escape(m)).join(", ")}.</span>`
+          : `<span>Tout est renseigné : passez l'état sur « ${escape(STATUTS.live.nom)} » ci-dessous.</span>`
+      }
+    </div>
+    <form method="post" action="/clients/${escape(slug)}/publish">
+      <button type="submit">Mettre en ligne</button>
+    </form>
+  </div>`
+      : site.status !== "live"
       ? `<div class="etat" data-etat="brouillon">
     <div class="etat__texte">
       <b>${escape(statutLisible(site.status))}</b>
@@ -118,7 +144,7 @@ ${bandeau}
     <div class="row">
       <label>État du site
         <select name="status">
-          ${(["draft", "live", "suspended"] as const)
+          ${(["draft", "preview", "live", "suspended"] as const)
             .map(
               (s) =>
                 `<option value="${s}"${s === site.status ? " selected" : ""}>${STATUTS[s].nom}</option>`,
@@ -128,7 +154,7 @@ ${bandeau}
       </label>
     </div>
     <p class="aide">
-      ${(["draft", "live", "suspended"] as const)
+      ${(["draft", "preview", "live", "suspended"] as const)
         .map((s) => `<b>${STATUTS[s].nom}</b> — ${STATUTS[s].aide}`)
         .join("<br>")}
     </p>
@@ -149,7 +175,8 @@ ${bandeau}
   </div>
   <p class="aide">
     Reconstruit le site avec le contenu enregistré et le déploie. Quelques
-    dizaines de secondes. Refusé tant que l'état n'est pas « ${STATUTS.live.nom} ».
+    dizaines de secondes. Refusé tant que l'état n'est ni
+    « ${STATUTS.preview.nom} » ni « ${STATUTS.live.nom} ».
   </p>
 </form>
 
@@ -276,18 +303,37 @@ export function clientRoutes(app: FastifyInstance): void {
   Ouvrez une fiche pour modifier le contenu du site, ses photos, et le mettre
   à jour.
 </p>
+<p class="raccourci">
+  <a class="btn-lien" href="/clients/nouveau">+ Nouveau client</a>
+</p>
 <div class="cartes">${cartes.join("")}</div>`,
         { authenticated: true },
       ),
     );
   });
 
-  app.get<{ Params: { slug: string } }>("/clients/:slug", async (request, reply) => {
-    // On récupère l'état du dépôt avant d'afficher : éditer une version
-    // périmée produirait un conflit au moment de pousser.
-    await pull();
-    return reply.type("text/html").send(await editPage(request.params.slug));
-  });
+  app.get<{ Params: { slug: string }; Querystring: { cree?: string } }>(
+    "/clients/:slug",
+    async (request, reply) => {
+      // On récupère l'état du dépôt avant d'afficher : éditer une version
+      // périmée produirait un conflit au moment de pousser.
+      await pull();
+
+      const { slug } = request.params;
+      const accueil =
+        request.query.cree === "1"
+          ? {
+              kind: "ok" as const,
+              text:
+                "Site créé et en ligne à son adresse. Montrez-le, puis remplissez" +
+                " le contenu avec le commerçant : c'est le moment de lui demander" +
+                " ses prestations, ses horaires et ses photos.",
+            }
+          : undefined;
+
+      return reply.type("text/html").send(await editPage(slug, accueil));
+    },
+  );
 
   app.post<{ Params: { slug: string }; Body: Record<string, string> }>(
     "/clients/:slug",
@@ -351,8 +397,21 @@ export function clientRoutes(app: FastifyInstance): void {
           .send(await editPage(slug, { kind: "error", text: written.errors.join(" · ") }));
       }
 
+      // L'édition brute touche à tout, horaires et prestations compris : la
+      // base doit suivre, comme après un enregistrement de section.
+      const base = await projeterCommerce(client(slug).site);
+
       const pushed = await commitAndPush(slug, `contenu(${slug}) : édition JSON depuis la console`);
       await logPublish(adminId(request), slug, "save", "json");
+
+      if (!base.ok) {
+        return reply.type("text/html").send(
+          await editPage(slug, {
+            kind: "error",
+            text: `JSON enregistré, mais la réservation n'a pas été mise à jour : ${base.message}`,
+          }),
+        );
+      }
 
       return reply.type("text/html").send(
         await editPage(slug, {
