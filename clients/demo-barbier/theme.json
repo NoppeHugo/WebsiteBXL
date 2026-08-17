@@ -1,26 +1,30 @@
 {
+  "preset": {
+    "style": "signature",
+    "palette": "nuit"
+  },
   "palette": {
-    "bg": "#ffffff",
-    "surface": "#f4f4f2",
-    "text": "#15120f",
-    "muted": "#6e6862",
-    "accent": "#15120f",
-    "accentText": "#ffffff",
-    "border": "#e3e0dc"
+    "bg": "#000000",
+    "surface": "#1d1d1f",
+    "text": "#f5f5f7",
+    "muted": "#9a9a9f",
+    "accent": "#f5f5f7",
+    "accentText": "#000000",
+    "border": "#2c2c2e"
   },
   "fonts": {
-    "display": "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-    "body": "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-    "displayWeight": 400,
-    "displayTracking": "-0.03em",
+    "display": "Archivo, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    "body": "Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    "displayWeight": 300,
+    "displayTracking": "-0.04em",
     "displayTransform": "none",
     "uiTransform": "uppercase",
-    "uiTracking": "0.14em"
+    "uiTracking": "0.18em"
   },
   "layout": {
-    "hero": "split",
+    "hero": "overlap",
     "heroAlign": "start",
-    "gallery": "marquee",
+    "gallery": "strip",
     "nav": "solid"
   },
   "radius": "none",
@@ -29,6 +33,6 @@
     "glass": false,
     "blur": 0,
     "reveal": true,
-    "parallax": true
+    "parallax": false
   }
 }
