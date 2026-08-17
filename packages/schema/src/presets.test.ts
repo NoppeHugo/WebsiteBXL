@@ -96,3 +96,14 @@ describe("les styles se distinguent vraiment", () => {
     }
   });
 });
+
+describe("dispositions du hero", () => {
+  it("chaque disposition annoncée existe dans le schéma", () => {
+    // Un nom inventé passerait la validation du style mais casserait le rendu :
+    // le template n'a de CSS que pour les dispositions qu'il connaît.
+    const connues = new Set(["fullbleed", "split", "minimal", "overlap"]);
+    for (const [id, style] of Object.entries(STYLES)) {
+      expect(connues.has(style.style.layout.hero), `${id} : ${style.style.layout.hero}`).toBe(true);
+    }
+  });
+});

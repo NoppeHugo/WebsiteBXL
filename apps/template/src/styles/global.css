@@ -2360,3 +2360,143 @@ body[data-glass="true"] .rdv {
 [data-steps][data-anime="true"] .deroule__photo-repli {
   display: none;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Hero « overlap » : le titre déborde sur la photo                           */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Une grande image, et le bloc de texte qui remonte dessus. Le titre se trouve
+ * ainsi à cheval : le haut sur la photo, le bas sur le fond de la page.
+ *
+ * C'est ce chevauchement qui pose la question de la couleur. Un titre blanc
+ * disparaît sur une photo claire, un titre noir sur une photo sombre — et la
+ * photo est fournie par le commerçant, elle change à chaque publication. La
+ * réponse est mesurée à la construction (`lib/tonalite.ts`) et arrive ici sous
+ * la forme d'un attribut : le navigateur n'a rien à décider.
+ */
+.hero--overlap {
+  display: block;
+  min-height: 0;
+  padding-bottom: clamp(2rem, 5vw, 4rem);
+}
+
+.hero--overlap .hero__media {
+  position: relative;
+  inset: auto;
+  z-index: 0;
+  /* Plus haute qu'une image d'illustration : c'est elle qui porte la page. */
+  aspect-ratio: 4 / 5;
+  max-height: 76svh;
+}
+
+@media (min-width: 760px) {
+  .hero--overlap .hero__media {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/*
+ * Photo claire : aucun voile, elle garde toute sa force — le titre foncé s'y
+ * lit sans aide. Photo sombre : le titre y reste posé, et un voile léger en bas
+ * assure sa lisibilité sans effacer l'image.
+ */
+.hero[data-ton="clair"].hero--overlap .hero__media::after {
+  display: none;
+}
+
+.hero[data-ton="sombre"].hero--overlap .hero__media::after {
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.25) 28%,
+    transparent 55%
+  );
+}
+
+/*
+ * L'accroche et le titre sont ancrés au bas de la photo ; le sous-titre et les
+ * boutons suivent en dessous, sur le fond de la page.
+ *
+ * Ce découpage règle d'un coup la question de la couleur. Le titre ne touche
+ * jamais le fond de page : il peut donc prendre celle qu'appelle l'image,
+ * mesurée à la construction, sans risquer de disparaître plus bas. Le sous-titre
+ * garde les couleurs du thème, où elles sont justes par construction.
+ *
+ * Deux approches ont été écartées en chemin. Le mélange `difference` rendait le
+ * titre lisible partout, mais le teintait selon la photo — du cyan sur un
+ * tablier orange. Faire remonter le bloc entier par une marge négative
+ * emportait le sous-titre sur l'image, où sa couleur grise se perdait.
+ */
+.hero--overlap .hero__surtitre {
+  position: absolute;
+  inset-inline: 0;
+  bottom: clamp(1.5rem, 4vw, 3rem);
+  z-index: 1;
+}
+
+.hero--overlap .hero__surtitre .eyebrow,
+.hero--overlap .hero__surtitre .hero__title {
+  color: var(--hero-ton-texte, #ffffff);
+}
+
+.hero--overlap .hero__surtitre .eyebrow {
+  color: var(--hero-ton-eyebrow, rgba(255, 255, 255, 0.82));
+}
+
+.hero--overlap .hero__content {
+  position: relative;
+  padding-block: clamp(1.5rem, 4vw, 2.5rem) 0;
+}
+
+.hero--overlap .hero__sub {
+  margin-top: 0;
+}
+
+/*
+ * Le titre chevauche, le reste non.
+ *
+ * Cantonner le débordement au seul titre évite d'avoir à rendre lisible un
+ * paragraphe entier sur une image : le sous-titre et les boutons retombent sur
+ * le fond de la page, où le contraste du thème s'applique normalement.
+ */
+/*
+ * Le titre est à cheval sur deux fonds : la photo en haut, la page en bas.
+ * Aucune couleur unique ne peut convenir aux deux — un blanc lisible sur la
+ * photo disparaît sur le fond clair, et l'inverse est vrai aussi. C'est ce
+ * qu'a montré le premier essai : la moitié basse des lettres s'effaçait.
+ *
+ * `difference` résout le cas exactement : le blanc y devient noir sur fond
+ * clair et reste blanc sur fond sombre, pixel par pixel, sans qu'aucune mesure
+ * n'ait à prévoir ce qu'il y aura dessous. La photo comme le fond de page sont
+ * traités du même coup.
+ *
+ * Le repli compte autant que l'effet : là où le mélange n'est pas géré, on
+ * retombe sur la couleur mesurée à la construction, qui reste juste pour la
+ * partie posée sur la photo.
+ */
+.hero--overlap .hero__title {
+  color: var(--hero-ton-texte, var(--c-text));
+  text-shadow: 0 1px 24px var(--hero-ton-ombre, transparent);
+}
+
+
+.hero--overlap .eyebrow {
+  color: var(--hero-ton-eyebrow, var(--c-muted));
+  text-shadow: 0 1px 20px var(--hero-ton-ombre, transparent);
+}
+
+/* Photo sombre sous le texte : on écrit en clair. */
+.hero[data-ton="sombre"] {
+  --hero-ton-texte: #ffffff;
+  --hero-ton-eyebrow: rgba(255, 255, 255, 0.82);
+  --hero-ton-ombre: rgba(0, 0, 0, 0.45);
+}
+
+/* Photo claire : on écrit en foncé, avec une ombre claire pour décoller les
+   lettres des zones les plus lumineuses. */
+.hero[data-ton="clair"] {
+  --hero-ton-texte: #14100e;
+  --hero-ton-eyebrow: rgba(20, 16, 14, 0.72);
+  --hero-ton-ombre: rgba(255, 255, 255, 0.55);
+}

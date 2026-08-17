@@ -394,7 +394,12 @@ export const ThemeConfig = z.object({
     uiTracking: z.string().default("0.12em"),
   }),
   layout: z.object({
-    hero: z.enum(["fullbleed", "split", "minimal"]).default("fullbleed"),
+    /**
+     * `overlap` : grande image, dont le bloc de titre déborde sur le bas.
+     * La couleur de ce titre est décidée à la construction, d'après ce que la
+     * photo montre à cet endroit précis.
+     */
+    hero: z.enum(["fullbleed", "split", "minimal", "overlap"]).default("fullbleed"),
     /** Texte du hero aligné à gauche, ou centré comme sur les pages Apple. */
     heroAlign: z.enum(["start", "center"]).default("start"),
     /**

@@ -117,7 +117,7 @@ export const STYLES: Record<string, StyleDefini> = {
    */
   signature: {
     nom: "Signature",
-    pour: "Haut de gamme, très épuré. Demande de belles photos.",
+    pour: "Haut de gamme. Grande photo, titre posé dessus, très peu de texte.",
     style: {
       fonts: {
         display: `Archivo, ${PILE_SYSTEME}`,
@@ -128,7 +128,7 @@ export const STYLES: Record<string, StyleDefini> = {
         uiTransform: "uppercase",
         uiTracking: "0.18em",
       },
-      layout: { hero: "minimal", heroAlign: "center", gallery: "strip", nav: "solid" },
+      layout: { hero: "overlap", heroAlign: "start", gallery: "strip", nav: "solid" },
       radius: "none",
       grain: false,
       effects: { glass: false, blur: 0, reveal: true, parallax: false },

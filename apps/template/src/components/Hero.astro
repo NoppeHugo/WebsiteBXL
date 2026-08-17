@@ -5,6 +5,7 @@ import { site, theme, t } from "../lib/client.ts";
 import { ui } from "../lib/i18n.ts";
 import { media } from "../lib/media.ts";
 import { bookingTarget, telHref } from "../lib/booking.ts";
+import { tonalite } from "../lib/tonalite.ts";
 
 interface Props {
   lang: Language;
@@ -14,9 +15,17 @@ const { lang } = Astro.props;
 const booking = bookingTarget(lang);
 const image = media(site.hero.image);
 const variant = theme.layout.hero;
+
+/*
+ * Clair ou sombre : mesuré à la construction, sur la bande de l'image où le
+ * texte va se poser. Le HTML transporte le résultat, le navigateur n'a rien à
+ * calculer — et la couleur reste juste même si la photo change de dominante
+ * d'une publication à l'autre.
+ */
+const ton = await tonalite(site.hero.image, theme.layout.heroAlign);
 ---
 
-<section class={`hero hero--${variant}`} data-align={theme.layout.heroAlign}>
+<section class={`hero hero--${variant}`} data-align={theme.layout.heroAlign} data-ton={ton}>
   <div class="hero__media" data-hero-media>
     <Image
       src={image}
@@ -27,15 +36,39 @@ const variant = theme.layout.hero;
       fetchpriority="high"
       quality={78}
     />
+
+    {
+      /*
+       * En disposition « overlap », l'accroche et le titre sont ancrés dans la
+       * photo elle-même, et non dans le bloc qui la suit.
+       *
+       * C'est ce qui permet de leur donner la couleur qu'appelle l'image —
+       * mesurée à la construction — sans se poser la question du fond de page :
+       * ils ne le touchent jamais. Le sous-titre et les boutons, eux, restent
+       * dessous, où les couleurs du thème s'appliquent normalement.
+       *
+       * Les faire simplement remonter par une marge négative aurait entraîné
+       * tout le bloc avec eux, sous-titre compris — lequel n'a pas de couleur
+       * adaptée et devenait illisible sur la photo.
+       */
+      variant === "overlap" && (
+        <div class="wrap hero__surtitre">
+          {site.business.tagline && (
+            <p class="eyebrow">{t(site.business.tagline, lang)}</p>
+          )}
+          <h1 class="hero__title">{t(site.hero.headline, lang)}</h1>
+        </div>
+      )
+    }
   </div>
 
   <div class="wrap hero__content">
     {
-      site.business.tagline && (
+      variant !== "overlap" && site.business.tagline && (
         <p class="eyebrow">{t(site.business.tagline, lang)}</p>
       )
     }
-    <h1 class="hero__title">{t(site.hero.headline, lang)}</h1>
+    {variant !== "overlap" && <h1 class="hero__title">{t(site.hero.headline, lang)}</h1>}
     {
       site.hero.subline && (
         <p class="hero__sub">{t(site.hero.subline, lang)}</p>
