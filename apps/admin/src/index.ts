@@ -9,6 +9,7 @@ import { sql } from "./db.ts";
 import { authRoutes, SESSION_COOKIE } from "./routes/auth.ts";
 import { clientRoutes } from "./routes/clients.ts";
 import { contenuRoutes } from "./routes/contenu.ts";
+import { apparenceRoutes } from "./routes/apparence.ts";
 import { requestRoutes } from "./routes/requests.ts";
 import { reportRoutes } from "./routes/reports.ts";
 import { billingRoutes } from "./routes/billing.ts";
@@ -77,6 +78,7 @@ app.get("/health", async () => {
 authRoutes(app);
 clientRoutes(app);
 contenuRoutes(app);
+apparenceRoutes(app);
 requestRoutes(app);
 reportRoutes(app);
 billingRoutes(app);

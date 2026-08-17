@@ -7,6 +7,52 @@
  * sans dupliquer la base de code.
  */
 
+/* -------------------------------------------------------------------------- */
+/* Polices auto-hébergées                                                     */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Servies depuis le site lui-même, jamais depuis Google Fonts : appeler leurs
+ * serveurs transmettrait l'adresse IP de chaque visiteur à un tiers hors UE,
+ * ce qui a déjà valu des condamnations en Europe. Les quatre familles sont
+ * sous licence OFL, réduites au latin étendu et converties en woff2 — 35 à
+ * 120 ko chacune au lieu de 200 à 850.
+ *
+ * Les quatre sont déclarées, aucune n'est imposée : un navigateur ne télécharge
+ * une police que si le style retenu par le client s'en sert réellement.
+ *
+ * `swap` : le texte s'affiche immédiatement dans la police de secours, puis
+ * bascule. Un commerce dont le nom reste invisible une seconde perd le
+ * visiteur qui a hésité.
+ */
+@font-face {
+  font-family: "Oswald";
+  src: url("/fonts/oswald.woff2") format("woff2-variations");
+  font-weight: 200 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Bitter";
+  src: url("/fonts/bitter.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/inter.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Archivo";
+  src: url("/fonts/archivo.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 *,
 *::before,
 *::after {
@@ -291,6 +337,23 @@ body[data-glass="true"] .nav[data-scrolled="true"] {
 @media (max-width: 760px) {
   .nav__inner {
     padding-block: 0.75rem;
+    /* Une barre qui passe à la ligne double sa hauteur et décale tout ce qui
+       suit. Elle tient sur une ligne, quitte à réduire le nom du commerce. */
+    flex-wrap: nowrap;
+    gap: 0.75rem;
+  }
+
+  /*
+   * Le nom cède l'espace avant les commandes : il reste lisible en plus petit,
+   * alors qu'un menu tronqué devient inutilisable. Observé avec une display à
+   * empattements, plus large que la pile système à taille égale — le nom, les
+   * langues et « Menu » ne tenaient plus ensemble.
+   */
+  .nav__brand {
+    font-size: var(--step-0);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -508,16 +571,46 @@ body[data-glass="true"] .nav[data-menu="open"] {
   object-fit: cover;
 }
 
+/*
+ * Voile de lisibilité entre la photo et le texte.
+ *
+ * Il prend la couleur du fond, si bien qu'il fonce sur une palette sombre et
+ * éclaircit sur une palette claire : le texte garde son contraste dans les deux
+ * cas, sans qu'aucun style ait à s'en occuper.
+ *
+ * Renforcé après essai sur téléphone : à 45 % au milieu, un sous-titre gris
+ * posé sur une photo claire devenait illisible. La photo reste franche dans son
+ * tiers haut, là où il n'y a jamais de texte, et le voile se ferme là où il y
+ * en a.
+ */
 .hero__media::after {
   content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(
     to top,
-    color-mix(in srgb, var(--c-bg) 88%, transparent) 0%,
-    color-mix(in srgb, var(--c-bg) 45%, transparent) 45%,
-    color-mix(in srgb, var(--c-bg) 20%, transparent) 100%
+    color-mix(in srgb, var(--c-bg) 96%, transparent) 0%,
+    color-mix(in srgb, var(--c-bg) 84%, transparent) 32%,
+    color-mix(in srgb, var(--c-bg) 38%, transparent) 64%,
+    color-mix(in srgb, var(--c-bg) 8%, transparent) 100%
   );
+}
+
+/*
+ * Texte centré : il ne repose plus sur le bas de l'image, où le voile est le
+ * plus dense, mais en plein milieu. Un second voile uniforme rattrape la
+ * différence — plus discret que de fermer complètement le dégradé, ce qui
+ * effacerait la photo.
+ */
+.hero[data-align="center"] .hero__media::after {
+  background:
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--c-bg) 92%, transparent) 0%,
+      color-mix(in srgb, var(--c-bg) 62%, transparent) 45%,
+      color-mix(in srgb, var(--c-bg) 30%, transparent) 100%
+    ),
+    color-mix(in srgb, var(--c-bg) 22%, transparent);
 }
 
 /*

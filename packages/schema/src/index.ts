@@ -328,6 +328,18 @@ const Color = z
  * sites qui ne se ressemblent pas sans dupliquer la base de code (README §3.3).
  */
 export const ThemeConfig = z.object({
+  /**
+   * Style et palette retenus dans la console, quand ils l'ont été.
+   *
+   * Purement indicatif : tout est déjà décrit par les champs qui suivent, et un
+   * thème réglé à la main s'en passe. Le noter permet à la console de montrer
+   * la sélection en cours plutôt que de la déduire en comparant les valeurs —
+   * déduction qui se tromperait dès qu'un réglage aurait été retouché.
+   */
+  preset: z
+    .object({ style: z.string().min(1), palette: z.string().min(1) })
+    .optional(),
+
   palette: z.object({
     bg: Color,
     surface: Color,

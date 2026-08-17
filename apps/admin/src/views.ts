@@ -251,6 +251,55 @@ details.avance > div { padding: 0 1.2rem 1.2rem; }
   border-radius: 980px; padding: 0.6em 1.4em; font-size: 0.95rem;
 }
 .btn-lien:hover { filter: brightness(1.12); }
+.btn-lien--second { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-lien--second:hover { border-color: var(--muted); filter: none; }
+
+/* --- Choix de l'apparence ----------------------------------------------- */
+
+/*
+ * Chaque style est montré, jamais décrit seul : un commerçant reconnaît une
+ * mise en page d'un coup d'œil, et ne devinera pas ce que recouvre
+ * « typographie condensée ». Les vignettes sont rendues avec les vraies
+ * polices et les vraies couleurs — elles suivent donc toute modification d'un
+ * style, sans capture à régénérer.
+ */
+.choix-grille {
+  display: grid; gap: 1rem; margin-bottom: 2.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+}
+.choix {
+  display: grid; gap: 0.9rem; margin: 0; cursor: pointer;
+  border: 1px solid var(--border); border-radius: 14px; padding: 1rem;
+  transition: border-color 0.15s;
+}
+.choix:hover { border-color: var(--muted); }
+.choix:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.choix input { position: absolute; opacity: 0; pointer-events: none; }
+.choix__texte { display: grid; gap: 0.2rem; font-size: 0.85rem; }
+.choix__texte b { font-size: 0.95rem; color: var(--text); }
+.choix__texte span { color: var(--muted); }
+
+.vignette {
+  display: grid; gap: 0.55rem; justify-items: start;
+  padding: 1rem; border: 1px solid; border-radius: 10px; min-height: 7.5rem;
+}
+.vignette__titre { font-size: 2rem; line-height: 1; }
+.vignette__filet { display: block; width: 100%; height: 1px; }
+.vignette__btn { font-size: 0.68rem; padding: 0.45em 1.1em; }
+
+.teinte-grille {
+  display: grid; gap: 0.75rem; margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+}
+.teinte {
+  display: grid; gap: 0.5rem; margin: 0; cursor: pointer; text-align: center;
+  border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem;
+  font-size: 0.85rem; color: var(--text);
+}
+.teinte:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.teinte input { position: absolute; opacity: 0; pointer-events: none; }
+.teinte__pastilles { display: flex; height: 2.2rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.teinte__pastilles span { flex: 1; }
 `;
 
 export function layout(

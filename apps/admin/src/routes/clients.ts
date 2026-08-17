@@ -104,8 +104,12 @@ ${message ? flash(message.kind, message.text) : ""}
 ${bandeau}
 
 <p class="raccourci">
-  <a class="btn-lien" href="/clients/${escape(slug)}/contenu">Modifier le contenu du site →</a>
-  <span class="aide">Textes, photos, galerie, équipe, avis — sans toucher au fichier.</span>
+  <a class="btn-lien" href="/clients/${escape(slug)}/contenu">Modifier le contenu →</a>
+  <a class="btn-lien btn-lien--second" href="/clients/${escape(slug)}/apparence">Changer l'apparence →</a>
+</p>
+<p class="aide" style="margin:-1.2rem 0 1.8rem">
+  Le contenu, ce sont les textes et les photos. L'apparence, le style et les
+  couleurs.
 </p>
 
 <form method="post" action="/clients/${escape(slug)}">
