@@ -46,14 +46,14 @@
   "hero": {
     "image": "360-f-469681744-fzwt6lkxlocu4xvv8cjx6zfmwnlnlm7x.jpg",
     "headline": {
-      "fr": "La coupe se prend son temps",
-      "nl": "Een knipbeurt neemt de tijd",
-      "en": "A proper cut takes its time"
+      "fr": "Assis à l'heure dite",
+      "nl": "Op het afgesproken uur",
+      "en": "In the chair, on time"
     },
     "subline": {
-      "fr": "Barbier traditionnel à Dansaert. Coupe, barbe et rasage à l'ancienne, sur rendez-vous.",
-      "nl": "Traditionele barbier aan Dansaert. Knippen, baard en klassiek scheren, op afspraak.",
-      "en": "Traditional barbershop on Dansaert. Cuts, beards and classic shaves, by appointment."
+      "fr": "Rue Dansaert. Coupe, barbe, rasage. Créneau réservé en ligne, tenu.",
+      "nl": "Dansaertstraat. Knippen, baard, scheren. Online geboekt, op tijd.",
+      "en": "On Dansaert. Cuts, beards, shaves. Booked online, kept on time."
     }
   },
   "hours": {

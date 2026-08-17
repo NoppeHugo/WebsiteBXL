@@ -132,10 +132,13 @@ p {
  * Le visiteur atterrit alors au milieu d'un contenu dont il ne voit plus le
  * nom. Cela vaut pour tous les liens du menu — c'est-à-dire, sur téléphone,
  * pour toute la navigation.
+ *
+ * 7rem et non 5.5 : mesuré sur téléphone, la barre descend à 137 px quand la
+ * marge n'en réservait que 127. Le haut du titre passait dessous.
  */
 section[id],
 main[id] {
-  scroll-margin-top: calc(var(--notice-h) + 5.5rem);
+  scroll-margin-top: calc(var(--notice-h) + 7rem);
 }
 
 .section--tight {
@@ -278,6 +281,17 @@ body[data-glass="true"] .nav[data-scrolled="true"] {
   justify-content: space-between;
   gap: 1.5rem;
   padding-block: 1.1rem;
+}
+
+/*
+ * Barre plus basse sur téléphone. Avec le bandeau d'état, elle occupait 137 px
+ * — un sixième de l'écran, immobilisé du haut de la page au bas, pour un nom
+ * et un menu. La hauteur d'appui reste au-dessus des 44 px recommandés.
+ */
+@media (max-width: 760px) {
+  .nav__inner {
+    padding-block: 0.75rem;
+  }
 }
 
 .nav__brand {
@@ -481,6 +495,11 @@ body[data-glass="true"] .nav[data-menu="open"] {
   position: absolute;
   inset: 0;
   z-index: -2;
+  /* Le parallaxe agrandit l'image de 30 % pour avoir de quoi la déplacer sans
+     découvrir le fond. Sans cette coupe, ce débord sort du cadre — invisible
+     en plein écran, où l'image occupe déjà tout, mais bien visible dès qu'elle
+     revient dans le flux (disposition « split »). */
+  overflow: hidden;
 }
 
 .hero__media img {
@@ -902,6 +921,23 @@ body[data-glass="true"] .nav[data-menu="open"] {
   grid-template-columns: repeat(auto-fit, minmax(min(45%, 220px), 1fr));
   list-style: none;
   padding: 0;
+}
+
+/*
+ * Équipe en nombre impair : le dernier portrait s'étend et se centre au lieu
+ * de laisser une case vide à côté de lui. Trois personnes sur deux colonnes
+ * donnaient un trou béant en bas à droite — la mise en page paraissait
+ * inachevée, alors qu'il ne manquait rien.
+ *
+ * Ne s'applique qu'à deux colonnes : au-delà, une ligne incomplète se lit
+ * comme une grille normale.
+ */
+@media (max-width: 760px) {
+  .team > li:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    max-width: calc(50% - clamp(0.75rem, 1.5vw, 1.25rem));
+    margin-inline: auto;
+  }
 }
 
 .team img {
