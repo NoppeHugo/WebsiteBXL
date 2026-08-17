@@ -119,7 +119,7 @@ function page(
   <div class="fiche">
     <div class="fiche__titre">Nouvelle fermeture</div>
 
-    <div class="actions" style="margin:0.9rem 0">
+    <div class="actions actions--rangee" style="margin:0.9rem 0">
       <button type="button" class="second" data-raccourci="${escape(jour)}|${escape(jour)}">
         Aujourd'hui
       </button>

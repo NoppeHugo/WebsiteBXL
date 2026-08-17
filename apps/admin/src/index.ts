@@ -126,7 +126,9 @@ app.addHook("onRequest", async (request, reply) => {
     );
   }
 
-  if (dansLEspace) return reply.redirect("/clients", 303);
+  // La liste des clients est servie à la racine, pas sur « /clients » — qui
+  // n'existe pas et renverrait un 404 à l'exploitant venu par curiosité.
+  if (dansLEspace) return reply.redirect("/", 303);
 });
 
 // En-têtes de sécurité : la console n'affiche que ses propres pages, sans

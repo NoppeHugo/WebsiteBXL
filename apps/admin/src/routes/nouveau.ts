@@ -230,7 +230,7 @@ ${
   </p>
 </form>
 
-<p style="margin-top:2rem"><a href="/clients">← Tous les clients</a></p>`,
+<p style="margin-top:2rem"><a href="/">← Tous les clients</a></p>`,
     { authenticated: true, editeur: true },
   );
 }

@@ -644,6 +644,105 @@ leur état avant d'agir, le vérifie après, et revient en arrière au moindre
 
 ---
 
+## 7 ter. Donner au commerçant les clés de son site
+
+Un commerçant n'a pas besoin de tout modifier. Il a besoin de **fermer**, et
+tout de suite : un imprévu, une maladie, et le client qui a réservé se déplace
+pour rien. C'est urgent par nature, ça ne peut pas attendre qu'on soit
+joignable, et c'est ce qui use une relation client.
+
+L'espace commerçant couvre cela, plus ce qui change de temps en temps : les
+horaires, les tarifs, les photos, le texte de présentation. Rien d'autre.
+
+### 7 ter.1 Ce que le commerçant voit, et ce qu'il ne voit pas
+
+| Il peut | Il ne peut pas |
+| --- | --- |
+| Fermer une journée, une semaine, des congés | Voir les autres commerces |
+| Changer ses horaires habituels | Changer son style ou ses couleurs |
+| Ajouter, modifier, retirer une prestation | Mettre son site hors ligne |
+| Envoyer des photos, choisir la couverture | Toucher au domaine, au palier, aux mentions légales |
+| Réécrire sa présentation, ses coordonnées | Accéder à la console d'exploitation |
+| Voir ses rendez-vous et les annuler | Modifier ses traductions |
+| Lire les messages reçus | |
+
+**Enregistrer publie.** Il n'y a pas de bouton « mettre en ligne » séparé : lui
+demander de comprendre qu'un enregistrement ne change rien au site public,
+c'est garantir qu'un jour il fermera sans que le site le dise.
+
+L'ordre est celui-ci, et il compte : **la base d'abord, le site ensuite.** La
+base commande la réservation ; dès qu'elle est à jour, plus aucun rendez-vous
+n'est accepté sur un créneau fermé. Si la reconstruction du site échoue
+ensuite, le site affiche encore l'ancien horaire — c'est fâcheux, mais personne
+ne peut réserver ce jour-là. L'ordre inverse aurait produit exactement la panne
+qu'on cherche à éviter.
+
+### 7 ter.2 Installation, une seule fois
+
+L'espace est servi par la **même application** que la console, sur un domaine
+distinct. Un domaine par usage : l'adresse remise au coiffeur ne doit jamais
+mener à la console qui gouverne les trente sites.
+
+```bash
+# Sur le serveur, en root :
+sudo bash /home/hugo/go18.sh
+```
+
+Le script renseigne `PORTAL_HOST`, pose le bloc nginx du portail, demande son
+certificat, applique la migration 007 et reconstruit les deux conteneurs.
+
+⛔ **STOP — choisir le sous-domaine du portail avec l'exploitant** avant de
+lancer, s'il ne veut pas `mon.<domaine de service>` :
+
+```bash
+PORTAIL=espace.hairbxl.be sudo -E bash /home/hugo/go18.sh
+```
+
+**Vérifier :** `https://<portail>/login` répond 200, et `https://<portail>/`
+répond 404 pour un compte d'exploitation connecté.
+
+### 7 ter.3 Ouvrir l'accès d'un commerçant
+
+Console → **Accès des commerçants** → saisir son adresse e-mail → *Ouvrir
+l'accès*.
+
+Un mot de passe est tiré au sort et **affiché une seule fois** : quatre mots
+courants séparés de tirets, faciles à dicter au téléphone. Le noter tout de
+suite, ou le lire au commerçant pendant qu'il est là.
+
+Il est obligé de le remplacer à sa première connexion : tant qu'il ne l'a pas
+fait, aucune autre page ne s'ouvre. Un mot de passe dicté au comptoir a été
+entendu par au moins deux personnes.
+
+**Retirer un accès** le supprime immédiatement : le compte est relu en base à
+chaque page, la session du commerçant meurt donc à sa requête suivante — pas à
+l'expiration de son jeton douze heures plus tard.
+
+### 7 ter.4 Ce qui empêche un salon de voir celui d'un autre
+
+Trois barrières indépendantes, et chacune suffirait seule :
+
+1. **Le rôle.** `admin_users.tenant_slug` vide désigne l'exploitant, renseigné
+   un commerçant. Un commerçant n'atteint que `/espace`.
+2. **Le nom d'hôte.** Le portail ne sert que l'espace ; la console refuse
+   `/espace`.
+3. **L'absence d'identifiant dans les URL.** Aucune page de l'espace ne prend
+   de `slug` : il vient de la session. Il n'y a rien à falsifier, parce qu'il
+   n'y a rien à écrire.
+
+Les lectures et l'annulation de rendez-vous portent le `slug` **dans la clause
+`where`**, pas dans une vérification préalable : un identifiant appartenant à un
+autre salon ne trouve simplement aucune ligne.
+
+### 7 ter.5 Ce qui reste à l'exploitant
+
+Le style et les couleurs, les traductions, les mentions légales, le domaine, le
+palier, la mise hors ligne, et la création des clients. C'est volontaire : ce
+sont des décisions qui engagent, ou qui se paient — et un commerçant qui
+change son style tous les mois n'a plus d'identité.
+
+---
+
 ## 8. Sauvegardes
 
 Les sites se reconstruisent depuis git ; **la base, non**. Elle contient les
@@ -777,3 +876,11 @@ mise en ligne rapide.
 | 2026-08-17 | 7 bis | **Ajout d'un client ramené à un formulaire.** Il fallait six commandes dont deux en root, sur une session serveur : autant dire, au retour, le lendemain. La console fait maintenant tout : fichiers, enregistrement en base, commit poussé, puis — sur l'hôte — visuels, construction, déploiement, bloc nginx et certificat. Une minute. | Le bloc nginx demande root : utilitaire `bxl-vhost` **copié hors du dépôt** dans `/usr/local/sbin` par `infra/installer-vhost.sh`, seul programme autorisé par sudo. Une règle pointant vers `/srv/repo` aurait donné root à quiconque obtient la console, qui écrit dans ce dépôt à chaque enregistrement. 23 contrôles automatisés (`infra/bxl-vhost.test.sh`) : refus d'injection, relevé avant/après des sites de production, retour arrière. |
 | 2026-08-17 | 7 bis | Un site créé en clientèle n'avait que deux issues : rester invisible — donc rien à montrer — ou passer « live », et livrer à Google un brouillon signé du nom du commerçant. | Statut **`preview`** ajouté au schéma : déployé et visible à son adresse, `noindex` et absent du sitemap. La fiche du client liste en permanence ce qu'il reste à remplir avant le passage en « live ». Le test d'indexation est écrit en négatif (« tout sauf live ») : un état ajouté plus tard sera couvert d'office. |
 | 2026-08-17 | — | **Défaut trouvé en chemin, sans rapport avec la demande.** Les horaires, prestations, fermetures et équipe modifiés dans l'éditeur partaient dans git et s'affichaient sur le site, mais **la base n'était jamais mise à jour** : seul `pnpm tenant`, lancé à la main, la remplissait. L'agenda ne lit que la base. Fermer le lundi dans la console changeait donc le site sans changer la réservation, qui continuait d'accepter le lundi — sans le moindre signal, jusqu'au client devant une porte close. | Projection extraite dans `@bxl/api/tenant-sync`, appelée par le CLI **et** par la console après chaque enregistrement de contenu, chaque édition JSON et chaque création. Un échec de report est désormais dit à l'écran au lieu de passer inaperçu. |
+| 2026-08-17 | 8 | **La base n'était sauvegardée nulle part.** Le §8 décrivait la procédure ; elle n'avait jamais été exécutée, aucune tâche planifiée n'existait et `/srv/sauvegardes` non plus. Un serveur sans sauvegarde fonctionne parfaitement jusqu'au jour où il ne fonctionne plus. | `infra/sauvegarde.sh` en minuterie systemd, chaque nuit à 3 h 17. Il **restaure** chaque archive dans une base jetable et y compte les lignes avant de la déclarer bonne : une sauvegarde jamais restaurée n'est qu'un fichier dont on suppose le contenu. Cycle vidage → gzip → restauration → comptage vérifié à la main sur la vraie base avant livraison. ⛔ **La copie hors du serveur reste à décider** : les archives vivent sur le disque de la base, et une destination inventée donnerait l'illusion d'une copie. `SAUVEGARDE_DISTANTE` attend la commande. |
+| 2026-08-17 | — | **Rien ne surveillait rien.** API tombée, certificat non renouvelé, disque plein, site client muet : on l'apprenait par un appel du client. | `infra/surveillance.sh` toutes les dix minutes, en root — il lit `nginx -T` pour connaître **tous** les hôtes servis, y compris les quatre sites de production des autres projets, et les dates d'expiration des certificats. N'écrit qu'au changement d'état, jamais en continu : une surveillance qui parle tous les jours n'est plus lue au bout d'une semaine. |
+| 2026-08-17 | — | Disque à 57 % avec **20 Go de cache de construction et 7,8 Go d'images inutilisées**, qui grossissent à chaque reconstruction de la console. Un disque plein n'arrête pas que ce projet : Postgres cesse d'écrire, nginx aussi, et les sites des autres projets tombent avec. C'est le seul point de rupture réellement partagé de la machine. | `infra/menage-docker.sh` chaque lundi. Ne touche jamais aux volumes — `docker volume prune` emporterait la base — et vérifie que les trois conteneurs tournent toujours après son passage. |
+| 2026-08-17 | 7 ter | **Espace commerçant.** Tout changement de contenu passait par l'exploitant. Tenable pour une refonte de textes ; intenable pour « je suis malade, je ferme jeudi », qui est urgent par nature et se paie par un client devant une porte close. | Interface distincte sur son propre domaine, servie par la même application : `PORTAL_HOST` décide laquelle. Migration 007 : une colonne `tenant_slug` porte toute la distinction. **Enregistrer publie** — pas de second bouton à comprendre — et dans cet ordre : la base d'abord, qui commande la réservation, le site ensuite. Une reconstruction ratée laisse un site en retard mais un agenda déjà fermé ; l'ordre inverse aurait produit la panne qu'on veut éviter. Parcours complet vérifié en vrai : connexion, mot de passe imposé au premier accès, fermeture écrite dans `site.json` **et** dans `tenant_closures`, réouverture, ajout et retrait de prestation, retrait d'accès qui coupe la session à la requête suivante. |
+| 2026-08-17 | 7 ter | Cloisonnement entre salons : trois barrières indépendantes — le rôle, le nom d'hôte, et l'absence totale d'identifiant de commerce dans les URL de l'espace (il vient de la session). Les lectures et l'annulation portent le `slug` **dans la clause `where`**, pas dans une vérification préalable. | Vérifié par requêtes réelles : un commerçant connecté est renvoyé au portail sur **toutes** les pages de la console ; un compte d'exploitation reçoit 404 sur le portail, sans boucle de redirection. |
+| 2026-08-17 | — | **Les prestations ne pouvaient ni s'ajouter ni se supprimer** depuis la console : la page renvoyait à « l'édition avancée », c'est-à-dire au JSON brut. On ne dit pas ça à un coiffeur. | Gérées comme les horaires et la galerie — la liste complète est renvoyée, l'absence vaut retrait. L'identifiant est stable et n'est **jamais** repris du formulaire quand il est inconnu : des rendez-vous s'y réfèrent, et le laisser choisir de l'extérieur reviendrait à laisser quelqu'un d'autre décider à quoi ils se rattachent. La virgule décimale belge est acceptée — « 28,50 » lu par `Number()` donne NaN, donc « sur devis », donc un tarif disparu sans un mot. |
+| 2026-08-17 | 6.4 | **`admin.hairbxl.be` n'avait pas de `client_max_body_size`** : nginx coupait à son mégaoctet par défaut alors que le code en accepte quarante. L'envoi de photos échouait donc pour **toutes** les vraies photos — une photo de téléphone en pèse trois à cinq — et le refus venait de nginx, que l'application ne voit jamais. | Porté à 40 Mo dans `admin.conf.modele` et dans le bloc en place, sauvegarde du fichier avant modification. |
+| 2026-08-17 | — | Liens « ← Tous les clients » et redirection de l'exploitant pointant vers `/clients`, qui **n'existe pas** : la liste est servie à la racine. 404 silencieux. | Corrigé, et trouvé en pilotant l'application pour de vrai plutôt qu'en la lisant. |

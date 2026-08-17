@@ -63,6 +63,12 @@ body {
 }
 .enveloppe { max-width: 34rem; margin: 0 auto; padding: 0 1.1rem; }
 
+/* Les liens du texte prennent la couleur de l'interface. Le bleu par défaut du
+   navigateur, au milieu d'une palette verte, se lit comme un élément étranger
+   collé là par erreur. */
+a { color: var(--accent); text-underline-offset: 0.15em; }
+a:hover { text-decoration: none; }
+
 header.barre {
   background: var(--carte);
   border-bottom: 1px solid var(--bord);
@@ -152,6 +158,11 @@ button.second, .bouton.second {
 }
 button.danger { background: transparent; color: var(--ko); border: 1px solid var(--bord); }
 .actions { margin: 1.6rem 0 0.8rem; display: grid; gap: 0.7rem; }
+
+/* Les raccourcis de dates tiennent sur une ligne : empilés, ils repoussaient
+   les champs de date sous le pli, et l'on ne voit plus ce qu'ils remplissent. */
+.actions--rangee { grid-auto-flow: column; grid-auto-columns: 1fr; }
+.actions--rangee button { font-size: 0.92rem; padding: 0.7rem 0.3rem; min-height: 2.9rem; }
 
 /* --- Fiches (fermeture, rendez-vous, message, tarif) -------------------- */
 .fiche {
