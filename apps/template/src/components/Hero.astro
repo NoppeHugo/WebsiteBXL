@@ -23,9 +23,24 @@ const variant = theme.layout.hero;
  * d'une publication à l'autre.
  */
 const ton = await tonalite(site.hero.image, theme.layout.heroAlign);
+
+/*
+ * Rapport réel de la photo fournie, transmis au CSS.
+ *
+ * Imposer un cadre fixe — 4/5 sur téléphone, 16/9 sur écran large — obligeait à
+ * recadrer : une photo en 3/2 y perdait les deux tiers de sa largeur, et le
+ * sujet s'en trouvait amputé. On croyait l'image trop petite alors qu'elle
+ * était surtout mal coupée. Le cadre suit désormais la photo, borné pour qu'un
+ * panorama ne s'étire pas en bandeau et qu'un portrait ne pousse pas tout le
+ * reste hors de l'écran.
+ */
+const rapport = Math.min(
+  1.6,
+  Math.max(0.75, image.width / image.height),
+).toFixed(3);
 ---
 
-<section class={`hero hero--${variant}`} data-align={theme.layout.heroAlign} data-ton={ton}>
+<section class={`hero hero--${variant}`} data-align={theme.layout.heroAlign} data-ton={ton} style={`--hero-rapport:${rapport}`}>
   <div class="hero__media" data-hero-media>
     <Image
       src={image}

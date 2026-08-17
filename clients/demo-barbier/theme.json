@@ -18,7 +18,7 @@
     "uiTracking": "0.14em"
   },
   "layout": {
-    "hero": "overlap",
+    "hero": "split",
     "heroAlign": "start",
     "gallery": "marquee",
     "nav": "solid"

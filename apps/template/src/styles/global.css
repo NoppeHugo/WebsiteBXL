@@ -703,17 +703,48 @@ body[data-glass="true"] .nav[data-menu="open"] {
 }
 
 /* Variante « split » : photo à droite, texte à gauche. */
+/*
+ * Image et texte côte à côte, l'image à gauche.
+ *
+ * La barre de navigation est fixe : sans marge en tête, la photo commence sous
+ * elle et paraît tronquée dès le chargement. La marge la dégage, et la
+ * respiration qui suit vaut mieux qu'une image collée au bord haut.
+ */
 .hero--split {
   grid-template-columns: 1fr;
   min-height: auto;
-  padding-top: 6rem;
+  padding-top: calc(var(--notice-h) + 7rem);
+  padding-bottom: clamp(2rem, 6vw, 4rem);
+  padding-inline: var(--gutter);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: center;
 }
 
+/* Le bloc de texte porte une réserve verticale prévue pour un hero plein
+   écran, où il faut décoller le texte du bas de la fenêtre. Ici, elle
+   s'ajoute à l'espacement de la grille et creuse un vide entre la photo et le
+   titre. L'espacement de la grille suffit. */
+.hero--split .hero__content {
+  padding-block: 0;
+}
+
+/*
+ * Le cadre suit le rapport de la photo au lieu de lui en imposer un.
+ *
+ * Un rapport fixe obligeait à recadrer : une photo panoramique forcée en
+ * portrait perdait ses côtés, et l'on croyait l'image trop petite alors qu'elle
+ * était mal coupée. Les bornes évitent les deux excès — un panorama réduit à un
+ * bandeau, un portrait qui repousse le texte hors de l'écran.
+ */
 .hero--split .hero__media {
   position: relative;
   inset: auto;
   z-index: 0;
-  aspect-ratio: 4 / 3;
+  /* Le bornage est fait à la construction : `clamp()` dans `aspect-ratio`
+     retombait sur sa borne basse au lieu d'évaluer la variable, et le cadre
+     passait en portrait pour une photo panoramique. */
+  aspect-ratio: var(--hero-rapport, 1.33);
+  max-height: 62svh;
 }
 
 .hero--split .hero__media::after {
@@ -722,15 +753,23 @@ body[data-glass="true"] .nav[data-menu="open"] {
 
 @media (min-width: 900px) {
   .hero--split {
-    grid-template-columns: 1fr 1fr;
+    /* L'image garde la part belle, le texte tient dans une colonne plus
+       étroite : une ligne de titre y reste lisible sans s'étirer. */
+    grid-template-columns: 1.15fr 1fr;
     align-items: center;
     gap: clamp(2rem, 5vw, 5rem);
     padding-inline: var(--gutter);
   }
 
+  /*
+   * Le cadre suit la photo ici aussi. Une règle imposait auparavant un portrait
+   * 3/4 et une hauteur fixe : une photo panoramique s'y trouvait rognée des
+   * deux côtés, ce qui donnait l'impression qu'elle était trop petite pour
+   * remplir son emplacement. C'était l'inverse — elle était trop coupée.
+   */
   .hero--split .hero__media {
-    aspect-ratio: 3 / 4;
-    height: 88svh;
+    max-height: 72svh;
+    height: auto;
   }
 
   .hero--split .hero__content {
