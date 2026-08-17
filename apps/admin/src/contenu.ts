@@ -83,6 +83,7 @@ export const SECTIONS = [
   "presentation",
   "horaires",
   "galerie",
+  "deroule",
   "equipe",
   "avis",
   "prestations",
@@ -155,6 +156,27 @@ export function appliquerSection(
         // déposée disparaît de la galerie : le conserver produirait une photo
         // sans fichier, et le site refuserait de se construire.
         .filter((photo) => photo.src.length > 0);
+      return;
+    }
+
+    case "deroule": {
+      raw.steps = indices(champs, "steps")
+        .map((i) => {
+          const etape: Record<string, unknown> = {
+            title: texteTraduit(champs, `steps.${i}.title`),
+            photo: (champs[`steps.${i}.photo`] ?? "").trim(),
+          };
+          const texte = texteTraduit(champs, `steps.${i}.text`);
+          if (Object.keys(texte).length > 0) etape.text = texte;
+          return etape;
+        })
+        // Une étape sans photo ou sans titre est une ligne ajoutée puis
+        // abandonnée : la garder ferait échouer la construction du site.
+        .filter(
+          (etape) =>
+            String(etape.photo).length > 0 &&
+            Object.keys(etape.title as object).length > 0,
+        );
       return;
     }
 

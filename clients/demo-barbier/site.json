@@ -338,14 +338,14 @@
   "steps": [
     {
       "title": {
-        "fr": "On s'installe",
-        "nl": "Installeren",
-        "en": "Settling in"
+        "fr": "On fait le point",
+        "nl": "We overlopen het",
+        "en": "We talk it through"
       },
       "text": {
-        "fr": "Deux minutes pour dire ce que vous voulez, et ce que vous ne voulez plus.",
-        "nl": "Twee minuten om te zeggen wat u wil, en wat niet meer.",
-        "en": "Two minutes to say what you want, and what you no longer want."
+        "fr": "Deux minutes assis, avant de toucher aux ciseaux : ce que vous voulez, ce que vous ne voulez plus, et ce que vos cheveux permettent.",
+        "nl": "Twee minuten zitten voor we beginnen: wat u wil, wat niet meer, en wat uw haar toelaat.",
+        "en": "Two minutes before anything else: what you want, what you no longer want, and what your hair allows."
       },
       "photo": "stylish-man-sitting-barbershop-1157-20487.jpg"
     },
@@ -356,9 +356,9 @@
         "en": "The wash"
       },
       "text": {
-        "fr": "Au bac, à l'eau tiède. C'est aussi le moment où l'on regarde comment vos cheveux tombent.",
-        "nl": "Aan de wasbak, met lauw water. Meteen zien we hoe uw haar valt.",
-        "en": "At the basin, lukewarm. It is also when we see how your hair falls."
+        "fr": "Au bac, à l'eau tiède. C'est aussi là qu'on voit comment vos cheveux tombent vraiment.",
+        "nl": "Aan de wasbak, met lauw water. Meteen zien we hoe uw haar echt valt.",
+        "en": "At the basin, lukewarm. It is also when we see how your hair really falls."
       },
       "photo": "1708524316differences-between-barber-mens-hairdressersquare.jpg"
     },
@@ -377,16 +377,42 @@
     },
     {
       "title": {
-        "fr": "La finition",
-        "nl": "De afwerking",
-        "en": "The finish"
+        "fr": "La barbe",
+        "nl": "De baard",
+        "en": "The beard"
       },
       "text": {
-        "fr": "Contours au rasoir, serviette chaude, et le miroir pour valider avant de vous lever.",
-        "nl": "Contouren met het mes, warme handdoek, en de spiegel voor u opstaat.",
-        "en": "Razor edges, hot towel, and the mirror before you stand up."
+        "fr": "Mise en forme au rasoir, contours nets. Huile de finition si la peau tire.",
+        "nl": "Vormgeven met het mes, strakke contouren. Afwerkolie als de huid trekt.",
+        "en": "Shaped with the razor, clean edges. Finishing oil if the skin feels tight."
       },
       "photo": "istockphoto-1245229656-612x612.jpg"
+    },
+    {
+      "title": {
+        "fr": "La serviette chaude",
+        "nl": "De warme handdoek",
+        "en": "The hot towel"
+      },
+      "text": {
+        "fr": "Trois minutes, sans rien faire. C'est le moment que les clients citent quand on leur demande pourquoi ils reviennent.",
+        "nl": "Drie minuten niksdoen. Net dat noemen klanten als je vraagt waarom ze terugkomen.",
+        "en": "Three minutes doing nothing. It is what clients mention when asked why they come back."
+      },
+      "photo": "guide-to-becoming-a-hairdresser.jpg"
+    },
+    {
+      "title": {
+        "fr": "Le miroir",
+        "nl": "De spiegel",
+        "en": "The mirror"
+      },
+      "text": {
+        "fr": "On regarde ensemble avant que vous vous leviez. Une retouche à ce moment-là ne coûte rien.",
+        "nl": "We kijken samen voor u opstaat. Een correctie kost dan niets.",
+        "en": "We look together before you stand up. A touch-up costs nothing at that point."
+      },
+      "photo": "stylish-man-sitting-barbershop-1157-20487.jpg"
     }
   ]
 }

@@ -284,3 +284,44 @@ describe("sections connues", () => {
     expect(estSection("../../etc/passwd")).toBe(false);
   });
 });
+
+describe("déroulé", () => {
+  it("reconstruit les étapes dans l'ordre, avec leur photo", () => {
+    const raw = siteComplet() as Record<string, any>;
+    appliquerSection(raw, "deroule", {
+      "steps.0.title.fr": "On fait le point",
+      "steps.0.text.fr": "Deux minutes assis.",
+      "steps.0.photo": "a.jpg",
+      "steps.1.title.fr": "La coupe",
+      "steps.1.title.nl": "De coupe",
+      "steps.1.photo": "b.jpg",
+    });
+    expect(raw.steps).toEqual([
+      { title: { fr: "On fait le point" }, text: { fr: "Deux minutes assis." }, photo: "a.jpg" },
+      { title: { fr: "La coupe", nl: "De coupe" }, photo: "b.jpg" },
+    ]);
+  });
+
+  it("écarte une étape sans photo ou sans titre", () => {
+    // Une ligne ajoutée puis abandonnée ferait échouer la construction du
+    // site : une étape sans fichier n'a rien à montrer.
+    const raw = siteComplet() as Record<string, any>;
+    appliquerSection(raw, "deroule", {
+      "steps.0.title.fr": "La coupe",
+      "steps.0.photo": "a.jpg",
+      "steps.1.title.fr": "Sans photo",
+      "steps.1.photo": "",
+      "steps.2.title.fr": "",
+      "steps.2.photo": "c.jpg",
+    });
+    expect(raw.steps).toHaveLength(1);
+  });
+
+  it("accepte qu'on retire toutes les étapes", () => {
+    // La section disparaît alors du site, plutôt que d'afficher un titre seul.
+    const raw = siteComplet() as Record<string, any>;
+    raw.steps = [{ title: { fr: "x" }, photo: "a.jpg" }];
+    appliquerSection(raw, "deroule", {});
+    expect(raw.steps).toEqual([]);
+  });
+});

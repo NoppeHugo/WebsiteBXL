@@ -197,6 +197,56 @@ export function sectionGalerie(slug: string, site: Site, defaut: Language): stri
   );
 }
 
+/* ------------------------------------------------------------------ déroulé */
+
+export function sectionDeroule(slug: string, site: Site, defaut: Language): string {
+  const elements = (site.steps ?? [])
+    .map(
+      (step, index) => `<li class="element" data-element>
+  ${barreElement(index, step.title[defaut] ?? `Étape ${index + 1}`)}
+  <div class="element__corps element__corps--deux">
+    ${emplacementPhoto(slug, `steps.${index}.photo`, "Photo de l'étape", step.photo)}
+    <div>
+      ${texteTraduit(`steps.${index}.title`, "Titre de l'étape", step.title, {
+        defaut,
+        aide: "Court : c'est ce qui s'affiche en grand à côté de la photo.",
+      })}
+      ${texteTraduit(`steps.${index}.text`, "Description", step.text, {
+        defaut,
+        lignes: 3,
+        aide: "Facultatif. Une ou deux phrases sur ce qui se passe à ce moment-là.",
+      })}
+    </div>
+  </div>
+</li>`,
+    )
+    .join("");
+
+  return section(
+    slug,
+    "deroule",
+    "Le déroulé d'une visite",
+    "Les étapes que traverse un client, dans l'ordre. La photo reste à l'écran pendant qu'on les fait défiler. En dessous de deux étapes, la section disparaît du site.",
+    `<ul class="liste" data-liste="steps">${elements}</ul>
+<div class="actions">
+  <button type="button" class="secondary" data-ajouter="steps">Ajouter une étape</button>
+</div>
+
+<template data-modele="steps">
+  <li class="element" data-element>
+    ${barreElement(0, "Nouvelle étape")}
+    <div class="element__corps element__corps--deux">
+      ${emplacementPhoto(slug, "steps.0.photo", "Photo de l'étape", undefined)}
+      <div>
+        ${texteTraduit("steps.0.title", "Titre de l'étape", undefined, { defaut })}
+        ${texteTraduit("steps.0.text", "Description", undefined, { defaut, lignes: 3 })}
+      </div>
+    </div>
+  </li>
+</template>`,
+  );
+}
+
 /* ------------------------------------------------------------------- équipe */
 
 export function sectionEquipe(slug: string, site: Site, defaut: Language): string {

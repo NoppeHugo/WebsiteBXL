@@ -12,6 +12,7 @@ import {
   sectionPresentation,
   sectionHoraires,
   sectionGalerie,
+  sectionDeroule,
   sectionEquipe,
   sectionAvis,
   sectionPrestations,
@@ -35,6 +36,7 @@ const TITRES: Record<string, string> = {
   presentation: "Le commerce",
   horaires: "Horaires",
   galerie: "Galerie",
+  deroule: "Le déroulé",
   equipe: "Équipe",
   avis: "Avis",
   prestations: "Prestations",
@@ -85,6 +87,7 @@ ${sectionAccueil(slug, site, defaut)}
 ${sectionPresentation(slug, site, defaut)}
 ${sectionHoraires(slug, site, formatSlots as (c: unknown) => string)}
 ${sectionGalerie(slug, site, defaut)}
+${sectionDeroule(slug, site, defaut)}
 ${sectionEquipe(slug, site, defaut)}
 ${sectionAvis(slug, site, defaut)}
 ${sectionPrestations(slug, site, defaut)}
