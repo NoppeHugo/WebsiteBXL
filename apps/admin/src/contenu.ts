@@ -46,6 +46,31 @@ export function indices(champs: Champs, prefixe: string): number[] {
   return [...vus].sort((a, b) => a - b);
 }
 
+/**
+ * Un identifiant de prestation dérivé de son nom, unique dans la liste.
+ *
+ * Le schéma n'accepte que minuscules, chiffres et tirets. « Coupe & barbe »
+ * donne « coupe-barbe » ; un second du même nom donne « coupe-barbe-2 » plutôt
+ * que d'écraser le premier.
+ */
+function identifiantLibre(nom: string, pris: Set<string>): string {
+  const base =
+    nom
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40)
+      .replace(/-+$/g, "") || "prestation";
+
+  if (!pris.has(base)) return base;
+  for (let n = 2; ; n += 1) {
+    const essai = `${base}-${n}`;
+    if (!pris.has(essai)) return essai;
+  }
+}
+
 function objet(raw: Record<string, unknown>, cle: string): Record<string, unknown> {
   const valeur = raw[cle];
   if (typeof valeur === "object" && valeur !== null) return valeur as Record<string, unknown>;
@@ -82,6 +107,7 @@ export const SECTIONS = [
   "accueil",
   "presentation",
   "horaires",
+  "fermetures",
   "galerie",
   "deroule",
   "equipe",
@@ -143,6 +169,37 @@ export function appliquerSection(
         heures[jour] = parseSlots(champs[`hours.${jour}`] ?? "");
       }
       raw.hours = heures;
+      return;
+    }
+
+    case "fermetures": {
+      /*
+       * Congés et fermetures exceptionnelles.
+       *
+       * C'est la modification la plus urgente qu'un commerçant ait à faire, et
+       * la seule qui ait un effet immédiat sur la réservation : une fermeture
+       * enregistrée retire les créneaux du jour même, avant toute
+       * reconstruction du site.
+       *
+       * Les dates passées sont conservées telles quelles. Les purger
+       * paraîtrait propre, mais une fermeture d'il y a trois jours explique
+       * l'agenda vide de la semaine dernière — et c'est la question qu'on pose.
+       */
+      raw.closures = indices(champs, "closures")
+        .map((i) => {
+          const du = (champs[`closures.${i}.from`] ?? "").trim();
+          // Une fermeture d'un seul jour ne demande pas de saisir deux fois la
+          // même date : la fin vide vaut « le même jour ».
+          const au = (champs[`closures.${i}.to`] ?? "").trim() || du;
+          const fermeture: Record<string, unknown> = { from: du, to: au };
+          const motif = texteTraduit(champs, `closures.${i}.reason`);
+          if (Object.keys(motif).length > 0) fermeture.reason = motif;
+          return fermeture;
+        })
+        .filter((f) => String(f.from).length > 0)
+        // Triées : la liste est lue pour savoir « quand suis-je fermé ? », et
+        // une liste dans l'ordre de saisie ne répond pas à cette question.
+        .sort((a, b) => String(a.from).localeCompare(String(b.from)));
       return;
     }
 
@@ -210,25 +267,65 @@ export function appliquerSection(
     }
 
     case "prestations": {
-      const services = (raw.services as Array<Record<string, unknown>>) ?? [];
-      for (const [position, i] of indices(champs, "services").entries()) {
-        // Retrouvé par identifiant et non par position : des rendez-vous déjà
-        // pris s'y réfèrent, et un décalage d'indice les rattacherait à une
-        // autre prestation.
-        const id = champs[`services.${i}.id`];
-        const service = services.find((s) => s.id === id) ?? services[position];
-        if (!service) continue;
+      const existants = (raw.services as Array<Record<string, unknown>>) ?? [];
+      const pris = new Set(existants.map((s) => String(s.id)));
 
-        const nom = texteTraduit(champs, `services.${i}.name`);
-        if (Object.keys(nom).length > 0) service.name = nom;
+      const suivants = indices(champs, "services")
+        .map((i) => {
+          const nom = texteTraduit(champs, `services.${i}.name`);
+          // Une ligne sans nom est une ligne ajoutée puis abandonnée.
+          if (Object.keys(nom).length === 0) return undefined;
 
-        const duree = champs[`services.${i}.durationMin`];
-        if (duree) service.durationMin = Number(duree);
+          /*
+           * L'identifiant est stable et ne se recalcule jamais.
+           *
+           * Les rendez-vous déjà pris le portent en clair. Le régénérer à
+           * partir du nom — parce qu'on a corrigé une faute de frappe —
+           * détacherait les rendez-vous existants de leur prestation, sans
+           * erreur visible : ils resteraient au calendrier, orphelins.
+           */
+          const fourni = (champs[`services.${i}.id`] ?? "").trim();
+          const connu = fourni ? existants.find((s) => s.id === fourni) : undefined;
 
-        const prix = champs[`services.${i}.price`];
-        service.price = prix === undefined || prix.trim() === "" ? null : Number(prix);
-        service.priceFrom = Boolean(champs[`services.${i}.priceFrom`]);
-      }
+          /*
+           * Un identifiant inconnu ne devient jamais l'identifiant de la
+           * prestation : on en fabrique un. Le champ est caché dans le
+           * formulaire, donc un identifiant qui ne correspond à rien vient
+           * d'une requête forgée ou d'un envoi périmé — dans les deux cas, le
+           * reprendre tel quel laisserait quelqu'un d'autre choisir la clé à
+           * laquelle des rendez-vous se rattacheront.
+           */
+          const service = connu ?? { id: identifiantLibre(Object.values(nom)[0]!, pris) };
+
+          pris.add(String(service.id));
+          service.name = nom;
+
+          const duree = Number(champs[`services.${i}.durationMin`] ?? "");
+          // Une durée absente ou absurde vaut trente minutes plutôt que zéro :
+          // une durée nulle fait proposer des créneaux qui se chevauchent tous.
+          service.durationMin = Number.isFinite(duree) && duree > 0 ? duree : 30;
+
+          const prix = (champs[`services.${i}.price`] ?? "").trim();
+          // Vide vaut « sur devis », pas « gratuit ». La virgule décimale est
+          // ce qu'un clavier belge produit : la refuser afficherait 0 €.
+          const montant = Number(prix.replace(",", "."));
+          service.price = prix === "" || !Number.isFinite(montant) ? null : montant;
+          service.priceFrom = Boolean(champs[`services.${i}.priceFrom`]);
+
+          return service;
+        })
+        .filter((s): s is Record<string, unknown> => s !== undefined);
+
+      /*
+       * Absente du formulaire, une prestation est supprimée — comme pour les
+       * horaires et la galerie. Le formulaire renvoie toujours la liste
+       * complète ; l'omission est donc un retrait voulu.
+       *
+       * Les rendez-vous déjà pris n'en souffrent pas : ils gardent le nom de la
+       * prestation en clair à côté de son identifiant, précisément pour que
+       * l'historique survive à une carte des tarifs qui change.
+       */
+      raw.services = suivants;
       return;
     }
 

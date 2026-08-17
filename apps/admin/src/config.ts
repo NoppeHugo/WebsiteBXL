@@ -60,6 +60,19 @@ const Env = z.object({
    */
   SERVICE_DOMAIN: z.string().default(""),
 
+  /**
+   * Nom d'hôte de l'espace commerçant, par exemple `mon.hairbxl.be`.
+   *
+   * Le même programme sert les deux interfaces ; c'est ce nom qui décide
+   * laquelle. Un domaine par usage : l'adresse remise au coiffeur ne donne
+   * jamais sur la console qui gouverne les trente sites, même à quelqu'un qui
+   * aurait les bons cookies.
+   *
+   * Vide, les deux mondes partagent l'hôte et seul le rôle du compte les
+   * sépare — c'est le mode de développement, et il reste sûr.
+   */
+  PORTAL_HOST: z.string().default(""),
+
   /** Injecté dans les builds déclenchés depuis la console. */
   PUBLIC_API_URL: z.string().default(""),
   STRIPE_SECRET_KEY: z.string().optional(),

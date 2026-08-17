@@ -108,6 +108,9 @@ services:
       # PUBLIC_ADMIN_URL : une variable de moins à renseigner, donc une
       # occasion d'oubli de moins.
       SERVICE_DOMAIN: ${SERVICE_DOMAIN:-}
+      # Nom d'hôte de l'espace commerçant. La même application sert les deux
+      # interfaces ; c'est ce nom qui décide laquelle.
+      PORTAL_HOST: ${PORTAL_HOST:-}
       PUBLIC_API_URL: ${PUBLIC_API_URL:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       PUBLIC_ADMIN_URL: ${PUBLIC_ADMIN_URL:-}

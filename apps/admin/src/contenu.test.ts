@@ -33,6 +33,7 @@ const siteComplet = () => ({
     { src: "a.jpg", alt: { fr: "A" } },
     { src: "b.jpg", alt: { fr: "B" } },
   ],
+  closures: [] as Array<{ from: string; to: string; reason?: Record<string, string> }>,
   team: [{ name: "Lucas", role: { fr: "Barbier" }, photo: "l.jpg" }],
   reviews: [{ author: "Sophie", rating: 5, text: { fr: "Super" }, source: "google" }],
   services: [
@@ -230,17 +231,26 @@ describe("avis", () => {
 });
 
 describe("prestations", () => {
+  /*
+   * Le formulaire renvoie toujours la liste complète : chaque ligne porte son
+   * nom, sa durée et son prix, et une ligne absente est une prestation
+   * retirée. C'est la même règle que pour les horaires et la galerie.
+   */
+  const ligne = (i: number, champs: Record<string, string>) =>
+    Object.fromEntries(Object.entries(champs).map(([k, v]) => [`services.${i}.${k}`, v]));
+
   it("retrouve la prestation par identifiant, pas par position", () => {
     // Des rendez-vous déjà pris référencent cet identifiant : un décalage
     // rattacherait une réservation à une autre prestation, avec une autre durée.
     const raw = siteComplet();
     appliquerSection(raw, "prestations", {
-      "services.0.id": "barbe",
-      "services.0.durationMin": "25",
-      "services.0.price": "20",
+      ...ligne(0, { id: "barbe", "name.fr": "Barbe", durationMin: "25", price: "20" }),
+      ...ligne(1, { id: "coupe", "name.fr": "Coupe", durationMin: "30", price: "28" }),
     });
-    const barbe = raw.services.find((s: { id: string }) => s.id === "barbe");
-    expect(barbe).toMatchObject({ durationMin: 25, price: 20 });
+    expect(raw.services.find((s: { id: string }) => s.id === "barbe")).toMatchObject({
+      durationMin: 25,
+      price: 20,
+    });
     expect(raw.services.find((s: { id: string }) => s.id === "coupe")).toMatchObject({
       durationMin: 30,
     });
@@ -248,33 +258,111 @@ describe("prestations", () => {
 
   it("traduit un prix vide en « sur devis »", () => {
     const raw = siteComplet();
-    appliquerSection(raw, "prestations", {
-      "services.0.id": "coupe",
-      "services.0.durationMin": "30",
-      "services.0.price": "",
-    });
+    appliquerSection(
+      raw,
+      "prestations",
+      ligne(0, { id: "coupe", "name.fr": "Coupe", durationMin: "30", price: "" }),
+    );
     expect(raw.services[0]!.price).toBeNull();
+  });
+
+  it("accepte la virgule décimale du clavier belge", () => {
+    // « 28,50 » lu par Number() donne NaN, donc « sur devis » — un tarif qui
+    // disparaît de la carte sans que personne ne s'en aperçoive.
+    const raw = siteComplet();
+    appliquerSection(
+      raw,
+      "prestations",
+      ligne(0, { id: "coupe", "name.fr": "Coupe", durationMin: "30", price: "28,50" }),
+    );
+    expect(raw.services[0]!.price).toBe(28.5);
   });
 
   it("retient « à partir de »", () => {
     const raw = siteComplet();
-    appliquerSection(raw, "prestations", {
-      "services.0.id": "coupe",
-      "services.0.durationMin": "30",
-      "services.0.price": "28",
-      "services.0.priceFrom": "1",
-    });
+    appliquerSection(
+      raw,
+      "prestations",
+      ligne(0, {
+        id: "coupe",
+        "name.fr": "Coupe",
+        durationMin: "30",
+        price: "28",
+        priceFrom: "1",
+      }),
+    );
     expect(raw.services[0]!.priceFrom).toBe(true);
   });
 
-  it("n'invente pas de prestation quand l'identifiant est inconnu", () => {
+  it("ajoute une prestation dont l'identifiant est dérivé du nom", () => {
     const raw = siteComplet();
-    const avant = raw.services.length;
     appliquerSection(raw, "prestations", {
-      "services.5.id": "inexistante",
-      "services.5.durationMin": "10",
+      ...ligne(0, { id: "coupe", "name.fr": "Coupe", durationMin: "30", price: "28" }),
+      ...ligne(1, { id: "barbe", "name.fr": "Barbe", durationMin: "20", price: "" }),
+      ...ligne(2, { id: "", "name.fr": "Coupe & barbe", durationMin: "45", price: "40" }),
     });
-    expect(raw.services).toHaveLength(avant);
+    expect(raw.services).toHaveLength(3);
+    expect(raw.services[2]).toMatchObject({ id: "coupe-barbe", durationMin: 45, price: 40 });
+  });
+
+  it("ne donne jamais deux fois le même identifiant", () => {
+    // Deux prestations homonymes existent : « Coupe » enfant et adulte. Le
+    // second écraserait le premier si l'identifiant était le même, et les
+    // rendez-vous de l'un basculeraient sur l'autre.
+    const raw = siteComplet();
+    appliquerSection(raw, "prestations", {
+      ...ligne(0, { id: "", "name.fr": "Coupe", durationMin: "30", price: "28" }),
+      ...ligne(1, { id: "", "name.fr": "Coupe", durationMin: "20", price: "18" }),
+    });
+    expect(raw.services.map((s: { id: string }) => s.id)).toEqual(["coupe-2", "coupe-3"]);
+  });
+
+  it("supprime une prestation absente du formulaire", () => {
+    const raw = siteComplet();
+    appliquerSection(
+      raw,
+      "prestations",
+      ligne(0, { id: "coupe", "name.fr": "Coupe", durationMin: "30", price: "28" }),
+    );
+    expect(raw.services.map((s: { id: string }) => s.id)).toEqual(["coupe"]);
+  });
+
+  it("ignore une ligne sans nom", () => {
+    // Une ligne ajoutée puis abandonnée. La garder ferait échouer la
+    // construction du site pour tous les clients, pas seulement celui-ci.
+    const raw = siteComplet();
+    appliquerSection(raw, "prestations", {
+      ...ligne(0, { id: "coupe", "name.fr": "Coupe", durationMin: "30", price: "28" }),
+      ...ligne(1, { id: "", "name.fr": "", durationMin: "30", price: "" }),
+    });
+    expect(raw.services).toHaveLength(1);
+  });
+
+  it("ne reprend pas un identifiant inconnu tel quel", () => {
+    /*
+     * Le champ est caché : un identifiant qui ne correspond à rien vient d'une
+     * requête forgée ou d'un envoi périmé. Le reprendre laisserait quelqu'un
+     * d'autre choisir la clé à laquelle des rendez-vous se rattachent.
+     */
+    const raw = siteComplet();
+    appliquerSection(
+      raw,
+      "prestations",
+      ligne(0, { id: "inexistante", "name.fr": "Balayage", durationMin: "90", price: "85" }),
+    );
+    expect(raw.services).toHaveLength(1);
+    expect(raw.services[0]!.id).toBe("balayage");
+  });
+
+  it("remplace une durée absurde par une valeur praticable", () => {
+    // Une durée nulle fait proposer des créneaux qui se chevauchent tous.
+    const raw = siteComplet();
+    appliquerSection(
+      raw,
+      "prestations",
+      ligne(0, { id: "coupe", "name.fr": "Coupe", durationMin: "0", price: "28" }),
+    );
+    expect(raw.services[0]!.durationMin).toBe(30);
   });
 });
 
@@ -323,5 +411,71 @@ describe("déroulé", () => {
     raw.steps = [{ title: { fr: "x" }, photo: "a.jpg" }];
     appliquerSection(raw, "deroule", {});
     expect(raw.steps).toEqual([]);
+  });
+});
+
+describe("fermetures", () => {
+  it("enregistre une période, triée par date", () => {
+    const raw = siteComplet();
+    appliquerSection(raw, "fermetures", {
+      "closures.0.from": "2026-12-24",
+      "closures.0.to": "2027-01-02",
+      "closures.1.from": "2026-08-01",
+      "closures.1.to": "2026-08-15",
+    });
+    expect(raw.closures.map((f) => f.from)).toEqual([
+      "2026-08-01",
+      "2026-12-24",
+    ]);
+  });
+
+  it("comprend une fermeture d'un seul jour sans date de fin", () => {
+    // Saisir deux fois la même date pour fermer un mardi est une demande
+    // absurde à faire à quelqu'un qui vient d'apprendre qu'il est malade.
+    const raw = siteComplet();
+    appliquerSection(raw, "fermetures", {
+      "closures.0.from": "2026-09-03",
+      "closures.0.to": "",
+    });
+    expect(raw.closures).toEqual([{ from: "2026-09-03", to: "2026-09-03" }]);
+  });
+
+  it("garde le motif quand il est renseigné, et rien sinon", () => {
+    const raw = siteComplet();
+    appliquerSection(raw, "fermetures", {
+      "closures.0.from": "2026-07-01",
+      "closures.0.to": "2026-07-21",
+      "closures.0.reason.fr": "Congés annuels",
+      "closures.1.from": "2026-09-03",
+      "closures.1.to": "2026-09-03",
+      "closures.1.reason.fr": "",
+    });
+    expect(raw.closures[0]).toMatchObject({ reason: { fr: "Congés annuels" } });
+    expect(raw.closures[1]).not.toHaveProperty("reason");
+  });
+
+  it("ignore une ligne sans date de début", () => {
+    // Le formulaire propose toujours une ligne vierge : envoyée telle quelle,
+    // elle produirait une fermeture du 1er janvier 1970.
+    const raw = siteComplet();
+    appliquerSection(raw, "fermetures", {
+      "closures.0.from": "2026-09-03",
+      "closures.0.to": "2026-09-03",
+      "closures.1.from": "",
+      "closures.1.to": "",
+    });
+    expect(raw.closures).toHaveLength(1);
+  });
+
+  it("supprime toutes les fermetures quand le formulaire n'en renvoie aucune", () => {
+    /*
+     * C'est ainsi que « Rouvrir ces dates » fonctionne : le formulaire renvoie
+     * la liste sans la ligne concernée. Une liste vide doit donc bien vider,
+     * sinon rouvrir la dernière fermeture serait impossible.
+     */
+    const raw = siteComplet();
+    raw.closures = [{ from: "2026-09-03", to: "2026-09-03" }];
+    appliquerSection(raw, "fermetures", {});
+    expect(raw.closures).toEqual([]);
   });
 });

@@ -1,0 +1,46 @@
+# Bloc nginx de l'espace commerçant.
+#
+# Usage :
+#   sed 's/@@PORTAIL@@/mon.hairbxl.be/g' portail.conf.modele \
+#     | sudo tee /etc/nginx/sites-available/mon.hairbxl.be
+#   sudo ln -s /etc/nginx/sites-available/mon.… /etc/nginx/sites-enabled/
+#   sudo nginx -t && sudo systemctl reload nginx
+#   sudo certbot --nginx -d mon.hairbxl.be
+#
+# En HTTP seul : c'est certbot qui ajoutera le TLS et la redirection, comme
+# pour tous les autres blocs de cette machine.
+#
+# ─── Pourquoi un domaine séparé pour la même application ───────────────────
+#
+# C'est le même processus qui répond ici et sur admin. : le nom d'hôte lui dit
+# laquelle des deux interfaces servir (PORTAL_HOST). Un domaine par usage —
+# l'adresse remise au coiffeur ne mène jamais à la console qui gouverne les
+# trente sites, et le jour où l'on voudra restreindre la console par adresse IP,
+# l'espace commerçant restera joignable de partout.
+
+server {
+    server_name @@PORTAIL@@;
+
+    include snippets/bxl-commun.conf;
+
+    location / {
+        proxy_pass http://127.0.0.1:4000;
+        proxy_http_version 1.1;
+
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $remote_addr;
+        # Indispensable : c'est cet en-tête que l'application lit pour savoir
+        # qu'elle doit servir l'espace commerçant et non la console.
+        proxy_set_header Host $host;
+
+        # Enregistrer depuis l'espace reconstruit et redéploie le site du
+        # commerce : la réponse peut mettre une minute à venir.
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+
+        # Une photo prise au téléphone pèse volontiers dix mégaoctets.
+        client_max_body_size 40m;
+    }
+}

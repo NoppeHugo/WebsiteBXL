@@ -77,6 +77,12 @@ export function authRoutes(app: FastifyInstance): void {
         config.SESSION_SECRET,
       );
 
+      /*
+       * Chacun chez soi. Le commerçant tombe sur son espace, l'exploitant sur
+       * sa console. Le crochet global le ferait de toute façon, mais une
+       * redirection de plus au premier écran donne l'impression d'un outil qui
+       * hésite.
+       */
       return reply
         .setCookie(COOKIE, token, {
           httpOnly: true,
@@ -85,11 +91,21 @@ export function authRoutes(app: FastifyInstance): void {
           path: "/",
           maxAge: config.SESSION_HOURS * 3600,
         })
-        .redirect("/", 303);
+        .redirect(user.tenant_slug ? "/espace" : "/", 303);
     },
   );
 
   app.post("/logout", async (_request, reply) =>
+    reply.clearCookie(COOKIE, { path: "/" }).redirect("/login", 303),
+  );
+
+  /*
+   * L'espace commerçant se déconnecte par un lien, pas par un formulaire : il
+   * n'y a rien à protéger — au pire, quelqu'un le déconnecte, et il se
+   * reconnecte. Un bouton de formulaire au milieu d'une barre de navigation
+   * aurait demandé du balisage pour rien.
+   */
+  app.get("/deconnexion", async (_request, reply) =>
     reply.clearCookie(COOKIE, { path: "/" }).redirect("/login", 303),
   );
 }

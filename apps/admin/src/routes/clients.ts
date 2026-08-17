@@ -305,6 +305,7 @@ export function clientRoutes(app: FastifyInstance): void {
 </p>
 <p class="raccourci">
   <a class="btn-lien" href="/clients/nouveau">+ Nouveau client</a>
+  <a class="btn-lien btn-lien--second" href="/comptes">Accès des commerçants →</a>
 </p>
 <div class="cartes">${cartes.join("")}</div>`,
         { authenticated: true },
