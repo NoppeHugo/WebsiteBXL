@@ -83,13 +83,18 @@ export interface Squelette {
 }
 
 /**
- * Horaires laissés entièrement fermés.
+ * Horaires laissés vides.
  *
  * Tentation permanente : préremplir « 9h-18h du mardi au samedi », qui est
  * juste pour beaucoup de salons. Mais l'agenda lit ces horaires, et un salon
  * fermé le mercredi dont le site accepte les rendez-vous du mercredi produit
- * un client devant une porte close. Sept journées vides affichent « nous
- * consulter » et ne promettent rien — c'est visible, donc corrigé.
+ * un client devant une porte close.
+ *
+ * Encore fallait-il que le site sache le dire. Il listait les sept jours suivis
+ * de « Fermé », ce qui se lit comme un commerce qui a mis la clé sous la porte
+ * — pire que pas d'horaires du tout. `Info.astro` affiche désormais une seule
+ * ligne, « nous contacter pour les horaires », quand aucun jour n'est
+ * renseigné.
  */
 const HORAIRES_VIDES = {
   monday: [],

@@ -12,6 +12,16 @@ interface Props {
 const { lang } = Astro.props;
 
 const { address } = site.business;
+
+/*
+ * Un commerce dont aucun jour n'est renseigné n'est pas un commerce fermé sept
+ * jours sur sept : c'est un commerce dont les horaires ne sont pas encore
+ * saisis. La liste affichait pourtant « Lundi Fermé … Dimanche Fermé », ce qui
+ * se lit comme un salon qui a mis la clé sous la porte — pire que pas
+ * d'horaires du tout, et c'est l'état d'un site créé en clientèle avant qu'on
+ * ait demandé ses heures au commerçant.
+ */
+const horairesInconnus = WEEKDAYS.every((day) => site.hours[day].length === 0);
 ---
 
 <section class="section" id="infos">
@@ -21,25 +31,29 @@ const { address } = site.business;
         <h2 class="section__title">{ui(lang, "hours_title")}</h2>
       </div>
 
-      <ul class="hours">
-        {
-          WEEKDAYS.map((day) => {
-            const slots = site.hours[day];
-            return (
-              <li data-day={day}>
-                <span class="hours__day">{weekday(lang, day)}</span>
-                <span class="hours__slots">
-                  {slots.length === 0
-                    ? ui(lang, "closed")
-                    : slots
-                        .map((s) => `${s.open} – ${s.close}`)
-                        .join(" · ")}
-                </span>
-              </li>
-            );
-          })
-        }
-      </ul>
+      {
+        horairesInconnus ? (
+          <p class="hours__note">{ui(lang, "hours_unset")}</p>
+        ) : (
+          <ul class="hours">
+            {WEEKDAYS.map((day) => {
+              const slots = site.hours[day];
+              return (
+                <li data-day={day}>
+                  <span class="hours__day">{weekday(lang, day)}</span>
+                  <span class="hours__slots">
+                    {slots.length === 0
+                      ? ui(lang, "closed")
+                      : slots
+                          .map((s) => `${s.open} – ${s.close}`)
+                          .join(" · ")}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )
+      }
 
       {site.hoursNote && <p class="hours__note">{t(site.hoursNote, lang)}</p>}
     </div>
