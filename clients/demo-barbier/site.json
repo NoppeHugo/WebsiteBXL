@@ -334,5 +334,59 @@
     "vatNumber": "BE0123.456.789",
     "publisher": "Lucas Verhaeren"
   },
-  "contact": {}
+  "contact": {},
+  "steps": [
+    {
+      "title": {
+        "fr": "On s'installe",
+        "nl": "Installeren",
+        "en": "Settling in"
+      },
+      "text": {
+        "fr": "Deux minutes pour dire ce que vous voulez, et ce que vous ne voulez plus.",
+        "nl": "Twee minuten om te zeggen wat u wil, en wat niet meer.",
+        "en": "Two minutes to say what you want, and what you no longer want."
+      },
+      "photo": "stylish-man-sitting-barbershop-1157-20487.jpg"
+    },
+    {
+      "title": {
+        "fr": "Le shampoing",
+        "nl": "De wasbeurt",
+        "en": "The wash"
+      },
+      "text": {
+        "fr": "Au bac, à l'eau tiède. C'est aussi le moment où l'on regarde comment vos cheveux tombent.",
+        "nl": "Aan de wasbak, met lauw water. Meteen zien we hoe uw haar valt.",
+        "en": "At the basin, lukewarm. It is also when we see how your hair falls."
+      },
+      "photo": "1708524316differences-between-barber-mens-hairdressersquare.jpg"
+    },
+    {
+      "title": {
+        "fr": "La coupe",
+        "nl": "De coupe",
+        "en": "The cut"
+      },
+      "text": {
+        "fr": "Aux ciseaux, jamais à la tondeuse seule. C'est ce qui fait qu'elle tient trois semaines.",
+        "nl": "Met de schaar, nooit met de tondeuse alleen. Daarom houdt ze drie weken.",
+        "en": "With scissors, never clippers alone. That is why it holds for three weeks."
+      },
+      "photo": "1000-f-170543483-lnhtmkdm84n7ijyqimmuwbdrp9czfykh.jpg"
+    },
+    {
+      "title": {
+        "fr": "La finition",
+        "nl": "De afwerking",
+        "en": "The finish"
+      },
+      "text": {
+        "fr": "Contours au rasoir, serviette chaude, et le miroir pour valider avant de vous lever.",
+        "nl": "Contouren met het mes, warme handdoek, en de spiegel voor u opstaat.",
+        "en": "Razor edges, hot towel, and the mirror before you stand up."
+      },
+      "photo": "istockphoto-1245229656-612x612.jpg"
+    }
+  ]
 }

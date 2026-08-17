@@ -6,6 +6,7 @@ import Nav from "./Nav.astro";
 import Hero from "./Hero.astro";
 import Services from "./Services.astro";
 import Gallery from "./Gallery.astro";
+import Steps from "./Steps.astro";
 import Team from "./Team.astro";
 import Reviews from "./Reviews.astro";
 import Info from "./Info.astro";
@@ -35,6 +36,9 @@ const suspended = site.status === "suspended";
         <Hero lang={lang} />
         {site.services.length > 0 && <Services lang={lang} />}
         {site.gallery.length > 0 && <Gallery lang={lang} />}
+        {/* Après la galerie : on a vu le lieu, on raconte ce qui s'y passe.
+            Le composant se retire de lui-même en dessous de deux étapes. */}
+        <Steps lang={lang} />
         {site.team.length > 0 && <Team lang={lang} />}
         {site.reviews.length > 0 && <Reviews lang={lang} />}
         <BookingCta lang={lang} />

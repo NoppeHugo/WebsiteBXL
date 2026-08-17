@@ -1,0 +1,148 @@
+---
+import { Image } from "astro:assets";
+import type { Language } from "@bxl/schema";
+import { site, t } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+import { media } from "../lib/media.ts";
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+/**
+ * Le déroulé d'une visite, raconté au défilement.
+ *
+ * Une photo reste à l'écran pendant que les étapes défilent à côté : c'est le
+ * seul endroit du site où ce dispositif se justifie, parce qu'une visite a un
+ * ordre — on s'installe, on lave, on coupe, on finit. Le même effet appliqué à
+ * une galerie, qui n'a pas de séquence, ne serait qu'un tour d'adresse.
+ *
+ * La numérotation en découle : elle n'est pas décorative, elle dit dans quel
+ * ordre les choses arrivent.
+ *
+ * Trois niveaux de lecture, du plus riche au plus simple :
+ *
+ *   - avec JavaScript : la photo change au fil des étapes, une pastille suit
+ *     la progression ;
+ *   - sans JavaScript : les étapes s'empilent, chacune avec sa photo — la
+ *     section reste complète, seule la mise en scène disparaît ;
+ *   - en mouvement réduit : idem, et rien ne bouge.
+ *
+ * `position: sticky` fait tout le travail dans les deux premiers cas ; aucun
+ * calcul de position, aucun écouteur de défilement pour la photo elle-même.
+ */
+
+const steps = site.steps ?? [];
+---
+
+{
+  steps.length >= 2 && (
+    <section class="deroule section" id="deroule" data-steps>
+      <div class="wrap">
+        <div class="section__head">
+          <h2 class="section__title">{ui(lang, "steps_title")}</h2>
+        </div>
+
+        <div class="deroule__piste">
+          {/* La colonne qui reste à l'écran. */}
+          <div class="deroule__visuel">
+            <div class="deroule__cadre">
+              {steps.map((step, index) => (
+                <Image
+                  src={media(step.photo)}
+                  alt={t(step.title, lang)}
+                  widths={[480, 720, 960]}
+                  sizes="(min-width: 900px) 40vw, 90vw"
+                  quality={78}
+                  loading={index === 0 ? "eager" : "lazy"}
+                  class="deroule__photo"
+                  data-index={index}
+                />
+              ))}
+            </div>
+
+            <ol class="deroule__points" aria-hidden="true">
+              {steps.map((_, index) => (
+                <li data-point={index} />
+              ))}
+            </ol>
+          </div>
+
+          {/* Les étapes, qui défilent. */}
+          <ol class="deroule__etapes">
+            {steps.map((step, index) => (
+              <li class="deroule__etape" data-etape={index}>
+                <span class="deroule__rang">{String(index + 1).padStart(2, "0")}</span>
+                <h3 class="deroule__titre">{t(step.title, lang)}</h3>
+                {step.text && <p class="deroule__texte">{t(step.text, lang)}</p>}
+                {/* Reprise de la photo pour la lecture sans JavaScript : masquée
+                    dès que le script prend la main. */}
+                <Image
+                  src={media(step.photo)}
+                  alt=""
+                  widths={[480, 720]}
+                  sizes="90vw"
+                  quality={72}
+                  loading="lazy"
+                  class="deroule__photo-repli"
+                />
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  /*
+   * Désigne l'étape en cours de lecture.
+   *
+   * `IntersectionObserver` plutôt qu'un écouteur de défilement : le navigateur
+   * fait le calcul lui-même, hors du fil principal, et rien ne s'exécute tant
+   * qu'aucune limite n'est franchie. La bande observée est réduite au tiers
+   * médian de l'écran, sinon deux étapes seraient actives à la fois.
+   */
+  const section = document.querySelector<HTMLElement>("[data-steps]");
+
+  if (section) {
+    const etapes = [...section.querySelectorAll<HTMLElement>("[data-etape]")];
+    const photos = [...section.querySelectorAll<HTMLElement>("[data-index]")];
+    const points = [...section.querySelectorAll<HTMLElement>("[data-point]")];
+
+    // Le script a pris la main : les photos de repli n'ont plus lieu d'être.
+    section.dataset.anime = "true";
+
+    const doux = matchMedia("(prefers-reduced-motion: reduce)");
+
+    const activer = (index: number) => {
+      for (const [i, photo] of photos.entries()) {
+        photo.dataset.actif = i === index ? "true" : "false";
+      }
+      for (const [i, point] of points.entries()) {
+        point.dataset.actif = i === index ? "true" : "false";
+      }
+      for (const [i, etape] of etapes.entries()) {
+        etape.dataset.actif = i === index ? "true" : "false";
+      }
+    };
+
+    activer(0);
+
+    if (!doux.matches) {
+      const observateur = new IntersectionObserver(
+        (entrees) => {
+          for (const entree of entrees) {
+            if (!entree.isIntersecting) continue;
+            const index = Number((entree.target as HTMLElement).dataset.etape);
+            activer(index);
+          }
+        },
+        { rootMargin: "-33% 0px -33% 0px", threshold: 0 },
+      );
+      for (const etape of etapes) observateur.observe(etape);
+    }
+  }
+</script>

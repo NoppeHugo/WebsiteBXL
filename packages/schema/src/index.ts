@@ -109,6 +109,26 @@ export const TeamMember = z.object({
   photo: z.string().optional(),
 });
 
+/**
+ * Une étape du déroulé d'une visite.
+ *
+ * Cette section-là justifie seule le défilement à section collante : une visite
+ * a un ordre — on s'installe, on lave, on coupe, on finit — et c'est cet ordre
+ * qui porte l'information. Appliqué à une galerie ou à des avis, qui n'ont pas
+ * de séquence, le même dispositif ne serait qu'un effet.
+ *
+ * Facultative : un commerce qui n'a pas de photos d'étapes n'affiche pas la
+ * section, plutôt que de la remplir de visuels génériques.
+ */
+export const Step = z.object({
+  title: LocalizedText,
+  text: LocalizedText.optional(),
+  /** Chemin relatif au dossier `media/` du client. */
+  photo: z.string().min(1),
+});
+
+export type Step = z.infer<typeof Step>;
+
 export const Review = z.object({
   author: z.string().min(1),
   rating: z.number().int().min(1).max(5),
@@ -222,6 +242,8 @@ export const SiteConfig = z
     services: z.array(Service).default([]),
     team: z.array(TeamMember).default([]),
     gallery: z.array(Photo).default([]),
+    /** Déroulé d'une visite, raconté au défilement. Vide = section absente. */
+    steps: z.array(Step).default([]),
     reviews: z.array(Review).default([]),
 
     booking: Booking,
