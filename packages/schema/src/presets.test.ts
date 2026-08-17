@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ThemeConfig } from "./index.ts";
-import { STYLES, PALETTES, composerTheme } from "./presets.ts";
+import { STYLES, PALETTES, composerTheme, reconnaitrePreset } from "./presets.ts";
 
 /**
  * Les styles sont choisis dans la console d'un clic, souvent devant le
@@ -105,5 +105,40 @@ describe("dispositions du hero", () => {
     for (const [id, style] of Object.entries(STYLES)) {
       expect(connues.has(style.style.layout.hero), `${id} : ${style.style.layout.hero}`).toBe(true);
     }
+  });
+});
+
+describe("reconnaissance du thème appliqué", () => {
+  it("lit la trace quand elle est là", () => {
+    expect(reconnaitrePreset(composerTheme("atelier", "sable"))).toEqual({
+      style: "atelier",
+      palette: "sable",
+    });
+  });
+
+  it("retrouve le style par comparaison quand la trace manque", () => {
+    // Cas de tous les thèmes réglés à la main, ou écrits avant que cette trace
+    // existe : sans cette reconnaissance, la console n'affichait aucune
+    // sélection et laissait croire qu'aucun style n'était appliqué.
+    const theme = composerTheme("studio", "encre");
+    delete (theme as { preset?: unknown }).preset;
+    expect(reconnaitrePreset(theme)).toEqual({ style: "studio", palette: "encre" });
+  });
+
+  it("ne reconnaît rien dans un thème retouché", () => {
+    // Il n'est plus l'un de ces ensembles : le prétendre serait faux.
+    const theme = composerTheme("maison", "blanc");
+    delete (theme as { preset?: unknown }).preset;
+    theme.palette.accent = "#ff0000";
+    theme.fonts.displayWeight = 900;
+    expect(reconnaitrePreset(theme)).toEqual({ style: undefined, palette: undefined });
+  });
+
+  it("reconnaît une couleur même si le style a été retouché", () => {
+    const theme = composerTheme("maison", "sauge");
+    delete (theme as { preset?: unknown }).preset;
+    theme.fonts.displayWeight = 900;
+    expect(reconnaitrePreset(theme).palette).toBe("sauge");
+    expect(reconnaitrePreset(theme).style).toBeUndefined();
   });
 });

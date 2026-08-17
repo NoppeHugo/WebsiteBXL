@@ -273,7 +273,27 @@ details.avance > div { padding: 0 1.2rem 1.2rem; }
   transition: border-color 0.15s;
 }
 .choix:hover { border-color: var(--muted); }
-.choix:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+/*
+ * Le choix retenu est cerné franchement, pas souligné d'un cheveu : cette page
+ * s'ouvre d'abord pour savoir ce qui est appliqué, et seulement ensuite pour en
+ * changer. Un liseré d'un pixel ne répond pas à la première question.
+ */
+.choix:has(input:checked) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.choix.est-actif { border-color: var(--ok); box-shadow: 0 0 0 2px var(--ok); }
+/* Une fois qu'on a cliqué ailleurs, c'est la nouvelle sélection qui prime :
+   l'ancienne n'est plus qu'un souvenir, et deux cadres se disputeraient l'œil. */
+.choix.est-actif:not(:has(input:checked)) { border-color: var(--border); box-shadow: none; }
+
+.marque {
+  font-size: 0.68rem; font-weight: 400; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ok);
+  border: 1px solid color-mix(in srgb, var(--ok) 45%, transparent);
+  border-radius: 980px; padding: 0.1em 0.6em; margin-left: 0.5rem;
+  vertical-align: 0.1em;
+}
 .choix input { position: absolute; opacity: 0; pointer-events: none; }
 .choix__texte { display: grid; gap: 0.2rem; font-size: 0.85rem; }
 .choix__texte b { font-size: 0.95rem; color: var(--text); }
@@ -296,7 +316,13 @@ details.avance > div { padding: 0 1.2rem 1.2rem; }
   border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem;
   font-size: 0.85rem; color: var(--text);
 }
-.teinte:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.teinte:has(input:checked) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.teinte.est-actif { border-color: var(--ok); box-shadow: 0 0 0 2px var(--ok); }
+.teinte.est-actif:not(:has(input:checked)) { border-color: var(--border); box-shadow: none; }
+.teinte b { display: block; }
 .teinte input { position: absolute; opacity: 0; pointer-events: none; }
 .teinte__pastilles { display: flex; height: 2.2rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
 .teinte__pastilles span { flex: 1; }

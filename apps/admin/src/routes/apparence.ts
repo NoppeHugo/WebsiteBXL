@@ -1,7 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import { STYLES, PALETTES, composerTheme } from "@bxl/schema/presets";
+import { STYLES, PALETTES, composerTheme, reconnaitrePreset } from "@bxl/schema/presets";
 import { client, commitAndPush, pull } from "../repo.ts";
 import { config } from "../config.ts";
 import { logPublish } from "../db.ts";
@@ -64,8 +64,16 @@ function pageApparence(
   message?: { kind: "ok" | "error"; text: string },
 ): string {
   const { site, theme } = client(slug);
-  const styleActif = theme.preset?.style ?? "";
-  const paletteActive = theme.preset?.palette ?? "";
+
+  /*
+   * Le thème dit lui-même ce qu'il applique quand il porte la trace du choix.
+   * Sinon, on la retrouve en comparant ses valeurs : sans cela, un thème réglé
+   * à la main — ou écrit avant que cette trace existe — ouvrait cette page sans
+   * qu'aucune sélection ne soit marquée, comme si rien n'était appliqué.
+   */
+  const actif = reconnaitrePreset(theme);
+  const styleActif = actif.style ?? "";
+  const paletteActive = actif.palette ?? "";
 
   const styles = Object.entries(STYLES)
     .map(
@@ -75,7 +83,9 @@ function pageApparence(
     } required>
     ${vignette(id, paletteActive || "blanc")}
     <span class="choix__texte">
-      <b>${escape(s.nom)}</b>
+      <b>${escape(s.nom)}${
+        id === styleActif ? ` <span class="marque">appliqué</span>` : ""
+      }</b>
       <span>${escape(s.pour)}</span>
     </span>
   </label>`,
@@ -94,7 +104,9 @@ function pageApparence(
       <span style="background:${p.palette.accent}"></span>
       <span style="background:${p.palette.text}"></span>
     </span>
-    <b>${escape(p.nom)}</b>
+    <b>${escape(p.nom)}${
+      id === paletteActive ? ` <span class="marque">appliquée</span>` : ""
+    }</b>
   </label>`,
     )
     .join("");
@@ -111,7 +123,7 @@ function pageApparence(
 ${message ? flash(message.kind, message.text) : ""}
 
 ${
-  styleActif
+  styleActif || paletteActive
     ? ""
     : `<div class="etat" data-etat="attente">
     <div class="etat__texte">

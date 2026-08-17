@@ -274,9 +274,72 @@ export function composerTheme(styleId: string, paletteId: string): ThemeConfig {
   if (!style) throw new Error(`style inconnu : ${styleId}`);
   if (!palette) throw new Error(`palette inconnue : ${paletteId}`);
 
-  return {
+  /*
+   * Copie profonde, et non les objets eux-mêmes.
+   *
+   * Sans elle, le thème rendu partage ses sous-objets avec les définitions
+   * ci-dessus : retoucher la couleur d'accent d'un client repeindrait la
+   * palette pour tous les autres traités par le même processus, et la
+   * reconnaissance continuerait de dire que le thème est intact. Trouvé par le
+   * test qui vérifie qu'un thème retouché n'est plus reconnu.
+   */
+  return structuredClone({
     preset: { style: styleId, palette: paletteId },
     palette: palette.palette,
     ...style.style,
-  } as ThemeConfig;
+  }) as ThemeConfig;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Reconnaissance                                                             */
+/* -------------------------------------------------------------------------- */
+
+/** Comparaison stable : l'ordre des clés d'un objet ne doit rien décider. */
+function memeContenu(a: unknown, b: unknown): boolean {
+  const trier = (valeur: unknown): unknown => {
+    if (Array.isArray(valeur)) return valeur.map(trier);
+    if (valeur && typeof valeur === "object") {
+      return Object.fromEntries(
+        Object.entries(valeur as Record<string, unknown>)
+          .sort(([x], [y]) => x.localeCompare(y))
+          .map(([cle, v]) => [cle, trier(v)]),
+      );
+    }
+    return valeur;
+  };
+  return JSON.stringify(trier(a)) === JSON.stringify(trier(b));
+}
+
+/**
+ * Retrouve le style et la palette d'un thème.
+ *
+ * Le champ `preset` répond directement quand il est là. Il manque à tous les
+ * thèmes écrits avant son introduction, et à ceux réglés à la main : la console
+ * ne pouvait alors marquer aucune sélection, et la page d'apparence s'ouvrait
+ * comme si rien n'était appliqué. La comparaison des valeurs rattrape ces cas.
+ *
+ * Un thème retouché après coup ne correspond plus exactement, et c'est bien
+ * ainsi : il n'est plus l'un de ces ensembles, et le dire serait faux.
+ */
+export function reconnaitrePreset(theme: ThemeConfig): {
+  style?: string;
+  palette?: string;
+} {
+  if (theme.preset) return theme.preset;
+
+  const style = Object.entries(STYLES).find(([, definie]) =>
+    memeContenu(definie.style, {
+      fonts: theme.fonts,
+      layout: theme.layout,
+      radius: theme.radius,
+      grain: theme.grain,
+      effects: theme.effects,
+    }),
+  )?.[0];
+
+  const palette = Object.entries(PALETTES).find(([, definie]) =>
+    memeContenu(definie.palette, theme.palette),
+  )?.[0];
+
+  return { style, palette };
 }
