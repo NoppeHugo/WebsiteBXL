@@ -267,6 +267,46 @@ const formScript = `(function(){
       var button = form.querySelector("button[type=submit]");
       var trap = form.querySelector("[name=_company]");
 
+      /*
+       * Un champ obligatoire manquant rendait le formulaire complètement muet.
+       *
+       * Le navigateur n'émet pas « submit » quand la validation échoue : le
+       * gestionnaire ci-dessous n'était donc jamais appelé, aucune requête ne
+       * partait, aucun message ne s'affichait. Il reste censé pointer le champ
+       * fautif par une bulle, mais elle ne paraît pas s'il est masqué — et ce
+       * formulaire replie ses étapes. Le visiteur appuie, rien ne bouge, et
+       * rien n'apparaît même dans la console.
+       *
+       * « invalid » ne remonte pas jusqu'au formulaire : il faut l'intercepter
+       * à la descente, d'où le troisième argument.
+       */
+      var signale = false;
+      form.addEventListener(
+        "invalid",
+        function (event) {
+          if (signale) return;
+          signale = true;
+          // Remis à zéro une fois la salve d'événements passée : le navigateur
+          // en émet un par champ fautif, et seul le premier nous intéresse.
+          setTimeout(function () { signale = false; }, 0);
+
+          var champ = event.target;
+          if (status) {
+            status.setAttribute("data-state", "error");
+            status.textContent =
+              form.getAttribute("data-label-incomplete") ||
+              "Il manque une information pour valider.";
+          }
+          // L'amener sous les yeux : c'est ce que la bulle native aurait fait
+          // si elle avait pu s'afficher.
+          if (champ.scrollIntoView) {
+            champ.scrollIntoView({ block: "center", behavior: "smooth" });
+          }
+          if (champ.focus) champ.focus({ preventScroll: true });
+        },
+        true,
+      );
+
       form.addEventListener("submit", function (event) {
         if (trap && trap.value) { event.preventDefault(); return; }
         event.preventDefault();

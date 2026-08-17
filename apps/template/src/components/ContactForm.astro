@@ -33,6 +33,7 @@ const returnUrl = Astro.site ? new URL(path(lang), Astro.site).href : undefined;
         data-label-sending={ui(lang, "form_sending")}
         data-label-ok={ui(lang, "form_ok")}
         data-label-error={ui(lang, "form_error")}
+        data-label-incomplete={ui(lang, "form_incomplete")}
         data-label-send={ui(lang, "form_send")}
       >
         {ownEndpoint && (
