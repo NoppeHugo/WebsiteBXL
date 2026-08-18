@@ -45,8 +45,15 @@ export function bookingTarget(lang: Language): BookingTarget {
   }
 }
 
-export function telHref(): string {
-  return `tel:${site.business.phone.replace(/[\s.]/g, "")}`;
+/**
+ * Lien téléphonique.
+ *
+ * Accepte un numéro : les fleurs de deuil peuvent avoir une ligne distincte de
+ * celle du commerce, joignable en dehors des heures d'ouverture. À défaut,
+ * c'est le numéro principal.
+ */
+export function telHref(numero?: string): string {
+  return `tel:${(numero ?? site.business.phone).replace(/[\s.]/g, "")}`;
 }
 
 /**

@@ -1,0 +1,51 @@
+---
+import type { Language } from "@bxl/schema";
+import { site, t } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+
+/**
+ * Abonnement floral.
+ *
+ * Le seul revenu récurrent d'un fleuriste — restaurants, cabinets, halls
+ * d'accueil, et de plus en plus de particuliers — et presque aucun n'en parle
+ * sur son site. Une section entière pour trois formules, parce que c'est ce
+ * qui transforme un client de passage en chiffre d'affaires mensuel.
+ */
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const prix = new Intl.NumberFormat(`${lang}-BE`, {
+  style: "currency",
+  currency: "EUR",
+  maximumFractionDigits: 0,
+});
+---
+
+<section class="section" id="abonnement">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="section__title">{ui(lang, "subscription_title")}</h2>
+      <p class="section__intro">{ui(lang, "subscription_intro")}</p>
+    </div>
+
+    <div class="formules">
+      {
+        site.subscriptions.map((formule) => (
+          <article class="formule">
+            <h3 class="formule__nom">{t(formule.name, lang)}</h3>
+            <p class="formule__rythme">{t(formule.rhythm, lang)}</p>
+            <p class="formule__prix">
+              {formule.price === null
+                ? ui(lang, "on_request")
+                : `${prix.format(formule.price)} ${ui(lang, "per_delivery")}`}
+            </p>
+            {formule.text && <p class="formule__desc">{t(formule.text, lang)}</p>}
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>

@@ -1,14 +1,16 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { client, pull } from "../repo.ts";
-import { comptesDuCommerce, changerMotDePasse, findAdminById } from "../db.ts";
+import { comptesDuCommerce, changerMotDePasse, findAdminById, commandesEnAttente } from "../db.ts";
 import { hashPassword, verifyPassword } from "../auth.ts";
 import { utilisateur, siteDuCommercant } from "../acces.ts";
-import { layoutClient, message, PAGES, periodeLisible } from "../views-client.ts";
+import { layoutClient, message, PAGES, periodeLisible, titrePage } from "../views-client.ts";
+import { metierDe } from "@bxl/schema/metiers";
 import { escape } from "../views.ts";
 import { ESPACE_JS } from "../views/espace-js.ts";
 import { espaceFermeturesRoutes } from "./espace-fermetures.ts";
 import { espaceContenuRoutes } from "./espace-contenu.ts";
 import { espaceAgendaRoutes } from "./espace-agenda.ts";
+import { espaceCommandesRoutes } from "./espace-commandes.ts";
 
 /**
  * L'espace du commerçant : accueil et compte.
@@ -32,7 +34,9 @@ async function pageAccueil(
   flash?: { ton: "ok" | "ko"; texte: string },
 ): Promise<string> {
   const { site } = client(slug);
+  const metier = metierDe(site.business.type);
   const comptes = await comptesDuCommerce(slug);
+  const commandes = metier.commande === "commande" ? await commandesEnAttente(slug) : 0;
 
   const aujourdhui = new Date().toISOString().slice(0, 10);
   const prochaines = site.closures
@@ -68,7 +72,7 @@ async function pageAccueil(
     return `<a href="/espace/${escape(page)}">
       <span class="menu__icone" aria-hidden="true">${p.icone}</span>
       <span class="menu__texte">
-        <b>${escape(p.titre)}</b>
+        <b>${escape(titrePage(metier.id, page))}</b>
         <span>${escape(p.sous)}</span>
       </span>
       ${compte ? `<span class="menu__compte">${compte}</span>` : ""}
@@ -92,7 +96,18 @@ ${bandeau}
   ${carte("tarifs")}
   ${carte("photos")}
   ${carte("presentation")}
-  ${site.booking.mode === "live" ? carte("rendez-vous", comptes.rendezVous) : ""}
+  ${
+    /*
+     * Un fleuriste voit ses commandes, un coiffeur ses rendez-vous. Jamais les
+     * deux : proposer une page vide dont le nom ne veut rien dire pour son
+     * métier fait douter de tout le reste.
+     */
+    metier.commande === "commande"
+      ? carte("commandes", commandes)
+      : site.booking.mode === "live"
+        ? carte("rendez-vous", comptes.rendezVous)
+        : ""
+  }
   ${carte("messages", comptes.messages)}
 </div>
 
@@ -226,6 +241,7 @@ export function espaceRoutes(app: FastifyInstance): void {
   espaceFermeturesRoutes(app);
   espaceContenuRoutes(app);
   espaceAgendaRoutes(app);
+  espaceCommandesRoutes(app);
 }
 
 export { pageAccueil };

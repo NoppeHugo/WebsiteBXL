@@ -27,6 +27,16 @@ export interface StyleDefini {
   nom: string;
   /** Ce que le commerçant reconnaîtra : à qui ce style ressemble. */
   pour: string;
+  /**
+   * Métiers auxquels ce style est proposé.
+   *
+   * Un style n'est pas une couleur qu'on pose sur n'importe quoi : « Atelier »
+   * suppose des photos de gestes et de matière, « Nature morte » suppose des
+   * fleurs sur fond sombre. Proposer les cinq styles de coiffure à un fleuriste
+   * lui ferait choisir celui qui va le moins bien à ses photos, et il en
+   * conclurait que le site est raté.
+   */
+  metiers: readonly string[];
   style: Style;
 }
 
@@ -43,6 +53,7 @@ export const STYLES: Record<string, StyleDefini> = {
   maison: {
     nom: "Maison",
     pour: "Élégant et discret. Le blanc, des filets fins, rien qui dépasse.",
+    metiers: ["soins", "commerce"],
     style: {
       fonts: {
         display: `Inter, ${PILE_SYSTEME}`,
@@ -68,6 +79,7 @@ export const STYLES: Record<string, StyleDefini> = {
   atelier: {
     nom: "Atelier",
     pour: "Barbier traditionnel. Chaud, artisanal, un peu d'usure.",
+    metiers: ["soins", "commerce"],
     style: {
       fonts: {
         display: `Bitter, Georgia, 'Times New Roman', serif`,
@@ -93,6 +105,7 @@ export const STYLES: Record<string, StyleDefini> = {
   studio: {
     nom: "Studio",
     pour: "Urbain et direct. Grandes capitales, contrastes marqués.",
+    metiers: ["soins", "commerce"],
     style: {
       fonts: {
         display: `Oswald, 'Arial Narrow', ${PILE_SYSTEME}`,
@@ -118,6 +131,7 @@ export const STYLES: Record<string, StyleDefini> = {
   signature: {
     nom: "Signature",
     pour: "Haut de gamme. Grande photo, titre posé dessus, très peu de texte.",
+    metiers: ["soins", "commerce"],
     style: {
       fonts: {
         display: `Archivo, ${PILE_SYSTEME}`,
@@ -143,6 +157,7 @@ export const STYLES: Record<string, StyleDefini> = {
   nuit: {
     nom: "Nuit",
     pour: "Salon contemporain. Fond sombre, surfaces vitrées, arrondis.",
+    metiers: ["soins", "commerce"],
     style: {
       fonts: {
         display: `Inter, ${PILE_SYSTEME}`,
@@ -157,6 +172,118 @@ export const STYLES: Record<string, StyleDefini> = {
       radius: "round",
       grain: false,
       effects: { glass: true, blur: 22, reveal: true, parallax: true },
+    },
+  },
+
+  /* ---------------------------------------------------------- fleuristes -- */
+
+  /*
+   * La lumière d'une serre : beaucoup de blanc, des filets fins, une serif à
+   * empattements fins pour le titre. Tout est clair parce que les fleurs, elles,
+   * ne le sont pas — un fond neutre laisse la couleur du bouquet exister seule.
+   * C'est le vocabulaire des fleuristes de quartier haut de gamme.
+   */
+  serre: {
+    nom: "Serre",
+    pour: "Clair et végétal. Beaucoup de blanc, la couleur vient des fleurs.",
+    metiers: ["fleuriste"],
+    style: {
+      fonts: {
+        display: `Bitter, Georgia, 'Times New Roman', serif`,
+        body: `Inter, ${PILE_SYSTEME}`,
+        displayWeight: 400,
+        displayTracking: "-0.015em",
+        displayTransform: "none",
+        uiTransform: "uppercase",
+        uiTracking: "0.14em",
+      },
+      layout: { hero: "split", heroAlign: "start", gallery: "grid", nav: "solid" },
+      radius: "soft",
+      grain: false,
+      effects: { glass: false, blur: 0, reveal: true, parallax: true },
+    },
+  },
+
+  /*
+   * La nature morte flamande : fond sombre, fleurs éclairées d'un seul côté.
+   * C'est une tradition picturale née à cent kilomètres d'ici, entre Anvers et
+   * Bruxelles, et aucun autre commerce ne peut s'en réclamer aussi
+   * légitimement qu'un fleuriste belge.
+   *
+   * Exige de bonnes photos, et les met en valeur comme aucun fond clair ne le
+   * fait — d'où la photo plein écran et le grain, qui rappelle la toile.
+   */
+  naturemorte: {
+    nom: "Nature morte",
+    pour: "Fond sombre, fleurs éclairées. Somptueux, très belge. Demande de belles photos.",
+    metiers: ["fleuriste"],
+    style: {
+      fonts: {
+        display: `Bitter, Georgia, 'Times New Roman', serif`,
+        body: `Inter, ${PILE_SYSTEME}`,
+        displayWeight: 500,
+        displayTracking: "-0.02em",
+        displayTransform: "none",
+        uiTransform: "uppercase",
+        uiTracking: "0.18em",
+      },
+      layout: { hero: "fullbleed", heroAlign: "start", gallery: "mosaic", nav: "overlay" },
+      radius: "none",
+      grain: true,
+      effects: { glass: false, blur: 0, reveal: true, parallax: true },
+    },
+  },
+
+  /*
+   * Le marché : condensée en capitales, généreux, rapide à lire. Pour les
+   * fleuristes de volume — un étal, des seaux, des prix affichés. La galerie
+   * défile comme on passe devant les bacs.
+   */
+  marche: {
+    nom: "Marché",
+    pour: "Chaleureux et direct. Grandes capitales, prix assumés.",
+    metiers: ["fleuriste"],
+    style: {
+      fonts: {
+        display: `Oswald, 'Arial Narrow', ${PILE_SYSTEME}`,
+        body: `Archivo, ${PILE_SYSTEME}`,
+        displayWeight: 500,
+        displayTracking: "0.01em",
+        displayTransform: "uppercase",
+        uiTransform: "uppercase",
+        uiTracking: "0.16em",
+      },
+      layout: { hero: "fullbleed", heroAlign: "center", gallery: "marquee", nav: "solid" },
+      radius: "soft",
+      grain: false,
+      effects: { glass: false, blur: 0, reveal: true, parallax: false },
+    },
+  },
+
+  /*
+   * La planche d'herbier : fond papier, titre en petites capitales espacées,
+   * bande de photos alignée comme des spécimens. Le style le plus savant des
+   * quatre — il suppose un fleuriste qui parle de ses variétés, pas seulement
+   * de ses bouquets.
+   */
+  herbier: {
+    nom: "Herbier",
+    pour: "Raffiné et botanique. Papier, petites capitales, presque un livre.",
+    metiers: ["fleuriste"],
+    style: {
+      fonts: {
+        display: `Archivo, ${PILE_SYSTEME}`,
+        body: `Inter, ${PILE_SYSTEME}`,
+        displayWeight: 300,
+        displayTracking: "-0.035em",
+        displayTransform: "none",
+        uiTransform: "uppercase",
+        uiTracking: "0.22em",
+      },
+      layout: { hero: "overlap", heroAlign: "start", gallery: "strip", nav: "solid" },
+      radius: "none",
+      grain: false,
+      effects: { glass: false, blur: 0, reveal: true, parallax: false },
     },
   },
 };
@@ -265,6 +392,65 @@ export const PALETTES: Record<string, PaletteDefinie> = {
       border: "#d8e0d3",
     },
   },
+  /* --- Pensées pour des fleurs, mais ouvertes à tous les métiers. --------- */
+
+  /*
+   * Le vert de serre : un fond presque blanc à peine teinté, un accent
+   * profond. Fait pour laisser les couleurs d'un bouquet exister sans que le
+   * site leur dispute l'attention.
+   */
+  serre: {
+    nom: "Serre",
+    sombre: false,
+    palette: {
+      bg: "#fbfcfa",
+      surface: "#eef2ea",
+      text: "#1a2118",
+      muted: "#5d6b58",
+      accent: "#2c4a2e",
+      accentText: "#fbfcfa",
+      border: "#dde5d8",
+    },
+  },
+
+  /*
+   * Le fond de nature morte : un noir chaud, jamais pur. Le noir absolu écrase
+   * les rouges et les pourpres d'un bouquet ; ce brun très sombre les laisse
+   * respirer.
+   */
+  velours: {
+    nom: "Velours",
+    sombre: true,
+    palette: {
+      bg: "#14100e",
+      surface: "#221b17",
+      text: "#f4efe9",
+      muted: "#a1938a",
+      accent: "#c9a227",
+      accentText: "#14100e",
+      border: "#332822",
+    },
+  },
+
+  /*
+   * Pivoine : un rose poudré tenu par un texte très sombre. La difficulté d'un
+   * rose est le contraste — celui-ci est vérifié comme les autres, et l'accent
+   * est un prune, pas un rose, sans quoi rien ne se détache.
+   */
+  pivoine: {
+    nom: "Pivoine",
+    sombre: false,
+    palette: {
+      bg: "#fdf7f5",
+      surface: "#f7e9e6",
+      text: "#231519",
+      muted: "#6d5257",
+      accent: "#6b2740",
+      accentText: "#fdf7f5",
+      border: "#eed9d5",
+    },
+  },
+
 };
 
 /** Assemble un thème complet à partir d'un style et d'une palette. */
@@ -342,4 +528,35 @@ export function reconnaitrePreset(theme: ThemeConfig): {
   )?.[0];
 
   return { style, palette };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Filtrage par métier                                                        */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Les styles proposés à un métier.
+ *
+ * Un style suppose un type de photographie : « Atelier » veut des gestes et de
+ * la matière, « Nature morte » veut des fleurs sur fond sombre. Les proposer
+ * tous à tout le monde ferait choisir au commerçant celui qui convient le
+ * moins à ses images — et il en conclurait, à juste titre, que son site est
+ * raté.
+ *
+ * Un métier inconnu reçoit tout : mieux vaut trop de choix que pas de page.
+ */
+export function stylesPour(metierId: string): Record<string, StyleDefini> {
+  const retenus = Object.entries(STYLES).filter(([, s]) => s.metiers.includes(metierId));
+  return Object.fromEntries(retenus.length > 0 ? retenus : Object.entries(STYLES));
+}
+
+/**
+ * Les palettes restent ouvertes à tous les métiers.
+ *
+ * Une couleur ne suppose rien du contenu, à la différence d'une disposition :
+ * « Velours » va très bien à un barbier, et « Encre » à un fleuriste. Fermer
+ * les palettes par métier retirerait du choix sans rien protéger.
+ */
+export function palettesPour(_metierId: string): Record<string, PaletteDefinie> {
+  return PALETTES;
 }

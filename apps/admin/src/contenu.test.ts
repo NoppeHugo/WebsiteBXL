@@ -34,6 +34,12 @@ const siteComplet = () => ({
     { src: "b.jpg", alt: { fr: "B" } },
   ],
   closures: [] as Array<{ from: string; to: string; reason?: Record<string, string> }>,
+  // Les blocs propres au fleuriste. Le squelette les porte pour que les tests
+  // décrivent le même objet que celui qu'un vrai site.json contient.
+  occasions: [] as Array<Record<string, unknown>>,
+  subscriptions: [] as Array<Record<string, unknown>>,
+  delivery: undefined as Record<string, unknown> | undefined,
+  mourning: undefined as Record<string, unknown> | undefined,
   team: [{ name: "Lucas", role: { fr: "Barbier" }, photo: "l.jpg" }],
   reviews: [{ author: "Sophie", rating: 5, text: { fr: "Super" }, source: "google" }],
   services: [
@@ -477,5 +483,109 @@ describe("fermetures", () => {
     raw.closures = [{ from: "2026-09-03", to: "2026-09-03" }];
     appliquerSection(raw, "fermetures", {});
     expect(raw.closures).toEqual([]);
+  });
+});
+
+describe("occasions", () => {
+  const ligne = (i: number, champs: Record<string, string>) =>
+    Object.fromEntries(Object.entries(champs).map(([k, v]) => [`occasions.${i}.${k}`, v]));
+
+  it("crée une occasion avec un identifiant dérivé du titre", () => {
+    const raw = siteComplet();
+    appliquerSection(raw, "occasions", ligne(0, { id: "", "title.fr": "Mariage", price: "180" }));
+    expect(raw.occasions).toHaveLength(1);
+    expect(raw.occasions[0]).toMatchObject({ id: "mariage", price: 180 });
+  });
+
+  it("accepte la virgule décimale et traduit un prix vide en « sur devis »", () => {
+    const raw = siteComplet();
+    appliquerSection(raw, "occasions", {
+      ...ligne(0, { id: "", "title.fr": "Naissance", price: "35,50" }),
+      ...ligne(1, { id: "", "title.fr": "Deuil", price: "" }),
+    });
+    expect(raw.occasions[0]!.price).toBe(35.5);
+    expect(raw.occasions[1]!.price).toBeNull();
+  });
+
+  it("ignore une ligne sans titre", () => {
+    const raw = siteComplet();
+    appliquerSection(raw, "occasions", {
+      ...ligne(0, { id: "", "title.fr": "Mariage" }),
+      ...ligne(1, { id: "", "title.fr": "", price: "50" }),
+    });
+    expect(raw.occasions).toHaveLength(1);
+  });
+});
+
+describe("livraison", () => {
+  it("découpe les communes sur les virgules et les retours à la ligne", () => {
+    const raw = siteComplet();
+    appliquerSection(raw, "livraison", {
+      "delivery.zones": "Ixelles, Saint-Gilles\nUccle ,, Forest",
+      "delivery.cutoff": "14:00",
+      "delivery.fee": "7",
+    });
+    expect(raw.delivery!.zones).toEqual(["Ixelles", "Saint-Gilles", "Uccle", "Forest"]);
+    expect(raw.delivery).toMatchObject({ cutoff: "14:00", fee: 7 });
+  });
+
+  it("retire la section quand plus aucune commune n'est desservie", () => {
+    /*
+     * C'est le seul moyen simple, pour un fleuriste qui cesse de livrer, de
+     * faire disparaître l'encadré. Le garder vide annoncerait une livraison
+     * qui n'existe plus.
+     */
+    const raw = siteComplet();
+    raw.delivery = { zones: ["Ixelles"], fee: 7 };
+    appliquerSection(raw, "livraison", { "delivery.zones": "  , \n " });
+    expect(raw.delivery).toBeUndefined();
+  });
+
+  it("annonce la livraison offerte quand les frais sont vides", () => {
+    const raw = siteComplet();
+    appliquerSection(raw, "livraison", { "delivery.zones": "Uccle", "delivery.fee": "" });
+    expect(raw.delivery!.fee).toBeNull();
+  });
+});
+
+describe("deuil", () => {
+  it("retire la section quand le texte est vidé", () => {
+    const raw = siteComplet();
+    raw.mourning = { text: { fr: "Nous préparons…" }, venues: [] };
+    appliquerSection(raw, "deuil", { "mourning.text.fr": "" });
+    expect(raw.mourning).toBeUndefined();
+  });
+
+  it("garde les funérariums, qui sont ce que la famille vérifie", () => {
+    const raw = siteComplet();
+    appliquerSection(raw, "deuil", {
+      "mourning.text.fr": "Couronnes et gerbes, livrées sur place.",
+      "mourning.venues": "Funérarium d'Ixelles, Crématorium d'Uccle",
+      "mourning.phone": "+32 2 538 41 12",
+    });
+    expect(raw.mourning!.venues).toEqual(["Funérarium d'Ixelles", "Crématorium d'Uccle"]);
+    expect(raw.mourning!.phone).toBe("+32 2 538 41 12");
+  });
+});
+
+describe("abonnements", () => {
+  it("reprend le nom comme rythme quand celui-ci est laissé vide", () => {
+    /*
+     * Le rythme est obligatoire au schéma. Vide, l'enregistrement échouerait
+     * avec un message technique — alors que le nom de la formule dit déjà le
+     * rythme dans neuf cas sur dix.
+     */
+    const raw = siteComplet();
+    appliquerSection(raw, "abonnements", {
+      "subscriptions.0.id": "",
+      "subscriptions.0.name.fr": "Chaque semaine",
+      "subscriptions.0.rhythm.fr": "",
+      "subscriptions.0.price": "32",
+    });
+    expect(raw.subscriptions[0]).toMatchObject({
+      id: "chaque-semaine",
+      rhythm: { fr: "Chaque semaine" },
+      price: 32,
+    });
   });
 });

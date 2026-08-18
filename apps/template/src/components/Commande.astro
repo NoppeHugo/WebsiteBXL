@@ -1,0 +1,158 @@
+---
+import type { Language } from "@bxl/schema";
+import { site, t, path } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+import { apiEndpoint } from "../lib/api.ts";
+
+/**
+ * Demande de commande.
+ *
+ * Ce qui remplace la prise de rendez-vous chez un métier qui n'en prend pas.
+ *
+ * Volontairement court : occasion, budget, date, livraison ou retrait, et le
+ * mot de la carte. Cinq champs plus les coordonnées. Un formulaire de boutique
+ * en ligne en demanderait vingt et perdrait le client au huitième — or il
+ * s'agit ici d'ouvrir une conversation, pas de conclure une vente : le
+ * commerçant rappelle.
+ *
+ * Le budget est présenté comme une intention, jamais comme un montant dû, et
+ * rien n'est encaissé. C'est écrit noir sur blanc sous le titre : un client qui
+ * croirait avoir payé serait deux fois déçu.
+ */
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const endpoint = site.tenantId ? apiEndpoint("/v1/orders") : undefined;
+const returnUrl = Astro.site ? new URL(path(lang), Astro.site).href : undefined;
+
+// Le choix livraison/retrait n'a de sens que si le commerce livre.
+const livre = (site.delivery?.zones.length ?? 0) > 0;
+
+const budgets = [30, 50, 75, 100, 150];
+---
+
+{
+  endpoint && (
+    <section class="section section--commande" id="commande">
+      <div class="wrap">
+        <div class="section__head">
+          <h2 class="section__title">{ui(lang, "order_title")}</h2>
+          <p class="section__intro">{ui(lang, "order_intro")}</p>
+        </div>
+
+        <form
+          class="commande"
+          method="post"
+          action={endpoint}
+          data-async-form
+          data-label-sending={ui(lang, "form_sending")}
+          data-label-ok={ui(lang, "order_ok")}
+          data-label-error={ui(lang, "order_ko")}
+          data-label-incomplete={ui(lang, "form_incomplete")}
+          data-label-send={ui(lang, "order_send")}
+        >
+          <input type="hidden" name="tenantId" value={site.tenantId} />
+          <input type="hidden" name="locale" value={lang} />
+          {returnUrl && <input type="hidden" name="redirectTo" value={returnUrl} />}
+
+          {/* Piège à robots : invisible, jamais rempli par un humain. Même
+              classe que le formulaire de contact — un seul mécanisme à
+              maintenir, et un seul à vérifier. */}
+          <input
+            type="text"
+            name="_company"
+            tabindex="-1"
+            autocomplete="off"
+            aria-hidden="true"
+            class="honeypot"
+          />
+
+          {site.occasions.length > 0 && (
+            <label class="commande__champ">
+              {ui(lang, "order_occasion")}
+              <select name="occasionName">
+                <option value="">{ui(lang, "order_free")}</option>
+                {site.occasions.map((o) => (
+                  <option value={t(o.title, lang)}>{t(o.title, lang)}</option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          <div class="commande__paire">
+            <label class="commande__champ">
+              {ui(lang, "order_budget")}
+              <select name="budget">
+                <option value="">{ui(lang, "order_free")}</option>
+                {budgets.map((b) => (
+                  <option value={String(b)}>{b} €</option>
+                ))}
+              </select>
+            </label>
+
+            <label class="commande__champ">
+              {ui(lang, "order_date")}
+              <input type="date" name="wantedDate" />
+            </label>
+          </div>
+
+          {livre ? (
+            <fieldset class="commande__mode">
+              <legend>{ui(lang, "order_mode")}</legend>
+              <label class="commande__radio">
+                <input type="radio" name="mode" value="delivery" checked data-mode-livraison />
+                <span>{ui(lang, "order_delivery")}</span>
+              </label>
+              <label class="commande__radio">
+                <input type="radio" name="mode" value="pickup" data-mode-retrait />
+                <span>{ui(lang, "order_pickup")}</span>
+              </label>
+            </fieldset>
+          ) : (
+            <input type="hidden" name="mode" value="pickup" />
+          )}
+
+          {livre && (
+            <label class="commande__champ" data-champ-adresse>
+              {ui(lang, "order_address")}
+              <input type="text" name="address" autocomplete="street-address" />
+            </label>
+          )}
+
+          <label class="commande__champ">
+            {ui(lang, "order_card")}
+            <textarea name="card" rows="2" maxlength="500" />
+            <span class="commande__aide">{ui(lang, "order_card_help")}</span>
+          </label>
+
+          <div class="commande__paire">
+            <label class="commande__champ">
+              {ui(lang, "form_name")}
+              <input type="text" name="name" required autocomplete="name" />
+            </label>
+            <label class="commande__champ">
+              {ui(lang, "form_email")}
+              <input type="email" name="email" required autocomplete="email" />
+            </label>
+          </div>
+
+          <label class="commande__champ">
+            {ui(lang, "form_phone")}
+            <input type="tel" name="phone" autocomplete="tel" />
+          </label>
+
+          <label class="consent">
+            <input type="checkbox" name="consent" required />
+            <span>{ui(lang, "form_consent")}</span>
+          </label>
+
+          <p class="form-status" role="status" aria-live="polite" />
+          <button type="submit">{ui(lang, "order_send")}</button>
+        </form>
+      </div>
+    </section>
+  )
+}

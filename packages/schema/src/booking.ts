@@ -88,6 +88,57 @@ export const BookingRequestInput = z.object({
 });
 export type BookingRequestInput = z.infer<typeof BookingRequestInput>;
 
+/**
+ * Comment le client veut récupérer ses fleurs.
+ *
+ * Deux valeurs seulement. Un fleuriste qui ne livre pas n'affiche pas le
+ * choix, et le formulaire poste alors « pickup » — plutôt qu'un troisième
+ * état « non précisé » dont personne ne saurait quoi faire.
+ */
+export const OrderMode = z.enum(["delivery", "pickup"]);
+export type OrderMode = z.infer<typeof OrderMode>;
+
+/**
+ * Demande de commande, pour les métiers qui ne prennent pas rendez-vous.
+ *
+ * Ce n'est **pas** une vente : aucun paiement, aucun engagement de prix. Un
+ * fleuriste ne peut pas promettre à l'avance ce qu'il composera — cela dépend
+ * de l'arrivage du matin. Il rappelle, confirme, puis compose.
+ *
+ * Le budget est donc une intention, pas un montant dû ; et la date est
+ * souhaitée, pas retenue. Les nommer autrement ferait croire à une commande
+ * ferme, et le premier client déçu aurait raison de se plaindre.
+ */
+export const OrderRequestInput = z.object({
+  tenantId: z.string().uuid(),
+  /** Identifiant de l'occasion choisie, ou vide si le client n'a pas choisi. */
+  occasionId: z.string().max(80).optional().or(z.literal("")),
+  /** Libellé affiché, repris tel quel dans le courriel au commerçant. */
+  occasionName: z.string().trim().max(160).optional().or(z.literal("")),
+  /** En euros. Une intention de dépense, jamais un montant dû. */
+  budget: z.coerce.number().int().min(0).max(100000).optional(),
+  /** Date souhaitée. Facultative : « dès que possible » est une réponse. */
+  wantedDate: IsoDate.optional().or(z.literal("")),
+  mode: OrderMode.default("pickup"),
+  /** Adresse de livraison, exigée par la route quand le mode est `delivery`. */
+  address: z.string().trim().max(300).optional().or(z.literal("")),
+  /**
+   * Mot à recopier sur la carte. Le fleuriste l'écrit à la main : c'est
+   * souvent la partie du bouquet à laquelle le client tient le plus, et une
+   * faute de frappe s'y voit pour toujours sur une photo de famille.
+   */
+  card: z.string().trim().max(500).optional().or(z.literal("")),
+  name: Customer.shape.name,
+  email: Customer.shape.email,
+  phone: Customer.shape.phone,
+  note: z.string().trim().max(2000).optional().or(z.literal("")),
+  locale: Language.default("fr"),
+  consent: Consent,
+  _company: Honeypot,
+  redirectTo: ReturnUrl.optional().or(z.literal("")),
+});
+export type OrderRequestInput = z.infer<typeof OrderRequestInput>;
+
 export const ContactMessageInput = z.object({
   tenantId: z.string().uuid(),
   name: Customer.shape.name,

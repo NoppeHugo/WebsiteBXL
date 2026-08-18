@@ -38,16 +38,25 @@ const isSplit = grouped.length > 1;
               <article class="service">
                 <h4 class="service__name">{t(service.name, lang)}</h4>
                 <p class="service__price">{formatPrice(service, lang)}</p>
-                <p class="service__meta">
-                  <span class="service__duration">
-                    {service.durationMin} {ui(lang, "minutes")}
-                  </span>
-                  {service.description && (
-                    <span class="service__desc">
-                      {t(service.description, lang)}
-                    </span>
-                  )}
-                </p>
+                {/*
+                  La durée n'existe que là où l'on prend rendez-vous. Chez un
+                  fleuriste, « 30 min » sous le prix d'un bouquet ne veut rien
+                  dire — et l'afficher vide donnerait « min » tout seul.
+                */}
+                {(service.durationMin !== undefined || service.description) && (
+                  <p class="service__meta">
+                    {service.durationMin !== undefined && (
+                      <span class="service__duration">
+                        {service.durationMin} {ui(lang, "minutes")}
+                      </span>
+                    )}
+                    {service.description && (
+                      <span class="service__desc">
+                        {t(service.description, lang)}
+                      </span>
+                    )}
+                  </p>
+                )}
               </article>
             ))}
           </div>

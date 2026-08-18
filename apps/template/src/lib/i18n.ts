@@ -1,4 +1,6 @@
 import type { Language, Weekday } from "@bxl/schema";
+import { metierDe } from "@bxl/schema/metiers";
+import { site } from "./client.ts";
 
 /**
  * Libellés d'interface du template — distincts du contenu du client, qui vit
@@ -7,6 +9,38 @@ import type { Language, Weekday } from "@bxl/schema";
  */
 const strings = {
   fr: {
+    form_phone: "Votre téléphone",
+    occasions_title: "Pour quelle occasion ?",
+    from_price: "à partir de",
+    on_request: "sur devis",
+    per_delivery: "par livraison",
+    mourning_title: "Fleurs de deuil",
+    mourning_venues: "Nous livrons notamment à ",
+    mourning_call: "Nous appeler",
+    delivery_title: "Livraison",
+    delivery_where: "Où",
+    delivery_when: "Commandé avant",
+    delivery_sameday: "pour une livraison le jour même",
+    delivery_price: "Frais",
+    delivery_free: "offerte",
+    delivery_free_from: "offerte à partir de",
+    subscription_title: "Des fleurs chaque semaine",
+    subscription_intro: "Pour un restaurant, un cabinet, un hall d'accueil — ou chez soi.",
+    order_title: "Commander des fleurs",
+    order_intro: "Dites-nous l'essentiel, nous vous rappelons pour confirmer. Aucun paiement ici.",
+    order_occasion: "L'occasion",
+    order_budget: "Votre budget",
+    order_date: "Pour quand",
+    order_mode: "Livraison ou retrait",
+    order_delivery: "Livraison",
+    order_pickup: "Retrait en boutique",
+    order_address: "Adresse de livraison",
+    order_card: "Message pour la carte",
+    order_card_help: "Nous le recopions à la main.",
+    order_send: "Envoyer ma demande",
+    order_ok: "Demande envoyée. Nous vous rappelons pour confirmer avant de composer.",
+    order_ko: "L'envoi a échoué. Appelez-nous, c'est plus sûr.",
+    order_free: "Sans préférence",
     nav_services: "Prestations",
     nav_gallery: "Galerie",
     nav_team: "L'équipe",
@@ -112,6 +146,38 @@ const strings = {
     made_by: "Site & photographies",
   },
   nl: {
+    form_phone: "Uw telefoonnummer",
+    occasions_title: "Voor welke gelegenheid?",
+    from_price: "vanaf",
+    on_request: "op aanvraag",
+    per_delivery: "per levering",
+    mourning_title: "Rouwbloemen",
+    mourning_venues: "Wij leveren onder meer aan ",
+    mourning_call: "Bel ons",
+    delivery_title: "Levering",
+    delivery_where: "Waar",
+    delivery_when: "Besteld voor",
+    delivery_sameday: "voor levering dezelfde dag",
+    delivery_price: "Kosten",
+    delivery_free: "gratis",
+    delivery_free_from: "gratis vanaf",
+    subscription_title: "Elke week bloemen",
+    subscription_intro: "Voor een restaurant, een praktijk, een onthaal — of gewoon thuis.",
+    order_title: "Bloemen bestellen",
+    order_intro: "Vertel ons het belangrijkste, wij bellen u terug om te bevestigen. Geen betaling hier.",
+    order_occasion: "De gelegenheid",
+    order_budget: "Uw budget",
+    order_date: "Voor wanneer",
+    order_mode: "Levering of afhalen",
+    order_delivery: "Levering",
+    order_pickup: "Afhalen in de winkel",
+    order_address: "Leveringsadres",
+    order_card: "Boodschap voor het kaartje",
+    order_card_help: "Wij schrijven het met de hand over.",
+    order_send: "Mijn aanvraag versturen",
+    order_ok: "Aanvraag verstuurd. Wij bellen u terug voor we samenstellen.",
+    order_ko: "Verzenden mislukt. Bel ons, dat is zekerder.",
+    order_free: "Geen voorkeur",
     nav_services: "Diensten",
     nav_gallery: "Galerij",
     nav_team: "Het team",
@@ -217,6 +283,38 @@ const strings = {
     made_by: "Site & fotografie",
   },
   en: {
+    form_phone: "Your phone",
+    occasions_title: "For what occasion?",
+    from_price: "from",
+    on_request: "on request",
+    per_delivery: "per delivery",
+    mourning_title: "Funeral flowers",
+    mourning_venues: "We deliver to ",
+    mourning_call: "Call us",
+    delivery_title: "Delivery",
+    delivery_where: "Where",
+    delivery_when: "Order before",
+    delivery_sameday: "for same-day delivery",
+    delivery_price: "Fee",
+    delivery_free: "free",
+    delivery_free_from: "free from",
+    subscription_title: "Flowers every week",
+    subscription_intro: "For a restaurant, a practice, a reception desk — or your own home.",
+    order_title: "Order flowers",
+    order_intro: "Tell us the essentials and we will call you back to confirm. No payment here.",
+    order_occasion: "The occasion",
+    order_budget: "Your budget",
+    order_date: "For when",
+    order_mode: "Delivery or pickup",
+    order_delivery: "Delivery",
+    order_pickup: "Pickup in store",
+    order_address: "Delivery address",
+    order_card: "Message for the card",
+    order_card_help: "We copy it out by hand.",
+    order_send: "Send my request",
+    order_ok: "Request sent. We will call you back before we start arranging.",
+    order_ko: "Sending failed. Please call us instead.",
+    order_free: "No preference",
     nav_services: "Services",
     nav_gallery: "Gallery",
     nav_team: "The team",
@@ -324,8 +422,26 @@ const strings = {
 
 export type UiKey = keyof (typeof strings)["fr"];
 
+/**
+ * Le métier du commerce, fixé pour toute la construction.
+ *
+ * Le template est bâti pour un client à la fois (variable `CLIENT`) : il n'y a
+ * donc qu'un métier courant, et le lire ici évite de le passer en argument à
+ * une quarantaine d'appels — dont on oublierait forcément le dernier, celui qui
+ * afficherait « Prestations & tarifs » sur le site d'un fleuriste.
+ */
+const metier = metierDe(site.business.type);
+
+/**
+ * Un libellé d'interface, dans la langue demandée.
+ *
+ * Le métier peut en remplacer certains : « Nos compositions » plutôt que
+ * « Prestations & tarifs », « Commander » plutôt que « Prendre rendez-vous ».
+ * Une clé qu'il ne remplace pas retombe sur le libellé commun — c'est ce qui
+ * permet d'ajouter un métier en traduisant huit chaînes au lieu de deux cents.
+ */
 export function ui(lang: Language, key: UiKey): string {
-  return strings[lang][key];
+  return metier.vocabulaire[key]?.[lang] ?? strings[lang][key];
 }
 
 const weekdayNames: Record<Language, Record<Weekday, string>> = {

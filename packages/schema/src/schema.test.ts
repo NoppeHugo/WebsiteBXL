@@ -53,6 +53,58 @@ describe("SiteConfig", () => {
     expect(SiteConfig.safeParse(validSite({ status: "en-ligne" })).success).toBe(false);
   });
 
+  it("rend la durée facultative, sauf quand le site prend des rendez-vous", () => {
+    /*
+     * Un bouquet n'a pas de durée. Mais dès qu'un site réserve, c'est la durée
+     * qui découpe les créneaux : sans elle, l'agenda proposerait des
+     * rendez-vous qui se chevauchent tous, et cela ne se verrait qu'au premier
+     * double-booking, chez le client.
+     */
+    const sansDuree = {
+      id: "bouquet",
+      name: { fr: "Bouquet" },
+      price: 25,
+    };
+
+    expect(
+      SiteConfig.safeParse(validSite({ services: [sansDuree] })).success,
+    ).toBe(true);
+
+    for (const mode of ["request", "live"] as const) {
+      const r = SiteConfig.safeParse(
+        validSite({ services: [sansDuree], booking: { mode }, tenantId: crypto.randomUUID() }),
+      );
+      expect(r.success, mode).toBe(false);
+      if (!r.success) {
+        expect(JSON.stringify(r.error.issues)).toContain("durée");
+      }
+    }
+  });
+
+  it("accepte les sections propres au fleuriste", () => {
+    const r = SiteConfig.safeParse(
+      validSite({
+        occasions: [{ id: "mariage", title: { fr: "Mariage" }, price: 180 }],
+        delivery: { zones: ["Ixelles"], cutoff: "14:00", fee: 7, freeFrom: 60 },
+        mourning: { text: { fr: "Couronnes et gerbes." }, venues: ["Funérarium d'Ixelles"] },
+        subscriptions: [
+          { id: "hebdo", name: { fr: "Chaque semaine" }, rhythm: { fr: "Un bouquet par semaine" }, price: 32 },
+        ],
+      }),
+    );
+    expect(r.success ? "" : JSON.stringify(r.error.issues)).toBe("");
+  });
+
+  it("laisse ces sections vides pour les autres métiers", () => {
+    // Vides, elles ne s'affichent pas : c'est ce qui permet à un salon de
+    // coiffure et à un fleuriste de partager exactement le même template.
+    const site = SiteConfig.parse(validSite());
+    expect(site.occasions).toEqual([]);
+    expect(site.subscriptions).toEqual([]);
+    expect(site.delivery).toBeUndefined();
+    expect(site.mourning).toBeUndefined();
+  });
+
   it("refuse une langue par défaut absente des langues disponibles", () => {
     const result = SiteConfig.safeParse(
       validSite({ languages: { default: "en", available: ["fr", "nl"] } }),

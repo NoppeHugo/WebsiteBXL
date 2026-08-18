@@ -1,0 +1,86 @@
+---
+import type { Language } from "@bxl/schema";
+import { site, t } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+
+/**
+ * Livraison.
+ *
+ * La première question de tout client de fleuriste — « livrez-vous chez moi,
+ * et jusqu'à quelle heure ? » — et celle à laquelle presque aucun site de
+ * fleuriste ne répond. On la trouve, quand on la trouve, au bas d'une page de
+ * conditions générales.
+ *
+ * Trois chiffres suffisent : où, avant quelle heure, combien. Ils sont ici en
+ * gros, avant tout le reste.
+ */
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const livraison = site.delivery!;
+
+const prix = new Intl.NumberFormat(`${lang}-BE`, {
+  style: "currency",
+  currency: "EUR",
+  maximumFractionDigits: 0,
+});
+
+/*
+ * L'heure limite est écrite « 14 h » et non « 14:00 » : c'est ainsi qu'on la
+ * dit, et ce texte se lit à voix haute autant qu'il se voit.
+ */
+function heureLisible(hhmm: string): string {
+  const [h, m] = hhmm.split(":");
+  return m === "00" ? `${Number(h)} h` : `${Number(h)} h ${m}`;
+}
+---
+
+<section class="section section--livraison" id="livraison">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="section__title">{ui(lang, "delivery_title")}</h2>
+    </div>
+
+    <div class="livraison">
+      {
+        livraison.zones.length > 0 && (
+          <div class="livraison__bloc">
+            <span class="livraison__etiquette">{ui(lang, "delivery_where")}</span>
+            <p class="livraison__zones">{livraison.zones.join(" · ")}</p>
+          </div>
+        )
+      }
+
+      {
+        livraison.cutoff && (
+          <div class="livraison__bloc">
+            <span class="livraison__etiquette">{ui(lang, "delivery_when")}</span>
+            <p class="livraison__chiffre">{heureLisible(livraison.cutoff)}</p>
+            <p class="livraison__precision">{ui(lang, "delivery_sameday")}</p>
+          </div>
+        )
+      }
+
+      <div class="livraison__bloc">
+        <span class="livraison__etiquette">{ui(lang, "delivery_price")}</span>
+        <p class="livraison__chiffre">
+          {livraison.fee === null || livraison.fee === 0
+            ? ui(lang, "delivery_free")
+            : prix.format(livraison.fee)}
+        </p>
+        {
+          livraison.freeFrom !== undefined && (
+            <p class="livraison__precision">
+              {ui(lang, "delivery_free_from")} {prix.format(livraison.freeFrom)}
+            </p>
+          )
+        }
+      </div>
+    </div>
+
+    {livraison.note && <p class="livraison__note">{t(livraison.note, lang)}</p>}
+  </div>
+</section>

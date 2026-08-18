@@ -743,6 +743,85 @@ change son style tous les mois n'a plus d'identité.
 
 ---
 
+## 7 quater. Les métiers
+
+Le projet ne fait plus seulement des sites de coiffeur. Un **métier** décide du
+vocabulaire du site, des sections qu'il affiche, des styles qu'on propose, des
+visuels de remplacement et des pages de l'espace commerçant.
+
+Il n'y a **pas de champ « métier »** : il se déduit de `business.type`, qui
+existe déjà et qui part dans les données lues par Google. Deux champs pour la
+même idée finiraient par se contredire — un fichier disant « fleuriste » d'un
+côté et `HairSalon` de l'autre, sans que rien ne le signale.
+
+| Métier | Types couverts | Commande | Styles |
+| --- | --- | --- | --- |
+| `soins` | salon de coiffure, barbier, institut | rendez-vous | Maison, Atelier, Studio, Signature, Nuit |
+| `fleuriste` | fleuriste | demande de commande | Serre, Nature morte, Marché, Herbier |
+| `commerce` | boulangerie, autre | aucune | les cinq de `soins` |
+
+Tout est dans `packages/schema/src/metiers.ts`.
+
+### 7 quater.1 Ce qu'un fleuriste a et qu'un coiffeur n'a pas
+
+Ce ne sont pas les mêmes sections recolorées — ce sont les questions que se
+pose son client :
+
+- **Occasions.** Personne ne cherche « bouquet rond de saison » : on cherche
+  des fleurs *pour* un mariage, *pour* une naissance. C'est l'entrée
+  principale du site, avant la carte des compositions.
+- **Fleurs de deuil**, en section à part et au ton distinct : ni prix, ni
+  formulaire, un seul bouton et il appelle. C'est le segment le plus urgent
+  d'un fleuriste ; on ne fait pas comparer trois formules à quelqu'un qui
+  enterre son père.
+- **Livraison** : où, avant quelle heure, combien. La première question de tout
+  client, et celle à laquelle presque aucun site de fleuriste ne répond.
+- **Abonnement floral** : le seul revenu qui revient tous les mois —
+  restaurants, cabinets, halls d'accueil.
+- **Demande de commande** au lieu de la réservation. Occasion, budget, date,
+  livraison ou retrait, mot pour la carte. **Aucun paiement** : un fleuriste ne
+  peut pas s'engager d'avance sur un bouquet dont il ignore ce que l'arrivage
+  du matin lui permettra de composer. Il rappelle, s'accorde, puis compose.
+
+### 7 quater.2 Créer un site de fleuriste
+
+Rien de particulier : **Clients → + Nouveau client**, et choisir « Fleuriste »
+dans *Type*. La grille de styles se met à jour toute seule — un fleuriste ne se
+voit jamais proposer « Nuit », qui est fait pour un salon de coiffure.
+
+L'éditeur affiche alors *Occasions*, *Fleurs de deuil*, *Abonnements* et
+*Livraison*, et masque *Le déroulé*. L'espace commerçant remplace
+*Mes rendez-vous* par **Mes commandes**, et *Mes tarifs* par
+*Mes compositions*.
+
+Une démonstration est fournie : `demo-fleuriste` (Fleurs Van Aken, Ixelles).
+
+### 7 quater.3 La durée des prestations
+
+`durationMin` est devenu **facultatif** : un bouquet n'a pas de durée. Le
+schéma la rend obligatoire dès que `booking.mode` vaut `request` ou `live` —
+c'est elle qui découpe les créneaux, et une durée manquante produirait un
+agenda dont tous les rendez-vous se chevauchent.
+
+Conséquence côté base : `tenant_services` ne reçoit que les prestations qui ont
+une durée. C'est la table de l'agenda ; une composition florale n'a rien à y
+faire.
+
+### 7 quater.4 Ajouter un métier plus tard
+
+Une entrée dans `METIERS`, et le reste suit. Les tests le vérifient : ils
+refusent un type de commerce qui ne serait rangé dans aucun métier, un style
+nommé par un métier mais inexistant, un style qu'aucun métier ne propose, et un
+remplacement de vocabulaire qui ne serait pas traduit dans les trois langues.
+
+⛔ **Une décision reste à prendre** : le domaine de service s'appelle
+`hairbxl.be`. Un fleuriste dont le site de démonstration vit à
+`fleurs.hairbxl.be` le remarquera. Ce n'est pas bloquant — le client passe à
+son propre domaine à la signature — mais un domaine neutre serait plus vendeur
+pour tous les métiers qui ne sont pas la coiffure.
+
+---
+
 ## 8. Sauvegardes
 
 Les sites se reconstruisent depuis git ; **la base, non**. Elle contient les
@@ -884,3 +963,8 @@ mise en ligne rapide.
 | 2026-08-17 | — | **Les prestations ne pouvaient ni s'ajouter ni se supprimer** depuis la console : la page renvoyait à « l'édition avancée », c'est-à-dire au JSON brut. On ne dit pas ça à un coiffeur. | Gérées comme les horaires et la galerie — la liste complète est renvoyée, l'absence vaut retrait. L'identifiant est stable et n'est **jamais** repris du formulaire quand il est inconnu : des rendez-vous s'y réfèrent, et le laisser choisir de l'extérieur reviendrait à laisser quelqu'un d'autre décider à quoi ils se rattachent. La virgule décimale belge est acceptée — « 28,50 » lu par `Number()` donne NaN, donc « sur devis », donc un tarif disparu sans un mot. |
 | 2026-08-17 | 6.4 | **`admin.hairbxl.be` n'avait pas de `client_max_body_size`** : nginx coupait à son mégaoctet par défaut alors que le code en accepte quarante. L'envoi de photos échouait donc pour **toutes** les vraies photos — une photo de téléphone en pèse trois à cinq — et le refus venait de nginx, que l'application ne voit jamais. | Porté à 40 Mo dans `admin.conf.modele` et dans le bloc en place, sauvegarde du fichier avant modification. |
 | 2026-08-17 | — | Liens « ← Tous les clients » et redirection de l'exploitant pointant vers `/clients`, qui **n'existe pas** : la liste est servie à la racine. 404 silencieux. | Corrigé, et trouvé en pilotant l'application pour de vrai plutôt qu'en la lisant. |
+| 2026-08-18 | 7 quater | **Le projet ne fait plus que des sites de coiffeur.** Notion de métier introduite, déduite de `business.type` — pas de champ supplémentaire, donc pas de contradiction possible entre ce que dit le fichier et ce que lit Google. Le métier commande le vocabulaire, les sections, les styles proposés, les visuels de remplacement et les pages de l'espace commerçant. | Un seul template, pas deux : deux templates divergeraient au premier correctif, et ce dépôt a déjà montré ce que deux copies de la même idée deviennent. Vérifié en construisant les deux démonstrations et en pilotant la console dans un vrai navigateur : le site du barbier est inchangé, section pour section et mot pour mot. |
+| 2026-08-18 | 7 quater | Un site de fleuriste n'est pas un site de coiffeur recoloré : son client entre par l'occasion, sa carte change chaque semaine, et sa première question est « livrez-vous chez moi, et jusqu'à quelle heure ? ». | Quatre sections propres : occasions, fleurs de deuil, abonnement floral, livraison. Quatre styles réels — Serre, Nature morte, Marché, Herbier — et trois palettes florales, toutes passées aux contrôles de contraste existants. Le deuil est une section à part, sans prix ni formulaire : on ne fait pas comparer trois formules à quelqu'un qui enterre son père. |
+| 2026-08-18 | 7 quater | La réservation ne se transpose pas : un fleuriste ne vend pas un créneau. | Table `orders` et route `/v1/orders` — occasion, budget, date, livraison ou retrait, mot pour la carte. **Aucun paiement**, et c'est un choix : ce qu'il pourra composer dépend de l'arrivage du matin. Mêmes protections que le formulaire de contact (piège à robots, origine, limite de débit), plus une contrainte en base qui refuse une livraison sans adresse. Route éprouvée en vrai contre la base : commande enregistrée, et refus vérifiés pour l'adresse manquante, la date passée, le commerce inconnu et le consentement absent. |
+| 2026-08-18 | — | `durationMin` devient facultatif — un bouquet n'a pas de durée — mais reste **obligatoire dès que le site prend des rendez-vous** : c'est elle qui découpe les créneaux, et une durée absente donnerait un agenda dont tous les rendez-vous se chevauchent. | Contrôle dans le schéma, et `tenant_services` ne reçoit plus que les prestations réservables. La table sert l'agenda : une composition florale n'a rien à y faire. |
+| 2026-08-18 | — | Défaut trouvé en pilotant l'espace commerçant : la date d'une commande s'affichait « Fri Aug 21 ». Le pilote Postgres rend les colonnes `date` sous forme d'objets, et `String(date).slice(0, 10)` produisait une chaîne que `new Date()` refuse — la fonction rendait donc cette bouillie telle quelle au commerçant. | `dateLisible()` accepte les deux formes. Trouvé parce que la page a été ouverte pour de vrai, pas relue. |

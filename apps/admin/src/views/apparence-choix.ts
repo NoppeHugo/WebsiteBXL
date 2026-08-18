@@ -1,4 +1,5 @@
 import { STYLES, PALETTES } from "@bxl/schema/presets";
+import { METIERS } from "@bxl/schema/metiers";
 import { escape } from "../views.ts";
 
 /**
@@ -56,10 +57,21 @@ export function grilleStyles(
   styleActif: string,
   paletteActive: string,
   marquerLActif = true,
+  /**
+   * Restreindre la grille à un métier. Vide, tous les styles sont rendus mais
+   * étiquetés : c'est le cas du formulaire de création, où le type de commerce
+   * peut encore changer et où la grille se filtre alors dans le navigateur.
+   */
+  metierId?: string,
 ): string {
-  return Object.entries(STYLES)
+  const retenus = metierId
+    ? Object.entries(STYLES).filter(([, s]) => s.metiers.includes(metierId))
+    : Object.entries(STYLES);
+
+  return retenus
     .map(
-      ([id, s]) => `<label class="choix${id === styleActif ? " est-actif" : ""}">
+      ([id, s]) => `<label class="choix${id === styleActif ? " est-actif" : ""}"
+    data-metiers="${escape(s.metiers.join(" "))}">
     <input type="radio" name="style" value="${escape(id)}"${
       id === styleActif ? " checked" : ""
     } required>

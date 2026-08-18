@@ -92,8 +92,16 @@ export const Service = z.object({
   id: Slug,
   name: LocalizedText,
   description: LocalizedText.optional(),
-  /** En minutes. Utilisé par la réservation pour calculer les créneaux. */
-  durationMin: z.number().int().positive().max(600),
+  /**
+   * En minutes. Utilisé par la réservation pour calculer les créneaux.
+   *
+   * Facultatif depuis l'arrivée des métiers sans rendez-vous : un bouquet n'a
+   * pas de durée, et en inventer une afficherait « 30 min » sous un prix de
+   * fleuriste. Le contrôle plus bas la rend obligatoire dès qu'un site prend
+   * des rendez-vous — c'est elle qui calcule les créneaux, et une durée
+   * manquante y produirait un agenda qui se chevauche.
+   */
+  durationMin: z.number().int().positive().max(600).optional(),
   /** En euros. `null` = « sur devis ». */
   price: z.number().nonnegative().nullable(),
   /** Affiche « à partir de » devant le prix. */
@@ -134,6 +142,85 @@ export const Review = z.object({
   rating: z.number().int().min(1).max(5),
   text: LocalizedText,
   source: z.enum(["google", "facebook", "direct"]).default("google"),
+});
+
+/* -------------------------------------------------------------------------- */
+/* Fleuriste                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Une occasion.
+ *
+ * C'est l'entrée principale d'un site de fleuriste : personne n'arrive en
+ * cherchant « bouquet rond de saison », on arrive en cherchant « fleurs pour
+ * un mariage » ou « fleurs pour un enterrement ». La navigation d'un fleuriste
+ * suit donc les occasions, là où celle d'un coiffeur suit les prestations.
+ */
+export const Occasion = z.object({
+  id: Slug,
+  title: LocalizedText,
+  text: LocalizedText.optional(),
+  /** Chemin relatif au dossier `media/` du client. */
+  photo: z.string().optional(),
+  /** Prix d'entrée en euros, toujours affiché « à partir de ». `null` = sur devis. */
+  price: z.number().nonnegative().nullable().default(null),
+});
+
+export type Occasion = z.infer<typeof Occasion>;
+
+/**
+ * Livraison.
+ *
+ * La première question de tout client de fleuriste, et celle à laquelle un
+ * site en oublie systématiquement de répondre : « livrez-vous chez moi, et
+ * jusqu'à quelle heure ? ». Une commande passée à 15 h pour le jour même n'a
+ * de sens que si l'heure limite est écrite quelque part.
+ */
+export const Delivery = z.object({
+  /** Communes ou quartiers desservis, tels que le commerçant les nomme. */
+  zones: z.array(z.string().min(1)).default([]),
+  /** Heure limite pour une livraison le jour même. */
+  cutoff: Time.optional(),
+  /** Frais en euros. `null` : à convenir. */
+  fee: z.number().nonnegative().nullable().default(null),
+  /** Montant de commande à partir duquel la livraison est offerte. */
+  freeFrom: z.number().nonnegative().optional(),
+  note: LocalizedText.optional(),
+});
+
+/**
+ * Fleurs de deuil.
+ *
+ * Une section à part, et non une occasion parmi d'autres. C'est le segment le
+ * plus urgent d'un fleuriste, souvent le plus rémunérateur, et le seul dont le
+ * client ne veut ni parcourir un catalogue ni comparer des prix : il veut
+ * savoir qu'on s'en occupe, et un numéro. Le présenter entre le mariage et la
+ * Saint-Valentin serait une faute de ton, pas une économie de place.
+ */
+export const Mourning = z.object({
+  text: LocalizedText,
+  /** Numéro joignable, s'il diffère du numéro principal du commerce. */
+  phone: z.string().optional(),
+  photo: z.string().optional(),
+  /** Funérariums et lieux desservis. */
+  venues: z.array(z.string().min(1)).default([]),
+});
+
+/**
+ * Abonnement floral.
+ *
+ * Livraison régulière chez un particulier, un restaurant, un cabinet. C'est le
+ * seul revenu récurrent d'un fleuriste, et presque aucun n'en parle sur son
+ * site.
+ */
+export const Subscription = z.object({
+  id: Slug,
+  name: LocalizedText,
+  /** « chaque semaine », « tous les quinze jours »… tel que le commerce le dit. */
+  rhythm: LocalizedText,
+  /** Prix par livraison, en euros. `null` = sur devis. */
+  price: z.number().nonnegative().nullable().default(null),
+  text: LocalizedText.optional(),
 });
 
 /* -------------------------------------------------------------------------- */
@@ -252,6 +339,11 @@ export const SiteConfig = z
     closures: z.array(Closure).default([]),
 
     services: z.array(Service).default([]),
+    /* --- Fleuriste. Vides pour les autres métiers, donc sections absentes. --- */
+    occasions: z.array(Occasion).default([]),
+    delivery: Delivery.optional(),
+    mourning: Mourning.optional(),
+    subscriptions: z.array(Subscription).default([]),
     team: z.array(TeamMember).default([]),
     gallery: z.array(Photo).default([]),
     /** Déroulé d'une visite, raconté au défilement. Vide = section absente. */
@@ -315,6 +407,28 @@ export const SiteConfig = z
         path: ["tenantId"],
         message: `le mode de réservation « ${cfg.booking.mode} » exige un tenantId (pnpm tenant <slug>)`,
       });
+    }
+
+    /*
+     * Une durée est obligatoire dès que le site prend des rendez-vous : c'est
+     * elle qui découpe les créneaux. Sans elle, l'agenda proposerait des
+     * rendez-vous qui se chevauchent tous — et cela ne se verrait qu'au premier
+     * double-booking, chez le client.
+     *
+     * Chez un fleuriste, la même durée n'a aucun sens : le contrôle ne
+     * s'applique donc qu'aux sites qui réservent.
+     */
+    if (cfg.booking.mode === "request" || cfg.booking.mode === "live") {
+      for (const [i, s] of cfg.services.entries()) {
+        if (s.durationMin === undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["services", i, "durationMin"],
+            message:
+              "une durée est obligatoire dès que le site prend des rendez-vous : c'est elle qui calcule les créneaux",
+          });
+        }
+      }
     }
 
     const ids = new Set<string>();

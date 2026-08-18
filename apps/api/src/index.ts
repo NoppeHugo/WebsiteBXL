@@ -6,6 +6,7 @@ import { config } from "./config.ts";
 import { migrate, purgeExpired, listOrigins, sql } from "./db.ts";
 import { bookingRoutes } from "./routes/booking.ts";
 import { contactRoutes } from "./routes/contact.ts";
+import { orderRoutes } from "./routes/orders.ts";
 import { collectRoutes } from "./routes/collect.ts";
 import { agendaRoutes } from "./routes/agenda.ts";
 import { sendMonthlyReports, shouldRunToday } from "./reports.ts";
@@ -137,6 +138,7 @@ app.get("/health", { config: { rateLimit: false } }, async () => {
 
 bookingRoutes(app);
 contactRoutes(app);
+orderRoutes(app);
 collectRoutes(app);
 agendaRoutes(app);
 stripeRoutes(app);

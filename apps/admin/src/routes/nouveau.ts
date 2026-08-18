@@ -8,11 +8,13 @@ import { logPublish } from "../db.ts";
 import { projeterCommerce } from "../tenant.ts";
 import { layout, flash, escape } from "../views.ts";
 import { grilleStyles, grillePalettes } from "../views/apparence-choix.ts";
+import { metierDe } from "@bxl/schema/metiers";
 import {
   TYPES_COMMERCE,
   identifiant,
   squelette,
   valider,
+  styleConvient,
   type DemandeNouveauClient,
   type TypeCommerce,
 } from "../nouveau.ts";
@@ -82,7 +84,9 @@ function pageNouveau(
   const types = Object.entries(TYPES_COMMERCE)
     .map(
       ([id, nom]) =>
-        `<option value="${escape(id)}"${id === saisie.type ? " selected" : ""}>${escape(nom)}</option>`,
+        `<option value="${escape(id)}" data-metier="${escape(metierDe(id).id)}"${
+          id === saisie.type ? " selected" : ""
+        }>${escape(nom)}</option>`,
     )
     .join("");
 
@@ -142,7 +146,7 @@ ${
                autocomplete="off" autocapitalize="words" data-slug-source>
       </label>
       <label>Type
-        <select name="type">${types}</select>
+        <select name="type" data-type-commerce>${types}</select>
       </label>
     </div>
 
@@ -215,8 +219,9 @@ ${
 
   <h2>Le style</h2>
   <p class="aide">Modifiable à tout moment ensuite, en quelques secondes.
-    Autant le choisir avec lui : c'est ce qui emporte la décision.</p>
-  <div class="choix-grille">${grilleStyles(saisie.style, saisie.palette, false)}</div>
+    Autant le choisir avec lui : c'est ce qui emporte la décision.
+    La liste suit le type de commerce choisi plus haut.</p>
+  <div class="choix-grille" data-grille-styles>${grilleStyles(saisie.style, saisie.palette, false)}</div>
 
   <h2>La couleur</h2>
   <div class="teinte-grille">${grillePalettes(saisie.palette, false)}</div>
@@ -284,6 +289,16 @@ export function nouveauRoutes(app: FastifyInstance): void {
       }
       if (!(saisie.type in TYPES_COMMERCE)) {
         return refus("Type de commerce inconnu.");
+      }
+      /*
+       * Le style doit convenir au type choisi. Le cas se produit sans mauvaise
+       * volonté : on choisit un style, puis on change le type au-dessus, et le
+       * formulaire part avec l'ancien.
+       */
+      if (!styleConvient(saisie.type, saisie.style)) {
+        return refus(
+          `Le style choisi n'est pas proposé pour « ${TYPES_COMMERCE[saisie.type as TypeCommerce]} » — choisissez-en un dans la liste ci-dessous.`,
+        );
       }
 
       const service = domaineDeService();

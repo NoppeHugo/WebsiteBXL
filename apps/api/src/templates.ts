@@ -130,3 +130,76 @@ export function contactToBusiness(data: {
     ].join("\n"),
   };
 }
+
+/**
+ * Une demande de commande, telle qu'elle arrive dans la boîte du commerçant.
+ *
+ * Écrite pour être lue sur un téléphone, entre deux clients, sans ouvrir de
+ * console : tout ce qu'il faut pour rappeler et commencer à composer est dans
+ * le corps du message. L'ordre suit l'urgence — pour quand, pour qui, combien,
+ * où — et non l'ordre du formulaire.
+ *
+ * Le mot de la carte est recopié tel quel, ponctuation comprise. Le fleuriste
+ * l'écrira à la main : une reformulation « propre » de notre part se
+ * retrouverait sur la carte, et ce n'est pas notre texte.
+ */
+export function orderToBusiness(data: {
+  businessName: string;
+  name: string;
+  email: string;
+  phone?: string;
+  occasion?: string;
+  budget?: number;
+  wantedDate?: string;
+  mode: "delivery" | "pickup";
+  address?: string;
+  card?: string;
+  note?: string;
+  locale: string;
+}): { subject: string; text: string } {
+  const quand = data.wantedDate
+    ? new Date(`${data.wantedDate}T12:00:00`).toLocaleDateString("fr-BE", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      })
+    : "dès que possible";
+
+  const lignes = [
+    `Nouvelle demande de commande pour ${data.businessName}.`,
+    "",
+    `Pour       : ${quand}`,
+    `Remise     : ${data.mode === "delivery" ? "livraison" : "retrait en boutique"}`,
+  ];
+
+  if (data.address) lignes.push(`Adresse    : ${data.address}`);
+  if (data.occasion) lignes.push(`Occasion   : ${data.occasion}`);
+  if (data.budget !== undefined) lignes.push(`Budget     : ${data.budget} €`);
+
+  lignes.push(
+    "",
+    `Client     : ${data.name}`,
+    `Courriel   : ${data.email}`,
+    ...(data.phone ? [`Téléphone  : ${data.phone}`] : []),
+  );
+
+  if (data.card) {
+    lignes.push("", "Mot pour la carte, à recopier tel quel :", `« ${data.card} »`);
+  }
+  if (data.note) {
+    lignes.push("", "Précisions du client :", data.note);
+  }
+
+  lignes.push(
+    "",
+    "Rien n'a été encaissé et rien n'est confirmé : rappelez le client pour",
+    "convenir de ce que vous pouvez composer.",
+    "",
+    "Répondre à ce courriel écrit directement au client.",
+  );
+
+  return {
+    subject: `Demande de commande — ${quand} — ${data.name}`,
+    text: lignes.join("\n"),
+  };
+}

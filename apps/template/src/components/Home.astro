@@ -14,11 +14,19 @@ import BookingCta from "./BookingCta.astro";
 import Footer from "./Footer.astro";
 import ActionBar from "./ActionBar.astro";
 import Suspended from "./Suspended.astro";
+import Occasions from "./Occasions.astro";
+import Deuil from "./Deuil.astro";
+import Livraison from "./Livraison.astro";
+import Abonnement from "./Abonnement.astro";
+import Commande from "./Commande.astro";
+import { metierDe } from "@bxl/schema/metiers";
 
 interface Props {
   lang: Language;
 }
 const { lang } = Astro.props;
+
+const metier = metierDe(site.business.type);
 
 // Chaque section ne s'affiche que si le client a fourni le contenu
 // correspondant : c'est ce qui permet à un palier Essentiel (une page, peu de
@@ -34,6 +42,14 @@ const suspended = site.status === "suspended";
       <Nav lang={lang} />
       <main id="content">
         <Hero lang={lang} />
+        {/*
+          L'ordre suit ce que cherche le client du commerce, pas ce que le
+          commerce a envie de montrer. Chez un fleuriste, on arrive avec une
+          occasion en tête — un mariage, un deuil — et la carte des
+          compositions ne vient qu'après. Chez un coiffeur, la prestation est
+          l'entrée : on sait déjà ce qu'on vient faire.
+        */}
+        {site.occasions.length > 0 && <Occasions lang={lang} />}
         {site.services.length > 0 && <Services lang={lang} />}
         {site.gallery.length > 0 && <Gallery lang={lang} />}
         {/* Après la galerie : on a vu le lieu, on raconte ce qui s'y passe.
@@ -41,7 +57,19 @@ const suspended = site.status === "suspended";
         <Steps lang={lang} />
         {site.team.length > 0 && <Team lang={lang} />}
         {site.reviews.length > 0 && <Reviews lang={lang} />}
-        <BookingCta lang={lang} />
+        {/*
+          Le deuil se place après les avis et avant la livraison : assez bas
+          pour ne pas assombrir l'accueil, assez haut pour être trouvé sans
+          chercher — c'est une section qu'on ouvre dans l'urgence.
+        */}
+        {site.mourning && <Deuil lang={lang} />}
+        {site.subscriptions.length > 0 && <Abonnement lang={lang} />}
+        {site.delivery && <Livraison lang={lang} />}
+        {metier.commande === "commande" ? (
+          <Commande lang={lang} />
+        ) : (
+          <BookingCta lang={lang} />
+        )}
         <Info lang={lang} />
       </main>
       <Footer lang={lang} />

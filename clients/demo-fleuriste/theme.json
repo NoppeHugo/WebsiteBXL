@@ -1,0 +1,38 @@
+{
+  "preset": {
+    "style": "serre",
+    "palette": "serre"
+  },
+  "palette": {
+    "bg": "#fbfcfa",
+    "surface": "#eef2ea",
+    "text": "#1a2118",
+    "muted": "#5d6b58",
+    "accent": "#2c4a2e",
+    "accentText": "#fbfcfa",
+    "border": "#dde5d8"
+  },
+  "fonts": {
+    "display": "Bitter, Georgia, 'Times New Roman', serif",
+    "body": "Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    "displayWeight": 400,
+    "displayTracking": "-0.015em",
+    "displayTransform": "none",
+    "uiTransform": "uppercase",
+    "uiTracking": "0.14em"
+  },
+  "layout": {
+    "hero": "split",
+    "heroAlign": "start",
+    "gallery": "grid",
+    "nav": "solid"
+  },
+  "radius": "soft",
+  "grain": false,
+  "effects": {
+    "glass": false,
+    "blur": 0,
+    "reveal": true,
+    "parallax": true
+  }
+}

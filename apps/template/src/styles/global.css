@@ -2539,3 +2539,339 @@ body[data-glass="true"] .rdv {
   --hero-ton-eyebrow: rgba(20, 16, 14, 0.72);
   --hero-ton-ombre: rgba(255, 255, 255, 0.55);
 }
+
+/* -------------------------------------------------------------------------- */
+/* Fleuriste                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Ces sections n'existent que pour les métiers qui les remplissent. Elles
+ * réutilisent les variables du thème — couleurs, polices, rayons — et ne
+ * définissent donc aucune couleur en dur : un fleuriste qui passe de la
+ * palette « Velours » à « Serre » les voit changer avec le reste.
+ */
+
+/* --- Occasions ----------------------------------------------------------- */
+/*
+ * Trois par ligne sur grand écran, deux sur tablette, une seule au téléphone.
+ * Une occasion se choisit en regardant une photo, pas en lisant une liste :
+ * l'image occupe donc les deux tiers de la carte.
+ */
+.occasions {
+  display: grid;
+  gap: clamp(1.25rem, 3vw, 2rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr));
+}
+
+.occasion {
+  display: flex;
+  flex-direction: column;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.occasion__media {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+.occasion__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Un léger agrandissement au survol : le seul mouvement de la section, et il
+     signale que la carte est un choix, pas une illustration. */
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.occasion:hover .occasion__media img {
+  transform: scale(1.04);
+}
+
+.occasion__texte {
+  padding: clamp(1.1rem, 2.5vw, 1.6rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.occasion__titre {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
+  text-transform: var(--display-transform);
+  font-size: var(--step-1);
+  margin: 0;
+}
+
+.occasion__desc {
+  color: var(--c-muted);
+  margin: 0;
+  flex: 1;
+}
+
+.occasion__prix {
+  margin: 0;
+  font-size: var(--step--1);
+  letter-spacing: var(--ui-tracking);
+  text-transform: var(--ui-transform);
+  color: var(--c-text);
+}
+
+/* --- Deuil --------------------------------------------------------------- */
+/*
+ * Le seul endroit du site où l'on ne cherche pas à séduire. Fond de surface,
+ * pas de photo pleine largeur, pas de prix, un seul bouton et il appelle.
+ * L'espacement est plus généreux qu'ailleurs : c'est ce qui donne le calme.
+ */
+.section--deuil {
+  background: var(--c-surface);
+}
+
+.deuil {
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: center;
+}
+
+@media (min-width: 52rem) {
+  .deuil {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
+}
+
+.deuil__mot {
+  font-size: var(--step-1);
+  max-width: var(--measure);
+  color: var(--c-text);
+}
+
+.deuil__lieux {
+  color: var(--c-muted);
+  font-size: var(--step--1);
+  max-width: var(--measure);
+}
+
+.deuil__lieux-titre {
+  display: block;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.78em;
+  margin-bottom: 0.35rem;
+}
+
+.deuil__media {
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.deuil__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* L'ordre du texte et de l'image s'inverse au téléphone : on veut lire avant
+   de regarder, dans cette section-là. */
+@media (max-width: 51.99rem) {
+  .deuil__media {
+    order: -1;
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* --- Livraison ----------------------------------------------------------- */
+/*
+ * Trois chiffres, en grand. C'est la première question du client, et elle doit
+ * se lire depuis l'autre bout de la pièce.
+ */
+.livraison {
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+}
+
+.livraison__bloc {
+  border-top: 1px solid var(--c-border);
+  padding-top: 1.1rem;
+}
+
+.livraison__etiquette {
+  display: block;
+  font-size: var(--step--1);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  margin-bottom: 0.7rem;
+}
+
+.livraison__chiffre {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
+  font-size: var(--step-2);
+  margin: 0;
+}
+
+.livraison__zones {
+  margin: 0;
+  font-size: var(--step-0);
+  line-height: 1.7;
+}
+
+.livraison__precision,
+.livraison__note {
+  color: var(--c-muted);
+  font-size: var(--step--1);
+  margin: 0.4rem 0 0;
+}
+
+.livraison__note {
+  margin-top: 2rem;
+  max-width: var(--measure);
+}
+
+/* --- Abonnement ---------------------------------------------------------- */
+.formules {
+  display: grid;
+  gap: clamp(1rem, 2.5vw, 1.75rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+}
+
+.formule {
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: clamp(1.3rem, 3vw, 2rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.formule__nom {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
+  text-transform: var(--display-transform);
+  font-size: var(--step-1);
+  margin: 0;
+}
+
+.formule__rythme {
+  color: var(--c-muted);
+  font-size: var(--step--1);
+  margin: 0;
+}
+
+.formule__prix {
+  font-size: var(--step-1);
+  margin: 0.6rem 0 0;
+}
+
+.formule__desc {
+  color: var(--c-muted);
+  margin: 0.4rem 0 0;
+}
+
+/* --- Formulaire de commande ---------------------------------------------- */
+.commande {
+  display: grid;
+  gap: 1.1rem;
+  max-width: 44rem;
+}
+
+.commande__champ {
+  display: grid;
+  gap: 0.4rem;
+  font-size: var(--step--1);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+
+.commande__champ input,
+.commande__champ select,
+.commande__champ textarea {
+  font: inherit;
+  /* 16 px au minimum : en dessous, Safari sur iPhone agrandit la page au
+     premier appui dans un champ et la mise en page se décale. */
+  font-size: max(16px, var(--step-0));
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 0.8rem 0.9rem;
+  width: 100%;
+}
+
+.commande__champ textarea {
+  resize: vertical;
+}
+
+.commande__aide {
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--c-muted);
+}
+
+.commande__paire {
+  display: grid;
+  gap: 1.1rem;
+}
+
+@media (min-width: 34rem) {
+  .commande__paire {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.commande__mode {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.commande__mode legend {
+  font-size: var(--step--1);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  margin-bottom: 0.5rem;
+}
+
+.commande__radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 0.7rem 1.1rem;
+  cursor: pointer;
+}
+
+.commande__radio:has(input:checked) {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 1px var(--c-accent);
+}
+
+.commande button[type="submit"] {
+  justify-self: start;
+  background: var(--c-accent);
+  color: var(--c-accent-text);
+  border: 0;
+  border-radius: var(--radius);
+  padding: 0.95em 2em;
+  font: inherit;
+  font-size: var(--step-0);
+  letter-spacing: var(--ui-tracking);
+  text-transform: var(--ui-transform);
+  cursor: pointer;
+}

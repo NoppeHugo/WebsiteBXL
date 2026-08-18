@@ -431,3 +431,152 @@ ${texteTraduit("seo.description", "Description dans les résultats", site.seo.de
 })}`,
   );
 }
+
+/* ---------------------------------------------------------------- fleuriste */
+
+/*
+ * Ces quatre sections ne sont rendues que pour les métiers qui les affichent
+ * (voir `metiers.ts`). Un salon de coiffure ne les voit pas : elles ne lui
+ * serviraient à rien, et un éditeur qui propose vingt sections dont douze
+ * inutiles n'est plus un éditeur, c'est un formulaire administratif.
+ */
+
+export function sectionOccasions(slug: string, site: Site, defaut: Language): string {
+  const elements = (site.occasions ?? [])
+    .map(
+      (occasion, index) => `<li class="element" data-element>
+  ${barreElement(index, occasion.title[defaut] ?? `Occasion ${index + 1}`)}
+  <div class="element__corps">
+    ${texteTraduit(`occasions.${index}.title`, "Titre", occasion.title, { defaut })}
+    ${texteTraduit(`occasions.${index}.text`, "Texte", occasion.text, {
+      defaut,
+      aide: "Deux phrases. Ce que vous faites pour cette occasion, et ce que le client doit vous dire.",
+      lignes: 3,
+    })}
+    ${emplacementPhoto(slug, `occasions.${index}.photo`, "Photo", occasion.photo)}
+    ${texte(`occasions.${index}.price`, "Prix d'entrée (€)", occasion.price === null ? "" : String(occasion.price), {
+      aide: "Toujours affiché « à partir de ». Laissé vide : rien ne s'affiche.",
+    })}
+    <input type="hidden" name="occasions.${index}.id" value="${escape(occasion.id)}">
+  </div>
+</li>`,
+    )
+    .join("");
+
+  return section(
+    slug,
+    "occasions",
+    "Occasions",
+    "C'est par là que vos clients entrent : on ne cherche pas « bouquet rond », on cherche des fleurs pour un mariage ou pour un enterrement.",
+    `<ul class="liste" data-liste="occasions">${elements}</ul>
+<div class="actions">
+  <button type="button" class="secondary" data-ajouter="occasions">Ajouter une occasion</button>
+</div>
+
+<template data-modele="occasions">
+  <li class="element" data-element>
+    ${barreElement(0, "Nouvelle occasion")}
+    <div class="element__corps">
+      ${texteTraduit("occasions.0.title", "Titre", undefined, { defaut })}
+      ${texteTraduit("occasions.0.text", "Texte", undefined, { defaut, lignes: 3 })}
+      ${emplacementPhoto(slug, "occasions.0.photo", "Photo", undefined)}
+      ${texte("occasions.0.price", "Prix d'entrée (€)", "")}
+      <input type="hidden" name="occasions.0.id" value="">
+    </div>
+  </li>
+</template>`,
+  );
+}
+
+export function sectionLivraison(slug: string, site: Site, defaut: Language): string {
+  const livraison = site.delivery;
+
+  return section(
+    slug,
+    "livraison",
+    "Livraison",
+    "La première question de tous vos clients. Videz la liste des communes pour retirer complètement la section.",
+    `${texte("delivery.zones", "Communes desservies", (livraison?.zones ?? []).join(", "), {
+      aide: "Séparées par des virgules. Telles que vous les diriez au téléphone.",
+    })}
+${texte("delivery.cutoff", "Heure limite pour le jour même", livraison?.cutoff ?? "", {
+  aide: "Format 14:00. Laissée vide, aucune heure n'est annoncée.",
+})}
+${texte("delivery.fee", "Frais de livraison (€)", livraison?.fee === null || livraison?.fee === undefined ? "" : String(livraison.fee), {
+  aide: "Vide ou 0 : la livraison est annoncée offerte.",
+})}
+${texte("delivery.freeFrom", "Offerte à partir de (€)", livraison?.freeFrom === undefined ? "" : String(livraison.freeFrom))}
+${texteTraduit("delivery.note", "Précision", livraison?.note, {
+  defaut,
+  aide: "Par exemple : « au-delà de ces communes, appelez-nous ».",
+  lignes: 2,
+})}`,
+  );
+}
+
+export function sectionDeuil(slug: string, site: Site, defaut: Language): string {
+  const deuil = site.mourning;
+
+  return section(
+    slug,
+    "deuil",
+    "Fleurs de deuil",
+    "Une section au ton distinct, sans prix ni formulaire : un client endeuillé veut savoir que vous vous en occupez, et un numéro. Videz le texte pour retirer la section.",
+    `${texteTraduit("mourning.text", "Ce que vous proposez", deuil?.text, {
+      defaut,
+      aide: "Dites ce dont vous vous chargez — y compris la coordination avec les pompes funèbres, si vous le faites.",
+      lignes: 3,
+    })}
+${texte("mourning.phone", "Numéro à appeler", deuil?.phone ?? "", {
+  aide: "Laissé vide, c'est le numéro du commerce qui s'affiche.",
+})}
+${texte("mourning.venues", "Funérariums et lieux desservis", (deuil?.venues ?? []).join(", "), {
+  aide: "Séparés par des virgules. C'est ce que la famille cherche à vérifier.",
+})}
+${emplacementPhoto(slug, "mourning.photo", "Photo", deuil?.photo)}`,
+  );
+}
+
+export function sectionAbonnements(slug: string, site: Site, defaut: Language): string {
+  const elements = (site.subscriptions ?? [])
+    .map(
+      (formule, index) => `<li class="element" data-element>
+  ${barreElement(index, formule.name[defaut] ?? `Formule ${index + 1}`)}
+  <div class="element__corps">
+    ${texteTraduit(`subscriptions.${index}.name`, "Nom de la formule", formule.name, { defaut })}
+    ${texteTraduit(`subscriptions.${index}.rhythm`, "Rythme", formule.rhythm, {
+      defaut,
+      aide: "« Un bouquet par semaine », « tous les quinze jours »…",
+    })}
+    ${texte(`subscriptions.${index}.price`, "Prix par livraison (€)", formule.price === null ? "" : String(formule.price))}
+    ${texteTraduit(`subscriptions.${index}.text`, "Précision", formule.text, { defaut, lignes: 3 })}
+    <input type="hidden" name="subscriptions.${index}.id" value="${escape(formule.id)}">
+  </div>
+</li>`,
+    )
+    .join("");
+
+  return section(
+    slug,
+    "abonnements",
+    "Abonnements",
+    "Le seul revenu qui revient tous les mois — restaurants, cabinets, halls d'accueil. Presque aucun fleuriste n'en parle sur son site.",
+    `<ul class="liste" data-liste="subscriptions">${elements}</ul>
+<div class="actions">
+  <button type="button" class="secondary" data-ajouter="subscriptions">Ajouter une formule</button>
+</div>
+
+<template data-modele="subscriptions">
+  <li class="element" data-element>
+    ${barreElement(0, "Nouvelle formule")}
+    <div class="element__corps">
+      ${texteTraduit("subscriptions.0.name", "Nom de la formule", undefined, { defaut })}
+      ${texteTraduit("subscriptions.0.rhythm", "Rythme", undefined, { defaut })}
+      ${texte("subscriptions.0.price", "Prix par livraison (€)", "")}
+      ${texteTraduit("subscriptions.0.text", "Précision", undefined, { defaut, lignes: 3 })}
+      <input type="hidden" name="subscriptions.0.id" value="">
+    </div>
+  </li>
+</template>`,
+  );
+}

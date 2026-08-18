@@ -113,6 +113,11 @@ export const SECTIONS = [
   "equipe",
   "avis",
   "prestations",
+  /* --- Fleuriste. Ignorées par les autres métiers, qui ne les affichent pas. --- */
+  "occasions",
+  "livraison",
+  "deuil",
+  "abonnements",
   "referencement",
 ] as const;
 
@@ -326,6 +331,136 @@ export function appliquerSection(
        * l'historique survive à une carte des tarifs qui change.
        */
       raw.services = suivants;
+      return;
+    }
+
+    case "occasions": {
+      /*
+       * Même règle que la galerie : la liste complète est renvoyée, l'absence
+       * vaut retrait. L'identifiant se dérive du titre quand il manque, et ne
+       * se recalcule jamais ensuite — rien ne s'y réfère aujourd'hui, mais une
+       * commande passée le porte, et une occasion renommée en janvier ne doit
+       * pas rendre illisible une commande de la Toussaint.
+       */
+      const existantes = (raw.occasions as Array<Record<string, unknown>>) ?? [];
+      const pris = new Set(existantes.map((o) => String(o.id)));
+
+      raw.occasions = indices(champs, "occasions")
+        .map((i) => {
+          const titre = texteTraduit(champs, `occasions.${i}.title`);
+          if (Object.keys(titre).length === 0) return undefined;
+
+          const fourni = (champs[`occasions.${i}.id`] ?? "").trim();
+          const connue = fourni ? existantes.find((o) => o.id === fourni) : undefined;
+          const occasion = connue ?? {
+            id: identifiantLibre(Object.values(titre)[0]!, pris),
+          };
+          pris.add(String(occasion.id));
+
+          occasion.title = titre;
+          const texte = texteTraduit(champs, `occasions.${i}.text`);
+          if (Object.keys(texte).length > 0) occasion.text = texte;
+          else delete occasion.text;
+
+          const photo = (champs[`occasions.${i}.photo`] ?? "").trim();
+          if (photo) occasion.photo = photo;
+          else delete occasion.photo;
+
+          const prix = (champs[`occasions.${i}.price`] ?? "").trim();
+          const montant = Number(prix.replace(",", "."));
+          occasion.price = prix === "" || !Number.isFinite(montant) ? null : montant;
+
+          return occasion;
+        })
+        .filter((o): o is Record<string, unknown> => o !== undefined);
+      return;
+    }
+
+    case "livraison": {
+      /*
+       * Une zone vide retire complètement la section : un fleuriste qui ne
+       * livre pas ne doit pas afficher un encadré « Livraison » vide, et c'est
+       * ainsi qu'il l'enlève — en vidant la liste des communes.
+       */
+      const zones = (champs["delivery.zones"] ?? "")
+        .split(/[,\n]/)
+        .map((z) => z.trim())
+        .filter(Boolean);
+
+      if (zones.length === 0) {
+        delete raw.delivery;
+        return;
+      }
+
+      const livraison = objet(raw, "delivery");
+      livraison.zones = zones;
+      poser(livraison, "cutoff", champs["delivery.cutoff"]);
+
+      const frais = (champs["delivery.fee"] ?? "").trim();
+      const montantFrais = Number(frais.replace(",", "."));
+      livraison.fee = frais === "" || !Number.isFinite(montantFrais) ? null : montantFrais;
+
+      const offert = (champs["delivery.freeFrom"] ?? "").trim();
+      const montantOffert = Number(offert.replace(",", "."));
+      if (offert !== "" && Number.isFinite(montantOffert)) livraison.freeFrom = montantOffert;
+      else delete livraison.freeFrom;
+
+      poserTraduit(livraison, "note", champs, "delivery.note");
+      return;
+    }
+
+    case "deuil": {
+      // Le texte commande la section : vidé, elle disparaît. C'est le seul
+      // moyen simple de la retirer pour un commerce qui n'en veut pas.
+      const texte = texteTraduit(champs, "mourning.text");
+      if (Object.keys(texte).length === 0) {
+        delete raw.mourning;
+        return;
+      }
+
+      const deuil = objet(raw, "mourning");
+      deuil.text = texte;
+      poser(deuil, "phone", champs["mourning.phone"]);
+      poser(deuil, "photo", champs["mourning.photo"]);
+      deuil.venues = (champs["mourning.venues"] ?? "")
+        .split(/[,\n]/)
+        .map((v) => v.trim())
+        .filter(Boolean);
+      return;
+    }
+
+    case "abonnements": {
+      const existants = (raw.subscriptions as Array<Record<string, unknown>>) ?? [];
+      const pris = new Set(existants.map((f) => String(f.id)));
+
+      raw.subscriptions = indices(champs, "subscriptions")
+        .map((i) => {
+          const nom = texteTraduit(champs, `subscriptions.${i}.name`);
+          if (Object.keys(nom).length === 0) return undefined;
+
+          const fourni = (champs[`subscriptions.${i}.id`] ?? "").trim();
+          const connu = fourni ? existants.find((f) => f.id === fourni) : undefined;
+          const formule = connu ?? { id: identifiantLibre(Object.values(nom)[0]!, pris) };
+          pris.add(String(formule.id));
+
+          formule.name = nom;
+          const rythme = texteTraduit(champs, `subscriptions.${i}.rhythm`);
+          // Le rythme est obligatoire au schéma : le laisser vide ferait
+          // échouer l'enregistrement avec un message technique. On reprend le
+          // nom, qui dit déjà le rythme dans neuf cas sur dix.
+          formule.rhythm = Object.keys(rythme).length > 0 ? rythme : nom;
+
+          const texte = texteTraduit(champs, `subscriptions.${i}.text`);
+          if (Object.keys(texte).length > 0) formule.text = texte;
+          else delete formule.text;
+
+          const prix = (champs[`subscriptions.${i}.price`] ?? "").trim();
+          const montant = Number(prix.replace(",", "."));
+          formule.price = prix === "" || !Number.isFinite(montant) ? null : montant;
+
+          return formule;
+        })
+        .filter((f): f is Record<string, unknown> => f !== undefined);
       return;
     }
 

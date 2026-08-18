@@ -63,8 +63,22 @@ export async function syncTenant(
       updated_at    = now()
   `;
 
+  /*
+   * Seules les prestations qui ont une durée entrent en base.
+   *
+   * Cette table n'existe que pour l'agenda : c'est elle qu'il lit pour savoir
+   * combien de temps occupe un rendez-vous. Une composition florale n'a pas de
+   * durée et ne se réserve pas ; lui en inventer une pour satisfaire la
+   * colonne mettrait dans l'agenda des lignes que rien ne viendra jamais
+   * réserver, et fausserait le jour où l'on comptera ce qui se vend.
+   *
+   * Le schéma garantit qu'une durée est présente dès que le site prend des
+   * rendez-vous : ce filtre ne peut donc pas faire disparaître une prestation
+   * réservable.
+   */
   await sql`delete from tenant_services where tenant_id = ${tenantId}`;
   for (const service of site.services) {
+    if (service.durationMin === undefined) continue;
     await sql`
       insert into tenant_services (tenant_id, service_id, name, duration_min, price_cents)
       values (

@@ -24,13 +24,31 @@
 
 import { randomUUID } from "node:crypto";
 import { SiteConfig, ThemeConfig } from "@bxl/schema";
-import { composerTheme } from "@bxl/schema/presets";
+import { composerTheme, stylesPour } from "@bxl/schema/presets";
+import { metierDe } from "@bxl/schema/metiers";
+
+/**
+ * Ce style convient-il à ce type de commerce ?
+ *
+ * « Nuit » existe, mais il est fait pour un salon de coiffure : appliqué à un
+ * fleuriste il donne un site que personne n'a choisi. Le cas arrive tout seul —
+ * on choisit un style, puis on change le type juste au-dessus, et le formulaire
+ * part avec l'ancien.
+ *
+ * Vérifié plutôt que corrigé en silence : substituer un style sans le dire
+ * reste une invention, et l'exploitant croirait avoir choisi ce qu'il voit.
+ */
+export function styleConvient(type: string, styleId: string): boolean {
+  return styleId in stylesPour(metierDe(type).id);
+}
 
 /** Type de commerce proposé au formulaire, avec son libellé. */
 export const TYPES_COMMERCE = {
   hair_salon: "Salon de coiffure",
   barbershop: "Barbier",
   beauty_salon: "Institut de beauté",
+  florist: "Fleuriste",
+  bakery: "Boulangerie",
   other: "Autre commerce",
 } as const;
 

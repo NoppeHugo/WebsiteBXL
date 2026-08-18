@@ -7,6 +7,7 @@ import { config } from "../config.ts";
 import { logPublish } from "../db.ts";
 import { layout, flash, escape } from "../views.ts";
 import { grilleStyles, grillePalettes } from "../views/apparence-choix.ts";
+import { metierDe } from "@bxl/schema/metiers";
 
 /**
  * Choix de l'apparence : un style et une couleur.
@@ -41,7 +42,13 @@ function pageApparence(
   const styleActif = actif.style ?? "";
   const paletteActive = actif.palette ?? "";
 
-  const styles = grilleStyles(styleActif, paletteActive);
+  /*
+   * Seuls les styles du métier sont proposés. Un fleuriste ne doit pas voir
+   * « Atelier » : il le choisirait, et son site prendrait la typographie d'une
+   * enseigne de barbier.
+   */
+  const metier = metierDe(site.business.type);
+  const styles = grilleStyles(styleActif, paletteActive, true, metier.id);
   const palettes = grillePalettes(paletteActive);
 
   return layout(
@@ -119,6 +126,22 @@ export function apparenceRoutes(app: FastifyInstance): void {
             text: "Style ou couleur inconnu — rien n'a été modifié.",
           }),
         );
+    }
+
+    /*
+     * Le style doit aussi convenir au métier. La grille ne propose que les bons,
+     * mais une requête envoyée à la main ne passe pas par la grille — et rien
+     * ne signalerait qu'un fleuriste vient de recevoir la typographie d'un
+     * barbier.
+     */
+    const metierClient = metierDe(client(slug).site.business.type);
+    if (!STYLES[style]!.metiers.includes(metierClient.id)) {
+      return reply.code(400).type("text/html").send(
+        pageApparence(slug, {
+          kind: "error",
+          text: `Le style « ${STYLES[style]!.nom} » n'est pas proposé pour ce type de commerce — rien n'a été modifié.`,
+        }),
+      );
     }
 
     const theme = composerTheme(style, palette);

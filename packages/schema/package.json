@@ -7,7 +7,8 @@
     ".": "./src/index.ts",
     "./load": "./src/load.ts",
     "./booking": "./src/booking.ts",
-    "./presets": "./src/presets.ts"
+    "./presets": "./src/presets.ts",
+    "./metiers": "./src/metiers.ts"
   },
   "dependencies": {
     "zod": "^3.24.1"

@@ -31,6 +31,7 @@ export const PAGES = {
   photos: { titre: "Mes photos", sous: "Les images du salon", icone: "📷" },
   presentation: { titre: "Mon texte", sous: "Ce qui est écrit sur le salon", icone: "✍️" },
   "rendez-vous": { titre: "Mes rendez-vous", sous: "Ce qui est réservé", icone: "📅" },
+  commandes: { titre: "Mes commandes", sous: "Les demandes reçues par le site", icone: "🧾" },
   messages: { titre: "Mes messages", sous: "Ce qu'on vous a écrit", icone: "✉️" },
 } as const;
 
@@ -173,6 +174,24 @@ button.danger { background: transparent; color: var(--ko); border: 1px solid var
 .fiche__detail { color: var(--doux); font-size: 0.92rem; }
 .fiche form { margin-top: 0.8rem; }
 .fiche button { min-height: 2.6rem; font-size: 0.95rem; }
+/* La commande pas encore traitée se repère sans lire : c'est la seule chose
+   qu'on cherche en ouvrant la page un lundi matin. */
+.marque-neuf {
+  display: inline-block; vertical-align: 0.1em; margin-left: 0.4rem;
+  background: var(--accent); color: var(--accent-texte);
+  border-radius: 980px; padding: 0.05em 0.6em;
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Le mot de la carte est recopié à la main : il se lit mot à mot, ponctuation
+   comprise, et mérite d'être détaché du reste. */
+.fiche__carte {
+  margin: 0.8rem 0 0; padding: 0.7rem 0.9rem;
+  background: var(--fond); border-radius: 10px;
+  font-size: 0.95rem; line-height: 1.5;
+}
+
 .vide {
   text-align: center; color: var(--doux); padding: 2.5rem 1rem;
   background: var(--carte); border: 1px dashed var(--bord); border-radius: 14px;
@@ -284,10 +303,18 @@ export function message(ton: "ok" | "ko", texte: string): string {
   return `<p class="flash" data-ton="${ton}">${escape(texte)}</p>`;
 }
 
-/** « lundi 3 mars », sans l'année quand c'est cette année. */
-export function dateLisible(iso: string): string {
-  const date = new Date(`${iso}T12:00:00`);
-  if (Number.isNaN(date.getTime())) return iso;
+/**
+ * « lundi 3 mars », sans l'année quand c'est cette année.
+ *
+ * Accepte une chaîne ISO ou un objet Date : le pilote Postgres renvoie les
+ * colonnes `date` sous forme d'objets, et `String(date).slice(0, 10)` donnait
+ * « Fri Aug 21 » — que `new Date()` refuse, si bien que la fonction rendait
+ * cette bouillie telle quelle au commerçant.
+ */
+export function dateLisible(valeur: string | Date): string {
+  const date =
+    valeur instanceof Date ? valeur : new Date(`${valeur}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return String(valeur);
   const memeAnnee = date.getFullYear() === new Date().getFullYear();
   return date.toLocaleDateString("fr-BE", {
     weekday: "long",
@@ -300,4 +327,20 @@ export function dateLisible(iso: string): string {
 /** Décrit une période de fermeture en une phrase. */
 export function periodeLisible(du: string, au: string): string {
   return du === au ? dateLisible(du) : `du ${dateLisible(du)} au ${dateLisible(au)}`;
+}
+
+/*
+ * Le mot « tarifs » convient à un coiffeur, moins à un fleuriste, dont la carte
+ * change au fil des saisons. Un seul libellé à remplacer suffit ; le reste du
+ * vocabulaire de l'espace vaut pour les deux.
+ */
+export const TITRES_METIER: Record<string, Partial<Record<PageClient, string>>> = {
+  fleuriste: {
+    tarifs: "Mes compositions",
+    photos: "Mes photos",
+  },
+};
+
+export function titrePage(metierId: string, page: PageClient): string {
+  return TITRES_METIER[metierId]?.[page] ?? PAGES[page].titre;
 }

@@ -347,3 +347,77 @@ export async function comptesDuCommerce(
     messages: Number(rows[0]?.msg ?? 0),
   };
 }
+
+export interface CommandeRecue {
+  id: string;
+  occasion_name: string | null;
+  budget_cents: number | null;
+  /** Le pilote Postgres rend les colonnes `date` sous forme d'objets Date. */
+  wanted_day: Date | null;
+  mode: string;
+  address: string | null;
+  card_message: string | null;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string | null;
+  note: string | null;
+  status: string;
+  created_at: Date;
+}
+
+/**
+ * Les commandes d'un commerce, la plus urgente d'abord.
+ *
+ * Triées par date souhaitée et non par date de réception : ce que le fleuriste
+ * doit préparer demain compte plus que ce qui est arrivé hier. Les commandes
+ * sans date — « dès que possible » — passent en tête, parce qu'elles attendent
+ * un appel.
+ */
+export async function commandesDuCommerce(
+  slug: string,
+  limite = 50,
+): Promise<CommandeRecue[]> {
+  return sql<CommandeRecue[]>`
+    select o.id, o.occasion_name, o.budget_cents, o.wanted_day, o.mode,
+           o.address, o.card_message, o.customer_name, o.customer_email,
+           o.customer_phone, o.note, o.status, o.created_at
+    from orders o
+    join tenants t on t.id = o.tenant_id
+    where t.slug = ${slug}
+      and o.status in ('new', 'confirmed')
+    order by o.wanted_day asc nulls first, o.created_at asc
+    limit ${limite}
+  `;
+}
+
+/**
+ * Change l'état d'une commande, à condition qu'elle appartienne à ce commerce.
+ *
+ * Le `slug` fait partie de la condition, il n'est pas vérifié à part : entre
+ * une vérification et une écriture séparées il y a une fenêtre, et surtout deux
+ * endroits où la règle peut être oubliée.
+ */
+export async function changerEtatCommande(
+  slug: string,
+  id: string,
+  etat: "confirmed" | "declined" | "done",
+): Promise<boolean> {
+  const lignes = await sql`
+    update orders o
+    set status = ${etat}
+    from tenants t
+    where t.id = o.tenant_id and t.slug = ${slug} and o.id = ${id}
+    returning o.id
+  `;
+  return lignes.length > 0;
+}
+
+/** Commandes à traiter, pour la pastille de l'accueil. */
+export async function commandesEnAttente(slug: string): Promise<number> {
+  const rows = await sql<Array<{ n: string }>>`
+    select count(*) as n from orders o
+    join tenants t on t.id = o.tenant_id
+    where t.slug = ${slug} and o.status = 'new'
+  `;
+  return Number(rows[0]?.n ?? 0);
+}

@@ -1,0 +1,374 @@
+{
+  "slug": "demo-fleuriste",
+  "status": "preview",
+  "plan": "pro",
+  "demo": true,
+  "domain": "fleurs.hairbxl.be",
+  "aliases": [],
+  "languages": {
+    "default": "fr",
+    "available": [
+      "fr",
+      "nl"
+    ]
+  },
+  "business": {
+    "name": "Fleurs Van Aken",
+    "type": "florist",
+    "tagline": {
+      "fr": "Fleurs de saison, coupées le matin",
+      "nl": "Seizoensbloemen, 's ochtends gesneden"
+    },
+    "description": {
+      "fr": "Un atelier de quartier ouvert depuis 1998. Nous travaillons ce que les producteurs belges et hollandais nous apportent le matin même : la carte change chaque semaine, et c'est ce qui fait qu'un bouquet d'ici ne ressemble à aucun autre.",
+      "nl": "Een buurtatelier sinds 1998. Wij werken met wat Belgische en Nederlandse telers ons dezelfde ochtend brengen: het aanbod wisselt elke week."
+    },
+    "address": {
+      "street": "Chaussée de Waterloo 412",
+      "postalCode": "1050",
+      "city": "Ixelles",
+      "country": "BE"
+    },
+    "phone": "+32 2 538 41 12",
+    "email": "bonjour@fleursvanaken.be",
+    "social": {
+      "instagram": "https://instagram.com/fleursvanaken"
+    }
+  },
+  "hero": {
+    "image": "hero.jpg",
+    "headline": {
+      "fr": "Fleurs Van Aken",
+      "nl": "Fleurs Van Aken"
+    },
+    "subline": {
+      "fr": "Atelier floral à Ixelles — livraison dans Bruxelles le jour même",
+      "nl": "Bloemenatelier in Elsene — dezelfde dag geleverd in Brussel"
+    }
+  },
+  "hours": {
+    "monday": [],
+    "tuesday": [
+      {
+        "open": "09:00",
+        "close": "18:30"
+      }
+    ],
+    "wednesday": [
+      {
+        "open": "09:00",
+        "close": "18:30"
+      }
+    ],
+    "thursday": [
+      {
+        "open": "09:00",
+        "close": "18:30"
+      }
+    ],
+    "friday": [
+      {
+        "open": "09:00",
+        "close": "19:00"
+      }
+    ],
+    "saturday": [
+      {
+        "open": "08:30",
+        "close": "18:00"
+      }
+    ],
+    "sunday": [
+      {
+        "open": "09:00",
+        "close": "13:00"
+      }
+    ]
+  },
+  "hoursNote": {
+    "fr": "Le dimanche matin, uniquement la boutique — pas de livraison.",
+    "nl": "Zondagochtend enkel de winkel — geen levering."
+  },
+  "closures": [],
+  "occasions": [
+    {
+      "id": "bouquet-du-moment",
+      "title": {
+        "fr": "Le bouquet du moment",
+        "nl": "Het boeket van het moment"
+      },
+      "text": {
+        "fr": "Ce qui est beau cette semaine, composé devant vous. Dites-nous seulement le budget et la couleur.",
+        "nl": "Wat deze week mooi is, voor u samengesteld."
+      },
+      "photo": "galerie-1.jpg",
+      "price": 25
+    },
+    {
+      "id": "mariage",
+      "title": {
+        "fr": "Mariage",
+        "nl": "Huwelijk"
+      },
+      "text": {
+        "fr": "Bouquet de mariée, boutonnières, décor de table et d'église. On se voit trois mois avant, on essaie, on ajuste.",
+        "nl": "Bruidsboeket, corsages, tafel- en kerkdecoratie."
+      },
+      "photo": "galerie-2.jpg",
+      "price": 180
+    },
+    {
+      "id": "naissance",
+      "title": {
+        "fr": "Naissance",
+        "nl": "Geboorte"
+      },
+      "text": {
+        "fr": "Livré à la maternité ou à la maison, avec la carte que vous nous dictez au téléphone.",
+        "nl": "Geleverd op de kraamafdeling of thuis."
+      },
+      "photo": "galerie-3.jpg",
+      "price": 35
+    },
+    {
+      "id": "entreprise",
+      "title": {
+        "fr": "Bureaux et vitrines",
+        "nl": "Kantoren en etalages"
+      },
+      "text": {
+        "fr": "Composition hebdomadaire pour un restaurant, un cabinet, une réception. Facture mensuelle.",
+        "nl": "Wekelijkse compositie voor restaurant, praktijk of onthaal."
+      },
+      "photo": "galerie-4.jpg",
+      "price": 45
+    }
+  ],
+  "mourning": {
+    "text": {
+      "fr": "Nous préparons couronnes, gerbes, coussins et raquettes, et nous livrons directement au funérarium ou à l'église. Appelez-nous : nous nous occupons des horaires avec les pompes funèbres, vous n'avez rien à coordonner.",
+      "nl": "Wij maken kransen, rouwstukken en bloemstukken, en leveren rechtstreeks aan het funerarium of de kerk. Bel ons — wij regelen de timing met de begrafenisondernemer."
+    },
+    "phone": "+32 2 538 41 12",
+    "photo": "galerie-5.jpg",
+    "venues": [
+      "Funérarium d'Ixelles",
+      "Funérarium de Saint-Gilles",
+      "Crématorium d'Uccle",
+      "Église Sainte-Croix, Flagey"
+    ]
+  },
+  "subscriptions": [
+    {
+      "id": "hebdomadaire",
+      "name": {
+        "fr": "Chaque semaine",
+        "nl": "Elke week"
+      },
+      "rhythm": {
+        "fr": "Un bouquet par semaine",
+        "nl": "Eén boeket per week"
+      },
+      "price": 32,
+      "text": {
+        "fr": "Pour un restaurant, un cabinet, ou simplement chez soi. Livré le mardi matin.",
+        "nl": "Voor een restaurant, een praktijk, of gewoon thuis."
+      }
+    },
+    {
+      "id": "quinzaine",
+      "name": {
+        "fr": "Tous les quinze jours",
+        "nl": "Om de twee weken"
+      },
+      "rhythm": {
+        "fr": "Un bouquet sur deux semaines",
+        "nl": "Eén boeket per twee weken"
+      },
+      "price": 38,
+      "text": {
+        "fr": "Le rythme le plus courant : les fleurs tiennent, et le bouquet est un peu plus généreux.",
+        "nl": "Het meest gekozen ritme."
+      }
+    },
+    {
+      "id": "mensuel",
+      "name": {
+        "fr": "Une fois par mois",
+        "nl": "Eén keer per maand"
+      },
+      "rhythm": {
+        "fr": "Un grand bouquet mensuel",
+        "nl": "Eén groot boeket per maand"
+      },
+      "price": 55,
+      "text": {
+        "fr": "Une composition plus importante, pour une entrée ou une salle d'attente.",
+        "nl": "Een grotere compositie, voor een inkomhal of wachtzaal."
+      }
+    }
+  ],
+  "delivery": {
+    "zones": [
+      "Ixelles",
+      "Saint-Gilles",
+      "Uccle",
+      "Etterbeek",
+      "Forest",
+      "Bruxelles-Centre",
+      "Watermael-Boitsfort"
+    ],
+    "cutoff": "14:00",
+    "fee": 7,
+    "freeFrom": 60,
+    "note": {
+      "fr": "Au-delà de ces communes, appelez-nous : on s'arrange presque toujours.",
+      "nl": "Buiten deze gemeenten: bel ons, meestal lukt het."
+    }
+  },
+  "services": [
+    {
+      "id": "bouquet-rond",
+      "name": {
+        "fr": "Bouquet rond de saison",
+        "nl": "Rond seizoensboeket"
+      },
+      "description": {
+        "fr": "Trois tailles, selon le budget."
+      },
+      "price": 25,
+      "priceFrom": true
+    },
+    {
+      "id": "composition-vase",
+      "name": {
+        "fr": "Composition en vase",
+        "nl": "Compositie in vaas"
+      },
+      "description": {
+        "fr": "Prête à poser, vase compris."
+      },
+      "price": 45,
+      "priceFrom": true
+    },
+    {
+      "id": "plante-interieur",
+      "name": {
+        "fr": "Plante d'intérieur",
+        "nl": "Kamerplant"
+      },
+      "description": {
+        "fr": "Cache-pot au choix, rempotage offert."
+      },
+      "price": 18,
+      "priceFrom": true
+    },
+    {
+      "id": "grand-bouquet",
+      "name": {
+        "fr": "Grand bouquet d'apparat",
+        "nl": "Groot boeket"
+      },
+      "description": {
+        "fr": "Pour un anniversaire, un départ, un merci qui se voit."
+      },
+      "price": 75,
+      "priceFrom": true
+    },
+    {
+      "id": "couronne-deuil",
+      "name": {
+        "fr": "Couronne et gerbe de deuil",
+        "nl": "Rouwkrans"
+      },
+      "price": null
+    }
+  ],
+  "team": [
+    {
+      "name": "Marieke Van Aken",
+      "role": {
+        "fr": "Fleuriste, fondatrice"
+      },
+      "photo": "equipe-1.jpg"
+    },
+    {
+      "name": "Tarik",
+      "role": {
+        "fr": "Compositions et livraisons"
+      },
+      "photo": "equipe-2.jpg"
+    }
+  ],
+  "gallery": [
+    {
+      "src": "galerie-1.jpg",
+      "alt": {
+        "fr": "Bouquet de saison sur l'établi"
+      }
+    },
+    {
+      "src": "galerie-2.jpg",
+      "alt": {
+        "fr": "Bouquet de mariée en préparation"
+      }
+    },
+    {
+      "src": "galerie-3.jpg",
+      "alt": {
+        "fr": "Composition en vase"
+      }
+    },
+    {
+      "src": "galerie-4.jpg",
+      "alt": {
+        "fr": "L'atelier, un matin d'arrivage"
+      }
+    },
+    {
+      "src": "galerie-6.jpg",
+      "alt": {
+        "fr": "Feuillages et branchages"
+      }
+    }
+  ],
+  "steps": [],
+  "reviews": [
+    {
+      "author": "Camille D.",
+      "rating": 5,
+      "text": {
+        "fr": "Commandé à 11 h pour une livraison le jour même à Uccle. Reçu à 15 h, ma mère a pleuré."
+      },
+      "source": "google"
+    },
+    {
+      "author": "Jean-Marc L.",
+      "rating": 5,
+      "text": {
+        "fr": "Ils se sont occupés des fleurs de l'enterrement de mon père, y compris de la coordination avec le funérarium. Je n'ai eu à m'occuper de rien."
+      },
+      "source": "google"
+    },
+    {
+      "author": "Restaurant Le Comptoir",
+      "rating": 5,
+      "text": {
+        "fr": "Abonnement hebdomadaire depuis deux ans. Jamais un mardi sans fleurs."
+      },
+      "source": "google"
+    }
+  ],
+  "booking": {
+    "mode": "none"
+  },
+  "seo": {},
+  "legal": {
+    "companyName": "Fleurs Van Aken SRL",
+    "legalForm": "SRL",
+    "registrationNumber": "0123.456.789",
+    "vatNumber": "BE0123.456.789"
+  },
+  "contact": {},
+  "tenantId": "b1e6a5c7-4ff4-4747-ab6e-4c22c2395eb2"
+}

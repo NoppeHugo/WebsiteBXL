@@ -1,0 +1,69 @@
+---
+import type { Language } from "@bxl/schema";
+import { Image } from "astro:assets";
+import { site, t } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+import { media } from "../lib/media.ts";
+
+/**
+ * Les occasions.
+ *
+ * L'entrée principale d'un site de fleuriste, et la différence la plus nette
+ * avec un site de coiffeur. Personne ne cherche « bouquet rond de saison » :
+ * on cherche des fleurs *pour* un mariage, *pour* une naissance, *pour* un
+ * enterrement. La navigation d'un fleuriste suit donc l'événement du client,
+ * pas le catalogue du commerce.
+ *
+ * Le prix est toujours dit « à partir de ». Un fleuriste ne peut pas annoncer
+ * un prix ferme : ce qu'il compose dépend de l'arrivage du matin, et un prix
+ * ferme affiché serait tenu contre lui.
+ */
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const prix = new Intl.NumberFormat(`${lang}-BE`, {
+  style: "currency",
+  currency: "EUR",
+  maximumFractionDigits: 0,
+});
+---
+
+<section class="section" id="occasions">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="section__title">{ui(lang, "occasions_title")}</h2>
+    </div>
+
+    <div class="occasions">
+      {
+        site.occasions.map((occasion) => (
+          <article class="occasion">
+            {occasion.photo && (
+              <div class="occasion__media">
+                <Image
+                  src={media(occasion.photo)}
+                  alt={t(occasion.title, lang)}
+                  widths={[400, 700]}
+                  sizes="(min-width: 60rem) 22rem, 90vw"
+                  loading="lazy"
+                />
+              </div>
+            )}
+            <div class="occasion__texte">
+              <h3 class="occasion__titre">{t(occasion.title, lang)}</h3>
+              {occasion.text && <p class="occasion__desc">{t(occasion.text, lang)}</p>}
+              {occasion.price !== null && (
+                <p class="occasion__prix">
+                  {ui(lang, "from_price")} {prix.format(occasion.price)}
+                </p>
+              )}
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>

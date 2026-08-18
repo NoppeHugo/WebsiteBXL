@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { client, readSiteRaw, writeSite, commitAndPush, pull } from "../repo.ts";
 import { projeterCommerce } from "../tenant.ts";
+import { metierDe } from "@bxl/schema/metiers";
 import { config } from "../config.ts";
 import { logPublish, etatPublication } from "../db.ts";
 import { layout, flash, escape, depuis } from "../views.ts";
@@ -17,6 +18,10 @@ import {
   sectionEquipe,
   sectionAvis,
   sectionPrestations,
+  sectionOccasions,
+  sectionLivraison,
+  sectionDeuil,
+  sectionAbonnements,
   sectionReferencement,
 } from "../views/sections.ts";
 
@@ -36,12 +41,33 @@ const TITRES: Record<string, string> = {
   accueil: "Accueil",
   presentation: "Le commerce",
   horaires: "Horaires",
+  occasions: "Occasions",
   galerie: "Galerie",
   deroule: "Le déroulé",
   equipe: "Équipe",
   avis: "Avis",
   prestations: "Prestations",
+  deuil: "Fleurs de deuil",
+  abonnements: "Abonnements",
+  livraison: "Livraison",
   referencement: "Référencement",
+};
+
+/*
+ * Les sections propres à un métier. Celles qui ne sont pas listées ici sont
+ * communes à tous : accueil, horaires, galerie, avis, référencement.
+ *
+ * Un salon de coiffure à qui l'on propose « Fleurs de deuil » et
+ * « Abonnements » se demande, à juste titre, si on lui a livré le bon outil.
+ */
+const SECTIONS_DU_METIER: Record<string, string> = {
+  occasions: "occasions",
+  livraison: "livraison",
+  deuil: "deuil",
+  abonnements: "abonnement",
+  prestations: "prestations",
+  deroule: "deroule",
+  equipe: "equipe",
 };
 
 async function pageContenu(
@@ -52,7 +78,14 @@ async function pageContenu(
   const defaut = site.languages.default;
   const etat = await etatPublication(slug);
 
+  const metier = metierDe(site.business.type);
+  const montre = (id: string) => {
+    const requise = SECTIONS_DU_METIER[id];
+    return requise === undefined || metier.sections.includes(requise as never);
+  };
+
   const sommaire = Object.entries(TITRES)
+    .filter(([id]) => montre(id))
     .map(([id, titre]) => `<a href="#${id}">${escape(titre)}</a>`)
     .join("");
 
@@ -87,11 +120,15 @@ ${bandeau}
 ${sectionAccueil(slug, site, defaut)}
 ${sectionPresentation(slug, site, defaut)}
 ${sectionHoraires(slug, site, formatSlots as (c: unknown) => string)}
+${montre("occasions") ? sectionOccasions(slug, site, defaut) : ""}
 ${sectionGalerie(slug, site, defaut)}
-${sectionDeroule(slug, site, defaut)}
-${sectionEquipe(slug, site, defaut)}
+${montre("deroule") ? sectionDeroule(slug, site, defaut) : ""}
+${montre("equipe") ? sectionEquipe(slug, site, defaut) : ""}
 ${sectionAvis(slug, site, defaut)}
-${sectionPrestations(slug, site, defaut)}
+${montre("prestations") ? sectionPrestations(slug, site, defaut) : ""}
+${montre("deuil") ? sectionDeuil(slug, site, defaut) : ""}
+${montre("abonnements") ? sectionAbonnements(slug, site, defaut) : ""}
+${montre("livraison") ? sectionLivraison(slug, site, defaut) : ""}
 ${sectionReferencement(slug, site, defaut)}
 
 <p style="margin-top:2rem"><a href="/clients/${escape(slug)}">← Réglages du client</a></p>`,

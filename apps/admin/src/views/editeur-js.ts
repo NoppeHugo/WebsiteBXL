@@ -333,6 +333,50 @@ export const EDITEUR_JS = String.raw`
     }, 0);
   });
 
+  /* ------------------------------------------- styles selon le métier */
+
+  /*
+   * La grille de styles suit le type de commerce choisi juste au-dessus.
+   *
+   * Tous les styles sont rendus par le serveur, étiquetés de leurs métiers :
+   * sans JavaScript la liste reste complète et le serveur refuse un style qui
+   * ne convient pas, avec un message. Avec, on ne voit que les bons — et l'on
+   * évite de choisir « Nuit » pour un fleuriste avant de se le faire refuser.
+   */
+  const selectType = $(document, "[data-type-commerce]");
+  const grilleStyles = $(document, "[data-grille-styles]");
+  if (selectType && grilleStyles) {
+    const filtrer = () => {
+      const option = selectType.selectedOptions[0];
+      const metier = option ? option.dataset.metier : "";
+      let premierVisible = null;
+      let selectionVisible = false;
+
+      for (const choix of $$(grilleStyles, ".choix")) {
+        const metiers = (choix.dataset.metiers || "").split(" ");
+        const garde = !metier || metiers.indexOf(metier) !== -1;
+        choix.hidden = !garde;
+        const radio = $(choix, "input[type=radio]");
+        if (!radio) continue;
+        // Un bouton radio caché reste envoyé s'il est coché : le désactiver
+        // est le seul moyen de l'exclure vraiment du formulaire.
+        radio.disabled = !garde;
+        if (garde) {
+          if (!premierVisible) premierVisible = radio;
+          if (radio.checked) selectionVisible = true;
+        }
+      }
+
+      // Le style retenu vient de disparaître : on en désigne un, sinon le
+      // formulaire part sans style et le serveur refuse pour une raison que
+      // personne ne comprend.
+      if (!selectionVisible && premierVisible) premierVisible.checked = true;
+    };
+
+    selectType.addEventListener("change", filtrer);
+    filtrer();
+  }
+
   /* ------------------------------------------------------------- démarrage */
 
   for (const liste of $$(document, "[data-liste]")) brancherListe(liste);

@@ -1,0 +1,71 @@
+---
+import type { Language } from "@bxl/schema";
+import { Image } from "astro:assets";
+import { site, t } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+import { tryMedia } from "../lib/media.ts";
+import { telHref } from "../lib/booking.ts";
+
+/**
+ * Fleurs de deuil.
+ *
+ * Une section à part, et son ton l'est aussi.
+ *
+ * C'est le segment le plus urgent d'un fleuriste et souvent le plus
+ * rémunérateur, mais celui dont le client ne veut ni parcourir un catalogue,
+ * ni comparer des prix, ni remplir un formulaire de six champs. Il veut savoir
+ * qu'on s'en occupe, et un numéro sur lequel appuyer.
+ *
+ * D'où : aucun prix, aucun bouton « commander », un seul appel à l'action et
+ * il est téléphonique. Poser ici la même grille de tarifs qu'ailleurs serait
+ * une faute — pas de goût, mais de commerce : on ne fait pas comparer trois
+ * formules à quelqu'un qui enterre son père.
+ */
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const deuil = site.mourning!;
+const photo = tryMedia(deuil.photo);
+const telephone = deuil.phone ?? site.business.phone;
+---
+
+<section class="section section--deuil" id="deuil">
+  <div class="wrap deuil">
+    <div class="deuil__texte">
+      <div class="section__head">
+        <h2 class="section__title">{ui(lang, "mourning_title")}</h2>
+      </div>
+      <p class="deuil__mot">{t(deuil.text, lang)}</p>
+
+      {
+        deuil.venues.length > 0 && (
+          <p class="deuil__lieux">
+            <span class="deuil__lieux-titre">{ui(lang, "mourning_venues")}</span>
+            {deuil.venues.join(" · ")}
+          </p>
+        )
+      }
+
+      <a class="btn btn--deuil" href={telHref(telephone)}>
+        {ui(lang, "mourning_call")} · {telephone}
+      </a>
+    </div>
+
+    {
+      photo && (
+        <div class="deuil__media">
+          <Image
+            src={photo}
+            alt=""
+            widths={[500, 900]}
+            sizes="(min-width: 60rem) 26rem, 90vw"
+            loading="lazy"
+          />
+        </div>
+      )
+    }
+  </div>
+</section>
