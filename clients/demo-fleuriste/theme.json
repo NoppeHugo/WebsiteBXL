@@ -1,16 +1,16 @@
 {
   "preset": {
     "style": "serre",
-    "palette": "serre"
+    "palette": "pivoine"
   },
   "palette": {
-    "bg": "#fbfcfa",
-    "surface": "#eef2ea",
-    "text": "#1a2118",
-    "muted": "#5d6b58",
-    "accent": "#2c4a2e",
-    "accentText": "#fbfcfa",
-    "border": "#dde5d8"
+    "bg": "#fdf7f5",
+    "surface": "#f7e9e6",
+    "text": "#231519",
+    "muted": "#6d5257",
+    "accent": "#6b2740",
+    "accentText": "#fdf7f5",
+    "border": "#eed9d5"
   },
   "fonts": {
     "display": "Bitter, Georgia, 'Times New Roman', serif",
