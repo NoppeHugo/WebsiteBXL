@@ -9,6 +9,12 @@ import { site } from "./client.ts";
  */
 const strings = {
   fr: {
+    closures_title: "Fermetures exceptionnelles",
+    closed_today: "Fermé aujourd'hui",
+    closed_until: "Fermé jusqu'au",
+    closed_included: "inclus",
+    closure_from: "Du",
+    closure_to: "au",
     form_phone: "Votre téléphone",
     occasions_title: "Pour quelle occasion ?",
     from_price: "à partir de",
@@ -146,6 +152,12 @@ const strings = {
     made_by: "Site & photographies",
   },
   nl: {
+    closures_title: "Uitzonderlijke sluitingen",
+    closed_today: "Vandaag gesloten",
+    closed_until: "Gesloten tot en met",
+    closed_included: "",
+    closure_from: "Van",
+    closure_to: "tot",
     form_phone: "Uw telefoonnummer",
     occasions_title: "Voor welke gelegenheid?",
     from_price: "vanaf",
@@ -283,6 +295,12 @@ const strings = {
     made_by: "Site & fotografie",
   },
   en: {
+    closures_title: "Exceptional closures",
+    closed_today: "Closed today",
+    closed_until: "Closed until",
+    closed_included: "inclusive",
+    closure_from: "From",
+    closure_to: "to",
     form_phone: "Your phone",
     occasions_title: "For what occasion?",
     from_price: "from",

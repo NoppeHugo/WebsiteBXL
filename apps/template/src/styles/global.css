@@ -2875,3 +2875,102 @@ body[data-glass="true"] .rdv {
   text-transform: var(--ui-transform);
   cursor: pointer;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Fermetures exceptionnelles                                                 */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Elles bloquaient déjà la réservation, mais le site n'en disait rien : la
+ * grille affichait « Mardi 09:00 – 18:00 » pendant les congés, et le client se
+ * déplaçait pour rien. C'est exactement ce que le commerçant croyait avoir
+ * évité en appuyant sur « Je ferme ».
+ *
+ * Deux états, et l'écart entre les deux est volontairement net :
+ *  - à venir : une note discrète sous les horaires, qui informe sans alarmer ;
+ *  - en cours : un encadré qui prend la couleur d'accent, parce que c'est la
+ *    seule chose que le visiteur doit lire avant de prendre sa veste.
+ */
+.fermetures {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--c-border);
+}
+
+.fermetures__titre {
+  font-size: var(--step--1);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  margin: 0 0 0.6rem;
+}
+
+.fermetures__liste {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.fermetures__liste li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.6rem;
+  align-items: baseline;
+}
+
+.fermetures__quand { color: var(--c-text); }
+.fermetures__motif { color: var(--c-muted); font-size: var(--step--1); }
+
+/* --- Fermé en ce moment --------------------------------------------------- */
+.fermetures[data-encours="oui"] {
+  border: 1px solid var(--c-accent);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.fermetures[data-encours="oui"] .fermetures__titre {
+  /* La taille du titre de section : c'est ce qu'on doit lire en premier, avant
+     même la grille des horaires juste au-dessus. */
+  font-size: var(--step-1);
+  letter-spacing: var(--display-tracking);
+  text-transform: none;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  color: var(--c-text);
+  margin-bottom: 0.45rem;
+}
+
+/* La fermeture en cours d'abord, le reste de la liste après elle. */
+.fermetures[data-encours="oui"] li[data-encours="oui"] {
+  order: -1;
+  font-size: var(--step-0);
+}
+
+.fermetures[data-encours="oui"] li:not([data-encours="oui"]) {
+  color: var(--c-muted);
+  font-size: var(--step--1);
+}
+
+.fermetures[data-encours="oui"] .fermetures__liste {
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * La journée du jour, quand une fermeture exceptionnelle la couvre.
+ *
+ * Sans cette règle, l'écran se contredisait : la ligne du jour restait en gras
+ * avec ses heures d'ouverture juste au-dessus d'un encadré annonçant la
+ * fermeture. Le regard va d'abord au gras — et le client se déplace.
+ */
+.hours li[data-ferme-exceptionnel="oui"] .hours__day {
+  color: var(--c-muted);
+}
+
+.hours li[data-ferme-exceptionnel="oui"] .hours__slots {
+  color: var(--c-accent);
+  font-weight: 600;
+}

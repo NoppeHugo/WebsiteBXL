@@ -1,5 +1,7 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import { depuis, statutLisible, STATUTS, escape } from "./views.ts";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 /**
  * Ces fonctions ne touchent ni à la base ni au disque : elles se testent
@@ -72,5 +74,31 @@ describe("échappement", () => {
     expect(escape(`<script>alert("x")</script>`)).toBe(
       "&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;",
     );
+  });
+});
+
+describe("feuilles de style de la console", () => {
+  /*
+   * Les styles vivent dans des littéraux de gabarit. Un seul accent grave à
+   * l'intérieur — fût-ce dans un commentaire nommant un fichier — referme le
+   * littéral, et la console ne compile plus avec une erreur qui désigne une
+   * ligne sans rapport.
+   *
+   * Le template a le même test depuis longtemps ; la console ne l'avait pas,
+   * et s'est fait prendre en citant « views/apparence-choix.ts » entre accents
+   * graves.
+   */
+  const fichiers = ["views.ts", "views-client.ts"];
+
+  it.each(fichiers)("%s : aucun accent grave dans les styles", (fichier) => {
+    const source = readFileSync(
+      fileURLToPath(new URL(`./${fichier}`, import.meta.url)),
+      "utf8",
+    );
+    const blocs = [...source.matchAll(/const STYLE = `([\s\S]*?)`;$/gm)];
+    expect(blocs.length, `aucun bloc STYLE trouvé dans ${fichier}`).toBeGreaterThan(0);
+    for (const [, corps] of blocs) {
+      expect(corps).not.toContain("`");
+    }
   });
 });

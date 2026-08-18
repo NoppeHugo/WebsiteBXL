@@ -1,4 +1,7 @@
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { client, readSiteRaw, writeSite, commitAndPush, publish, pull } from "./repo.ts";
+import { config } from "./config.ts";
 import { projeterCommerce } from "./tenant.ts";
 import { logPublish } from "./db.ts";
 import { appliquerSection, type Champs, type Section } from "./contenu.ts";
@@ -105,4 +108,51 @@ export async function enregistrerEtPublier(
   }
 
   return { ok: true, reservationAJour: true, message: "C'est en ligne." };
+}
+
+/**
+ * Changer le style et la couleur, puis mettre en ligne.
+ *
+ * Même geste unique que pour le contenu, à une différence près : le thème ne
+ * touche pas à la base. Ni les horaires, ni les prestations, ni les fermetures
+ * n'en dépendent — la projection n'aurait rien à reporter, et l'appeler pour
+ * rien ferait croire qu'elle a sa part dans l'affaire.
+ */
+export async function publierApparence(
+  slug: string,
+  adminId: number,
+  theme: unknown,
+): Promise<ResultatEnregistrement> {
+  await pull();
+
+  writeFileSync(
+    join(config.REPO_PATH, "clients", slug, "theme.json"),
+    `${JSON.stringify(theme, null, 2)}\n`,
+  );
+
+  const pousse = await commitAndPush(slug, `espace client(${slug}) : apparence`);
+  await logPublish(adminId, slug, "save", "espace client : apparence");
+  if (!pousse.ok) {
+    return {
+      ok: false,
+      reservationAJour: true,
+      message:
+        "Votre nouveau style est enregistré sur le serveur, mais son" +
+        " enregistrement définitif a échoué. Prévenez votre prestataire.",
+    };
+  }
+
+  const misEnLigne = await publish(slug);
+  await logPublish(adminId, slug, "publish", misEnLigne.output.slice(0, 1000));
+  if (!misEnLigne.ok) {
+    return {
+      ok: false,
+      reservationAJour: true,
+      message:
+        "Votre nouveau style est enregistré, mais le site public n'a pas pu" +
+        " être mis à jour. Prévenez votre prestataire — rien n'est perdu.",
+    };
+  }
+
+  return { ok: true, reservationAJour: true, message: "Votre site a changé d'allure." };
 }

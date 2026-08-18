@@ -36,3 +36,40 @@ describe("horaires", () => {
     expect(source).toContain("WEEKDAYS.map");
   });
 });
+
+describe("fermetures exceptionnelles", () => {
+  it("les affiche : sans cela, elles ne bloquaient que la réservation", () => {
+    /*
+     * Le défaut d'origine : « Je ferme » écrivait la fermeture dans le fichier
+     * et bloquait l'agenda, mais le site n'en disait rien. La grille affichait
+     * « Mardi 09:00 – 18:30 » pendant les congés, et le client se déplaçait —
+     * exactement ce que le commerçant croyait avoir évité.
+     */
+    expect(source).toContain("site.closures");
+    expect(source).toContain("data-fermetures");
+  });
+
+  it("décide dans le navigateur quelle fermeture est en cours", () => {
+    /*
+     * Le site est statique. Figer « aujourd'hui » à la construction produirait
+     * un bandeau périmé dès le lendemain — le projet s'est déjà fait prendre
+     * par là avec la date du jour de l'agenda, qui vidait le calendrier à
+     * mesure que la publication s'éloignait.
+     *
+     * Et dans le fuseau du commerce, pas celui du visiteur.
+     */
+    const script = source.slice(source.lastIndexOf("<script>"));
+    expect(script).toContain('timeZone: "Europe/Brussels"');
+    expect(script).toContain("data-fermetures");
+  });
+
+  it("contredit la ligne du jour quand une fermeture la couvre", () => {
+    /*
+     * Sans cette règle, l'écran se contredisait : la ligne du jour restait en
+     * gras avec ses heures juste au-dessus d'un encadré annonçant la
+     * fermeture. Le regard va d'abord au gras.
+     */
+    expect(source).toContain("fermeExceptionnel");
+    expect(source).toContain("data-mot-ferme");
+  });
+});

@@ -22,6 +22,46 @@ const { address } = site.business;
  * ait demandé ses heures au commerçant.
  */
 const horairesInconnus = WEEKDAYS.every((day) => site.hours[day].length === 0);
+
+/*
+ * Fermetures exceptionnelles.
+ *
+ * Elles bloquaient déjà la réservation, mais le site n'en disait **rien** : la
+ * grille affichait « Mardi 09:00 – 18:00 » pendant les congés, et le client
+ * se déplaçait. C'est précisément ce que le commerçant croyait avoir évité en
+ * appuyant sur « Je ferme ».
+ *
+ * Les dates sont mises en forme ici — elles ne dépendent pas du jour de
+ * lecture — mais **quelle** fermeture est en cours se décide dans le
+ * navigateur, plus bas. Le site est statique : figer « aujourd'hui » au build
+ * produirait un bandeau périmé dès le lendemain. Le projet s'est déjà fait
+ * prendre une fois par là, avec l'agenda.
+ */
+const aujourdhuiAuBuild = new Date().toLocaleDateString("en-CA", {
+  timeZone: "Europe/Brussels",
+});
+
+const dateLisible = (iso: string) =>
+  new Date(`${iso}T12:00:00`).toLocaleDateString(`${lang}-BE`, {
+    day: "numeric",
+    month: "long",
+  });
+
+const fermetures = site.closures
+  // Une fermeture terminée avant même la construction ne redeviendra jamais
+  // d'actualité : la retirer allège la page sans rien cacher.
+  .filter((f) => f.to >= aujourdhuiAuBuild)
+  .sort((a, b) => a.from.localeCompare(b.from))
+  .map((f) => ({
+    du: f.from,
+    au: f.to,
+    motif: f.reason ? t(f.reason, lang) : "",
+    libelle:
+      f.from === f.to
+        ? dateLisible(f.from)
+        : `${ui(lang, "closure_from")} ${dateLisible(f.from)} ${ui(lang, "closure_to")} ${dateLisible(f.to)}`,
+    jusquau: dateLisible(f.to),
+  }));
 ---
 
 <section class="section" id="infos">
@@ -35,7 +75,7 @@ const horairesInconnus = WEEKDAYS.every((day) => site.hours[day].length === 0);
         horairesInconnus ? (
           <p class="hours__note">{ui(lang, "hours_unset")}</p>
         ) : (
-          <ul class="hours">
+          <ul class="hours" data-mot-ferme={ui(lang, "closed")}>
             {WEEKDAYS.map((day) => {
               const slots = site.hours[day];
               return (
@@ -56,6 +96,30 @@ const horairesInconnus = WEEKDAYS.every((day) => site.hours[day].length === 0);
       }
 
       {site.hoursNote && <p class="hours__note">{t(site.hoursNote, lang)}</p>}
+
+      {
+        fermetures.length > 0 && (
+          <div
+            class="fermetures"
+            data-fermetures
+            data-mot-aujourdhui={ui(lang, "closed_today")}
+            data-mot-jusquau={ui(lang, "closed_until")}
+            data-mot-inclus={ui(lang, "closed_included")}
+          >
+            <p class="fermetures__titre" data-fermetures-titre>
+              {ui(lang, "closures_title")}
+            </p>
+            <ul class="fermetures__liste">
+              {fermetures.map((f) => (
+                <li data-du={f.du} data-au={f.au} data-jusquau={f.jusquau}>
+                  <span class="fermetures__quand">{f.libelle}</span>
+                  {f.motif && <span class="fermetures__motif">{f.motif}</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
     </div>
 
     <div>
@@ -97,9 +161,22 @@ const horairesInconnus = WEEKDAYS.every((day) => site.hours[day].length === 0);
 </section>
 
 <script>
-  // Mise en évidence du jour courant. Volontairement côté client : le site est
-  // statique, il ne peut pas connaître le jour au moment du build.
-  const days = [
+  /*
+   * Tout ce qui dépend de la date se décide ici, dans le navigateur.
+   *
+   * Le site est statique : ce qui est calculé au build est figé pour des
+   * semaines. Le projet s'est déjà fait prendre une fois — la date du jour de
+   * l'agenda était gelée à la construction, et l'agenda se vidait tout seul à
+   * mesure que la publication s'éloignait.
+   *
+   * Le jour est celui du commerce, pas celui du visiteur : un client qui
+   * consulte depuis un autre fuseau ne doit pas voir le mauvais jour surligné.
+   */
+  const aujourdhui = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Europe/Brussels",
+  });
+
+  const jours = [
     "sunday",
     "monday",
     "tuesday",
@@ -108,8 +185,74 @@ const horairesInconnus = WEEKDAYS.every((day) => site.hours[day].length === 0);
     "friday",
     "saturday",
   ];
-  const today = days[new Date().getDay()];
+  const jour = jours[new Date(`${aujourdhui}T12:00:00`).getDay()];
   document
-    .querySelector(`.hours li[data-day="${today}"]`)
+    .querySelector(`.hours li[data-day="${jour}"]`)
     ?.setAttribute("data-today", "true");
+
+  /* --- Fermetures exceptionnelles --- */
+
+  const bloc = document.querySelector<HTMLElement>("[data-fermetures]");
+  if (bloc) {
+    const lignes = Array.from(bloc.querySelectorAll<HTMLLIElement>("li"));
+    let enCours: HTMLLIElement | undefined;
+
+    for (const ligne of lignes) {
+      const du = ligne.dataset.du ?? "";
+      const au = ligne.dataset.au ?? "";
+      // Comparaison de chaînes ISO : « 2026-08-25 » < « 2026-09-01 » est vrai
+      // au sens lexicographique, ce qui évite toute conversion de fuseau.
+      if (au < aujourdhui) {
+        ligne.remove();
+      } else if (du <= aujourdhui) {
+        enCours = ligne;
+      }
+    }
+
+    if (bloc.querySelectorAll("li").length === 0) {
+      bloc.remove();
+    } else if (enCours) {
+      /*
+       * Fermé en ce moment : c'est la seule information qui compte, et elle
+       * passe avant le reste de la liste.
+       */
+      bloc.dataset.encours = "oui";
+      const seulJour = enCours.dataset.du === enCours.dataset.au;
+
+      /*
+       * Le bloc remonte au-dessus de la grille, et la journée du jour cesse
+       * d'annoncer des heures d'ouverture.
+       *
+       * Sans cela, l'information se contredisait à l'écran : la ligne du jour
+       * restait en gras avec « 10:30 – 18:30 » juste au-dessus d'un encadré
+       * disant « Fermé ». Le regard va d'abord au gras, et le client se
+       * déplace.
+       */
+      const liste = document.querySelector<HTMLElement>(".hours");
+      if (liste && bloc.parentElement) {
+        bloc.parentElement.insertBefore(bloc, liste);
+
+        const ligneDuJour = liste.querySelector<HTMLElement>("li[data-today]");
+        const creneaux = ligneDuJour?.querySelector<HTMLElement>(".hours__slots");
+        if (ligneDuJour && creneaux) {
+          ligneDuJour.dataset.fermeExceptionnel = "oui";
+          creneaux.textContent = liste.dataset.motFerme ?? "";
+        }
+      }
+      const titre = bloc.querySelector<HTMLElement>("[data-fermetures-titre]");
+      if (titre) {
+        titre.textContent = seulJour
+          ? (bloc.dataset.motAujourdhui ?? "")
+          : `${bloc.dataset.motJusquau ?? ""} ${enCours.dataset.jusquau ?? ""} ${
+              bloc.dataset.motInclus ?? ""
+            }`
+              .replace(/\s+/g, " ")
+              .trim();
+      }
+      // Sur une fermeture d'un seul jour, la ligne n'a plus à répéter la date :
+      // le titre la porte déjà.
+      if (seulJour) enCours.querySelector(".fermetures__quand")?.remove();
+      enCours.dataset.encours = "oui";
+    }
+  }
 </script>

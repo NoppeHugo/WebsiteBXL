@@ -30,6 +30,7 @@ export const PAGES = {
   tarifs: { titre: "Mes tarifs", sous: "Les prestations et leurs prix", icone: "💶" },
   photos: { titre: "Mes photos", sous: "Les images du salon", icone: "📷" },
   presentation: { titre: "Mon texte", sous: "Ce qui est écrit sur le salon", icone: "✍️" },
+  apparence: { titre: "Mon style", sous: "L'allure du site et ses couleurs", icone: "🎨" },
   "rendez-vous": { titre: "Mes rendez-vous", sous: "Ce qui est réservé", icone: "📅" },
   commandes: { titre: "Mes commandes", sous: "Les demandes reçues par le site", icone: "🧾" },
   messages: { titre: "Mes messages", sous: "Ce qu'on vous a écrit", icone: "✉️" },
@@ -258,6 +259,64 @@ button.danger { background: transparent; color: var(--ko); border: 1px solid var
 .depot input { position: absolute; opacity: 0; pointer-events: none; }
 .depot b { display: block; font-size: 1.05rem; }
 .depot span { color: var(--doux); font-size: 0.9rem; }
+
+/* --- Choix du style et de la couleur ------------------------------------ */
+/*
+ * Le balisage vient de views/apparence-choix.ts, partagé avec la console de
+ * l'exploitant : une seule liste de styles, donc aucune chance qu'un style
+ * ajouté n'apparaisse que d'un côté. Seul l'habillage change, pour tenir sur
+ * un téléphone.
+ */
+.choix-grille {
+  display: grid; gap: 0.8rem; margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr));
+}
+.choix {
+  display: grid; gap: 0.8rem; margin: 0; cursor: pointer;
+  background: var(--carte); border: 1px solid var(--bord);
+  border-radius: 14px; padding: 0.9rem;
+}
+/* Le choix retenu est cerné franchement : cette page s'ouvre d'abord pour
+   savoir ce qui est appliqué, et seulement ensuite pour en changer. */
+.choix:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.choix input { position: absolute; opacity: 0; pointer-events: none; }
+.choix__texte { display: grid; gap: 0.2rem; font-size: 0.88rem; }
+.choix__texte b { font-size: 1rem; }
+.choix__texte span { color: var(--doux); }
+
+.vignette {
+  display: grid; gap: 0.5rem; justify-items: start;
+  padding: 0.9rem; border: 1px solid; border-radius: 10px; min-height: 6.5rem;
+}
+.vignette__titre { font-size: 1.9rem; line-height: 1; }
+.vignette__filet { display: block; width: 100%; height: 1px; }
+.vignette__btn { font-size: 0.66rem; padding: 0.45em 1.1em; }
+
+.marque {
+  font-size: 0.66rem; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ok);
+  border: 1px solid color-mix(in srgb, var(--ok) 45%, transparent);
+  border-radius: 980px; padding: 0.1em 0.55em; margin-left: 0.4rem;
+  vertical-align: 0.12em;
+}
+
+.teinte-grille {
+  display: grid; gap: 0.6rem; margin-bottom: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(7.5rem, 100%), 1fr));
+}
+.teinte {
+  display: grid; gap: 0.45rem; margin: 0; cursor: pointer; text-align: center;
+  background: var(--carte); border: 1px solid var(--bord);
+  border-radius: 12px; padding: 0.65rem; font-size: 0.88rem;
+}
+.teinte:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.teinte input { position: absolute; opacity: 0; pointer-events: none; }
+.teinte b { display: block; font-weight: 600; }
+.teinte__pastilles {
+  display: flex; height: 2rem; border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--bord);
+}
+.teinte__pastilles span { flex: 1; }
 
 /* --- Voile d'attente ---------------------------------------------------- */
 /*

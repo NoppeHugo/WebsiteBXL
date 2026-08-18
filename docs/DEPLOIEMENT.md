@@ -734,12 +734,38 @@ Les lectures et l'annulation de rendez-vous portent le `slug` **dans la clause
 `where`**, pas dans une vérification préalable : un identifiant appartenant à un
 autre salon ne trouve simplement aucune ligne.
 
-### 7 ter.5 Ce qui reste à l'exploitant
+### 7 ter.5 Les fermetures sur le site public
 
-Le style et les couleurs, les traductions, les mentions légales, le domaine, le
-palier, la mise hors ligne, et la création des clients. C'est volontaire : ce
-sont des décisions qui engagent, ou qui se paient — et un commerçant qui
-change son style tous les mois n'a plus d'identité.
+Une fermeture saisie dans « Je ferme » fait trois choses, et il a fallu les
+trois :
+
+1. elle est écrite dans `site.json` ;
+2. elle est reportée dans `tenant_closures`, ce qui **bloque la réservation**
+   immédiatement ;
+3. elle s'affiche sur le site, sous les horaires.
+
+La troisième manquait, et c'est la seule que voit un client qui n'utilise pas
+la réservation : la grille annonçait les heures d'ouverture habituelles pendant
+les congés.
+
+Quand la fermeture est **en cours**, l'encadré passe au-dessus de la grille et
+la ligne du jour affiche « Fermé » à la place de ses heures. Sans cela l'écran
+se contredit, et le regard va d'abord au gras.
+
+Le choix de la fermeture en cours se fait **dans le navigateur** : le site est
+statique, et figer « aujourd'hui » à la construction produirait un encadré
+périmé dès le lendemain.
+
+### 7 ter.6 Ce qui reste à l'exploitant
+
+Les traductions, les mentions légales, le domaine, le palier, la mise hors
+ligne, et la création des clients. Ce sont des décisions qui engagent, ou qui
+se paient.
+
+**Le style et les couleurs, en revanche, sont passés au commerçant** — page
+« Mon style ». La liste est filtrée par métier : un fleuriste ne se voit
+proposer que Serre, Nature morte, Marché et Herbier, et le serveur revérifie,
+pour le cas d'une requête qui ne passerait pas par la grille.
 
 ---
 
@@ -1051,3 +1077,7 @@ mise en ligne rapide.
 | 2026-08-18 | 7 quinquies | Le téléphone et l'e-mail **sont** recopiés, pour servir de repère à la saisie — mais ils désignent encore l'autre commerce, et les deux valeurs sont parfaitement valides : rien ne le signalerait. | La fiche compare les coordonnées avec celles des autres clients tant que le site n'est pas en ligne, et le dit en rouge. Comparaison sur la valeur du numéro et non sur son écriture : `+32 2 111 11 11` et `02/111.11.11` sont le même poste, et le cas arrive en recopiant depuis une fiche Google. |
 | 2026-08-18 | 7 quinquies | « Mettre en ligne » ne faisait que construire et déployer. Sur un site jamais publié — donc sur tout doublon — il aurait déposé des fichiers que rien ne sert : pas de bloc nginx, pas de certificat, un site introuvable. | Le bouton installe complètement quand le site n'a jamais été mis en ligne, et se contente de publier ensuite. Il promeut aussi le brouillon en « En préparation » : c'est ce qu'il annonce, et refuser aurait obligé à changer un menu déroulant avant d'appuyer sur le bouton qui dit déjà ce qu'il fait. |
 | 2026-08-18 | — | ⚠️ Défaut évité : `scripts/nouveau-site.sh` régénérait toujours les visuels de remplacement, aux noms fixes `hero.jpg` et `galerie-*.jpg`. La première mise en ligne d'un site dupliqué aurait donc remplacé ses photos par des dégradés abstraits, sans un mot. | Les visuels ne sont générés que si le dossier `media` est vide. Un client créé de zéro les reçoit ; un doublon garde les siens. |
+| 2026-08-18 | 7 ter | ⚠️ **« Je ferme » ne se voyait pas sur le site.** La fermeture partait bien dans `site.json` et dans `tenant_closures` — la réservation était donc bloquée — mais `closures` n'était **utilisé nulle part dans le template**. La grille affichait « Mardi 09:00 – 18:30 » pendant les congés, et le client se déplaçait : exactement ce que le commerçant croyait avoir évité en appuyant sur le bouton. Défaut signalé par l'exploitant, et confirmé sur ses propres données. | Les fermetures s'affichent sous les horaires. Deux états : discret pour celles à venir, encadré à la couleur d'accent quand elle est en cours — et le bloc remonte alors **au-dessus** de la grille, dont la ligne du jour cesse d'annoncer des heures d'ouverture. Sans cela l'écran se contredisait, et le regard va d'abord au gras. |
+| 2026-08-18 | 7 ter | Le choix de quelle fermeture est en cours se fait **dans le navigateur**, jamais au build. | Le site est statique : figer « aujourd'hui » à la construction produirait un encadré périmé dès le lendemain. Le projet s'est déjà fait prendre par là — la date du jour de l'agenda était gelée au build, et le calendrier se vidait tout seul à mesure que la publication s'éloignait. Le jour est celui du commerce et non du visiteur, ce qui corrige au passage le surlignage du jour courant, qui suivait le fuseau du lecteur. |
+| 2026-08-18 | 7 ter | Le commerçant ne pouvait pas changer son style ni ses couleurs — réservés à l'exploitant. Choix revu à la demande. | Page « Mon style » dans l'espace, avec les **mêmes vignettes** que la console : une seule liste de styles, donc aucune chance qu'un style ajouté n'apparaisse que d'un côté. Filtrée par métier — un fleuriste ne peut pas prendre « Nuit », et le serveur le revérifie pour une requête qui ne passerait pas par la grille. Confirmation avant envoi : c'est la seule page de cet espace où un appui distrait change l'allure de toutes les pages à la fois. |
+| 2026-08-18 | — | Défaut attrapé par le typage : un commentaire citant un fichier entre accents graves, à l'intérieur du littéral de gabarit des styles de la console — ce qui referme le littéral. | Le template avait ce test depuis longtemps, la console non. Il couvre désormais `views.ts` et `views-client.ts`. |

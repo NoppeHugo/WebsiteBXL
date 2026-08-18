@@ -11,6 +11,7 @@ import { espaceFermeturesRoutes } from "./espace-fermetures.ts";
 import { espaceContenuRoutes } from "./espace-contenu.ts";
 import { espaceAgendaRoutes } from "./espace-agenda.ts";
 import { espaceCommandesRoutes } from "./espace-commandes.ts";
+import { espaceApparenceRoutes } from "./espace-apparence.ts";
 
 /**
  * L'espace du commerçant : accueil et compte.
@@ -96,6 +97,7 @@ ${bandeau}
   ${carte("tarifs")}
   ${carte("photos")}
   ${carte("presentation")}
+  ${carte("apparence")}
   ${
     /*
      * Un fleuriste voit ses commandes, un coiffeur ses rendez-vous. Jamais les
@@ -242,6 +244,7 @@ export function espaceRoutes(app: FastifyInstance): void {
   espaceContenuRoutes(app);
   espaceAgendaRoutes(app);
   espaceCommandesRoutes(app);
+  espaceApparenceRoutes(app);
 }
 
 export { pageAccueil };
