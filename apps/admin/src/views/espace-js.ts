@@ -22,6 +22,108 @@ export const ESPACE_JS = String.raw`
   const $ = (racine, sel) => racine.querySelector(sel);
   const $$ = (racine, sel) => Array.from(racine.querySelectorAll(sel));
 
+  /* -------------------------------------------------------------- attente */
+
+  const voile = $(document, "[data-voile]");
+  const voileTitre = $(document, "[data-voile-titre]");
+  const voileMot = $(document, "[data-voile-mot]");
+  const voileSecours = $(document, "[data-voile-secours]");
+
+  const minuteries = [];
+
+  const arreterMinuteries = () => {
+    for (const m of minuteries) clearTimeout(m);
+    minuteries.length = 0;
+  };
+
+  /**
+   * Montre le voile, et fait vivre son message.
+   *
+   * Le délai de 400 ms n'est pas une hésitation : les actions rapides — marquer
+   * une commande confirmée, mettre une photo en couverture — reviennent avant,
+   * et le voile ne fait alors que clignoter, ce qui inquiète au lieu de
+   * rassurer. Seules les actions réellement longues le déclenchent.
+   */
+  function attendre(titre) {
+    if (!voile) return;
+
+    minuteries.push(
+      setTimeout(() => {
+        if (voileTitre) voileTitre.textContent = titre;
+        if (voileMot) voileMot.textContent = "Ne fermez pas cette page.";
+        if (voileSecours) voileSecours.hidden = true;
+        voile.hidden = false;
+      }, 400),
+    );
+
+    /*
+     * Après quinze secondes, on dit que c'est normal. C'est le moment précis
+     * où l'on commence à croire que ça a planté — et c'est vrai : le site se
+     * reconstruit entièrement, images comprises.
+     */
+    minuteries.push(
+      setTimeout(() => {
+        if (voileMot) {
+          voileMot.textContent =
+            "C'est un peu long, c'est normal : votre site se reconstruit. Ne fermez pas cette page.";
+        }
+      }, 15000),
+    );
+
+    /*
+     * Au bout de trois minutes, quelque chose ne va pas — connexion coupée,
+     * serveur muet. Le voile ne doit alors pas enfermer le commerçant : on le
+     * dit, et on lui rend la main. Le rechargement est sans danger, ses
+     * modifications sont enregistrées avant la partie longue.
+     */
+    minuteries.push(
+      setTimeout(() => {
+        if (voileTitre) voileTitre.textContent = "Ça prend anormalement longtemps";
+        if (voileMot) {
+          voileMot.textContent =
+            "Votre connexion s'est peut-être interrompue. Rechargez la page : ce que vous avez enregistré est conservé.";
+        }
+        if (voileSecours) {
+          voileSecours.href = location.href;
+          voileSecours.hidden = false;
+        }
+      }, 180000),
+    );
+  }
+
+  /*
+   * ─── Pas d'avertissement « quitter la page ? » ───────────────────────────
+   *
+   * La tentation était forte : le voile empêche de cliquer dans la page, pas
+   * de fermer l'onglet. Mais « beforeunload » se déclenche sur **toute**
+   * navigation sortante — y compris celle du formulaire lui-même, quand la
+   * réponse arrive. Le commerçant aurait donc vu la boîte « Quitter le site ? »
+   * à chaque enregistrement réussi.
+   *
+   * Un avertissement qui se trompe une fois sur deux apprend à cliquer
+   * « Quitter » sans lire, et ne protège alors plus de rien. Essayé, constaté
+   * dans un vrai navigateur, retiré.
+   *
+   * Le voile reste la protection : il occupe l'écran, verrouille le bouton et
+   * dit en toutes lettres de ne pas fermer la page.
+   */
+
+  /*
+   * Retour depuis l'historique : Safari et Firefox restituent la page telle
+   * qu'elle était, voile compris. Sans ce nettoyage, revenir en arrière après
+   * un enregistrement laisse un voile figé sur une page parfaitement
+   * utilisable.
+   */
+  addEventListener("pageshow", (evenement) => {
+    if (!evenement.persisted) return;
+    arreterMinuteries();
+    if (voile) voile.hidden = true;
+    for (const b of $$(document, "button[data-lent]")) {
+      b.disabled = false;
+      if (b.dataset.libelle) b.textContent = b.dataset.libelle;
+    }
+  });
+
   /* ------------------------------------------------------- confirmations */
 
   document.addEventListener("submit", (evenement) => {
@@ -32,9 +134,8 @@ export const ESPACE_JS = String.raw`
     }
 
     /*
-     * Le bouton dit ce qu'il fait et se verrouille. La mise en ligne prend une
-     * minute pendant laquelle rien ne bouge : sans cela on appuie une seconde
-     * fois, et deux publications du même site se chevauchent.
+     * Le bouton dit ce qu'il fait et se verrouille. Sans cela on appuie une
+     * seconde fois, et deux publications du même site se chevauchent.
      *
      * Verrouillé après l'envoi (setTimeout à 0) : désactiver un bouton avant
      * que le navigateur n'ait relevé le formulaire lui ferait oublier ce
@@ -42,10 +143,22 @@ export const ESPACE_JS = String.raw`
      */
     const bouton = $(evenement.target, "button[data-lent]");
     if (bouton && !evenement.defaultPrevented) {
+      // Le libellé d'origine est retenu pour pouvoir être rétabli au retour
+      // arrière.
+      if (!bouton.dataset.libelle) bouton.dataset.libelle = bouton.textContent.trim();
+      const annonce = bouton.dataset.lent;
       setTimeout(() => {
         bouton.disabled = true;
-        bouton.textContent = bouton.dataset.lent;
+        bouton.textContent = annonce;
       }, 0);
+      /*
+       * Le titre du voile reprend ce que le bouton annonce — « Mise à jour du
+       * site » — moins ses points de suspension : le rond qui tourne dit déjà
+       * que c'est en cours, et le caractère « … » se pose trop haut dans cette
+       * graisse pour être écrit en grand.
+       */
+      const titre = (annonce || "").replace(/\s*…\s*$/, "").trim();
+      attendre(titre || "Enregistrement en cours");
     }
   });
 

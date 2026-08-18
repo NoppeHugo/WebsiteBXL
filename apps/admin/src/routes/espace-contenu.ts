@@ -206,13 +206,13 @@ function pagePhotos(slug: string, flash?: { ton: "ok" | "ko"; texte: string }): 
         ? `<span class="photo__marque">Photo principale</span>`
         : `<form method="post" action="/espace/photos/couverture">
              <input type="hidden" name="nom" value="${escape(nom)}">
-             <button type="submit" class="second" data-lent="…">En couverture</button>
+             <button type="submit" class="second" data-lent="Mise à jour du site…">En couverture</button>
            </form>`
     }
     <form method="post" action="/espace/photos/retirer"
           data-confirmer="Retirer cette photo du site ?">
       <input type="hidden" name="nom" value="${escape(nom)}">
-      <button type="submit" class="danger" data-lent="…">
+      <button type="submit" class="danger" data-lent="Mise à jour du site…">
         ${dedans ? "Retirer du site" : "Supprimer"}
       </button>
     </form>
@@ -228,7 +228,7 @@ function pagePhotos(slug: string, flash?: { ton: "ok" | "ko"; texte: string }): 
   <div class="photo__pied">
     <form method="post" action="/espace/photos/ajouter">
       <input type="hidden" name="nom" value="${escape(f.name)}">
-      <button type="submit" data-lent="…">Mettre sur le site</button>
+      <button type="submit" data-lent="Mise à jour du site…">Mettre sur le site</button>
     </form>
   </div>
 </div>`)

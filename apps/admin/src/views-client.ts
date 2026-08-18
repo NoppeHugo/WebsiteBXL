@@ -259,6 +259,88 @@ button.danger { background: transparent; color: var(--ko); border: 1px solid var
 .depot b { display: block; font-size: 1.05rem; }
 .depot span { color: var(--doux); font-size: 0.9rem; }
 
+/* --- Voile d'attente ---------------------------------------------------- */
+/*
+ * Ce que voyait le commerçant jusqu'ici : un bouton grisé. La mise en ligne
+ * prend une minute pleine, pendant laquelle la page ne bouge plus — on croit
+ * que ça a planté, on revient en arrière, et l'enregistrement se perd à
+ * mi-chemin.
+ *
+ * Le voile occupe tout l'écran parce que c'est le seul moyen d'être vu sur un
+ * téléphone tenu à bout de bras, et parce qu'il empêche physiquement de
+ * réappuyer.
+ */
+.voile {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  /* Opaque à 92 % plutôt que translucide : sur un fond clair, un voile trop
+     transparent laisse lire la page et n'a plus l'air d'un état d'attente. */
+  background: color-mix(in srgb, var(--fond) 92%, transparent);
+  backdrop-filter: blur(3px);
+  animation: voile-entree 0.18s ease-out;
+}
+.voile[hidden] { display: none; }
+
+@keyframes voile-entree {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.voile__boite {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  text-align: center;
+  max-width: 22rem;
+}
+
+/*
+ * Un rond de 4,5 rem : assez grand pour se voir d'un coup d'œil, assez sobre
+ * pour ne pas ressembler à une alerte. L'arc clair tourne, le reste est un
+ * anneau fixe — c'est ce contraste qui donne le mouvement, pas la vitesse.
+ */
+.voile__rond {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  border: 5px solid var(--bord);
+  border-top-color: var(--accent);
+  animation: voile-tourne 0.9s linear infinite;
+  margin-bottom: 0.6rem;
+}
+
+@keyframes voile-tourne {
+  to { transform: rotate(360deg); }
+}
+
+.voile__titre { font-size: 1.2rem; }
+.voile__mot { color: var(--doux); font-size: 0.95rem; line-height: 1.5; }
+.voile__secours {
+  margin-top: 0.9rem;
+  font-weight: 600;
+}
+
+/*
+ * Mouvement réduit : une rotation continue peut provoquer des vertiges, et
+ * c'est un réglage que les gens activent parce qu'ils en ont besoin. Le rond
+ * respire au lieu de tourner — l'attente reste lisible, le mouvement disparaît.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .voile { animation: none; }
+  .voile__rond {
+    animation: voile-respire 1.6s ease-in-out infinite;
+    border-top-color: var(--accent);
+  }
+  @keyframes voile-respire {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+  }
+}
+
 /* --- Connexion ---------------------------------------------------------- */
 .connexion { max-width: 24rem; margin: 3rem auto; }
 .connexion h1 { text-align: center; }
@@ -294,6 +376,26 @@ ${
 ${options.retour ? `<a class="retour" href="${escape(options.retour)}">← Retour</a>` : ""}
 ${corps}
 </main>
+
+<!--
+  Voile d'attente.
+
+  Toujours présent, jamais visible tant qu'on n'enregistre pas. Écrit dans le
+  balisage plutôt que fabriqué par le script : il doit pouvoir s'afficher à
+  l'instant même où l'on appuie, sans attendre que quoi que ce soit se
+  construise.
+
+  « aria-live » et le rôle « alert » le font annoncer par les lecteurs d'écran :
+  quelqu'un qui n'y voit pas doit lui aussi savoir qu'il faut patienter.
+-->
+<div class="voile" data-voile hidden>
+  <div class="voile__boite" role="alert" aria-live="assertive">
+    <div class="voile__rond" aria-hidden="true"></div>
+    <b class="voile__titre" data-voile-titre>Enregistrement en cours</b>
+    <span class="voile__mot" data-voile-mot>Ne fermez pas cette page.</span>
+    <a class="voile__secours" href="" data-voile-secours hidden>Recharger la page</a>
+  </div>
+</div>
 ${options.script ? `<script src="/assets/espace.js" defer></script>` : ""}
 </body>
 </html>`;
