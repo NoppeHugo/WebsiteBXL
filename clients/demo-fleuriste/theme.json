@@ -1,6 +1,6 @@
 {
   "preset": {
-    "style": "serre",
+    "style": "naturemorte",
     "palette": "pivoine"
   },
   "palette": {
@@ -15,20 +15,20 @@
   "fonts": {
     "display": "Bitter, Georgia, 'Times New Roman', serif",
     "body": "Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-    "displayWeight": 400,
-    "displayTracking": "-0.015em",
+    "displayWeight": 500,
+    "displayTracking": "-0.02em",
     "displayTransform": "none",
     "uiTransform": "uppercase",
-    "uiTracking": "0.14em"
+    "uiTracking": "0.18em"
   },
   "layout": {
-    "hero": "split",
+    "hero": "fullbleed",
     "heroAlign": "start",
-    "gallery": "grid",
-    "nav": "solid"
+    "gallery": "mosaic",
+    "nav": "overlay"
   },
-  "radius": "soft",
-  "grain": false,
+  "radius": "none",
+  "grain": true,
   "effects": {
     "glass": false,
     "blur": 0,
