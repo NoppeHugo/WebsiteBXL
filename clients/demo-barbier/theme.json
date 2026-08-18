@@ -1,6 +1,6 @@
 {
   "preset": {
-    "style": "maison",
+    "style": "studio",
     "palette": "cuivre"
   },
   "palette": {
@@ -13,19 +13,19 @@
     "border": "#e6ddd4"
   },
   "fonts": {
-    "display": "Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-    "body": "Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-    "displayWeight": 400,
-    "displayTracking": "-0.03em",
-    "displayTransform": "none",
+    "display": "Oswald, 'Arial Narrow', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    "body": "Archivo, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    "displayWeight": 600,
+    "displayTracking": "0.005em",
+    "displayTransform": "uppercase",
     "uiTransform": "uppercase",
-    "uiTracking": "0.14em"
+    "uiTracking": "0.2em"
   },
   "layout": {
-    "hero": "split",
+    "hero": "fullbleed",
     "heroAlign": "start",
-    "gallery": "marquee",
-    "nav": "solid"
+    "gallery": "mosaic",
+    "nav": "overlay"
   },
   "radius": "none",
   "grain": false,
