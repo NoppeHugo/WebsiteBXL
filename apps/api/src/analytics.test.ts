@@ -70,6 +70,7 @@ describe("message mensuel", () => {
     calls: 1,
     directions: 1,
     bookings: 1,
+    orders: 1,
     contacts: 1,
     mobileShare: 70,
     topReferrers: [],
@@ -82,6 +83,21 @@ describe("message mensuel", () => {
     expect(text).toContain("1 demande de rendez-vous");
     expect(text).toContain("1 message via le formulaire");
     expect(text).not.toContain("1 demandes");
+  });
+
+  /*
+   * Un fleuriste ne prend pas de rendez-vous : sans cette ligne, son rapport
+   * mensuel annonçait zéro demande le mois où il en avait honoré trente — et
+   * c'est précisément le message censé le retenir.
+   */
+  it("compte les demandes de commande à part des rendez-vous", () => {
+    const text = reportText("Fleurs Van Aken", "août 2026", {
+      ...summary,
+      bookings: 0,
+      orders: 4,
+    });
+    expect(text).toContain("4 demandes de commande");
+    expect(text).not.toContain("rendez-vous");
   });
 
   it("accorde au pluriel", () => {
@@ -126,9 +142,11 @@ describe("message mensuel", () => {
       calls: 0,
       directions: 0,
       bookings: 0,
+      orders: 0,
       contacts: 0,
     });
     expect(text).not.toContain("itinéraire");
     expect(text).not.toContain("rendez-vous");
+    expect(text).not.toContain("commande");
   });
 });

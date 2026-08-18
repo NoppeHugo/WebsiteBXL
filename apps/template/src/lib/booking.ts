@@ -1,5 +1,7 @@
 import type { Language } from "@bxl/schema";
+import { metierDe } from "@bxl/schema/metiers";
 import { site, path } from "./client.ts";
+import { apiConfigured } from "./api.ts";
 
 export interface BookingTarget {
   /** Faut-il afficher un bouton de réservation ? */
@@ -12,13 +14,42 @@ export interface BookingTarget {
 }
 
 /**
- * Cible du bouton « Prendre rendez-vous », selon le mode déclaré par le client.
+ * Cible du bouton principal, selon ce que le commerce prend : un rendez-vous
+ * ou une commande.
  *
  * Tant que l'API de réservation n'existe pas (phases 3 et 4 du README), les
  * modes `request` et `live` réservent leur emplacement dans la page : le
  * template est prêt, seul le widget reste à brancher.
+ *
+ * Le métier passe avant `booking.mode`, et c'est ce qui manquait : un
+ * fleuriste déclare `mode: "none"` — il ne réserve rien — et le bouton
+ * disparaissait alors du menu et de la barre d'action, alors que sa page
+ * porte un formulaire de commande. Il fallait dérouler tout le site pour le
+ * trouver. Le bouton dit désormais « Commander » et descend à `#commande`.
+ *
+ * Une adresse externe explicite garde la priorité : elle a été saisie exprès,
+ * et c'est là que le commerce veut envoyer ses clients.
  */
 export function bookingTarget(lang: Language): BookingTarget {
+  if (
+    site.booking.mode !== "external" &&
+    metierDe(site.business.type).commande === "commande"
+  ) {
+    return {
+      /*
+       * Exactement la condition du formulaire lui-même (voir Commande.astro) :
+       * toute la section disparaît sans `tenantId` ou sans `PUBLIC_API_URL`,
+       * contrairement à la réservation dont le bloc reste, avec son téléphone.
+       * Un bouton qui pointe vers une ancre absente ne fait rien du tout, et
+       * c'est la panne qu'on ne remarque qu'en démonstration.
+       */
+      enabled: Boolean(site.tenantId) && apiConfigured,
+      href: `${path(lang)}#commande`,
+      external: false,
+      widget: false,
+    };
+  }
+
   switch (site.booking.mode) {
     case "external":
       return {

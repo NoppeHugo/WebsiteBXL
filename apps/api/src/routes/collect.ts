@@ -10,7 +10,10 @@ import {
 
 const Event = z.object({
   tenantId: z.string().uuid(),
-  kind: z.enum(["view", "call", "directions", "booking", "contact", "social"]),
+  // « order » : la demande de commande d'un fleuriste. Elle ne se confond pas
+  // avec « booking » — un rendez-vous prend un créneau, une commande ouvre une
+  // conversation — et le rapport mensuel les nomme séparément.
+  kind: z.enum(["view", "call", "directions", "booking", "contact", "social", "order"]),
   path: z.string().max(200).default("/"),
   lang: z.enum(["fr", "nl", "en"]).default("fr"),
   referrer: z.string().max(500).optional(),

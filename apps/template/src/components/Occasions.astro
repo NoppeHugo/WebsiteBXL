@@ -4,6 +4,7 @@ import { Image } from "astro:assets";
 import { site, t } from "../lib/client.ts";
 import { ui } from "../lib/i18n.ts";
 import { media } from "../lib/media.ts";
+import { bookingTarget } from "../lib/booking.ts";
 
 /**
  * Les occasions.
@@ -17,6 +18,11 @@ import { media } from "../lib/media.ts";
  * Le prix est toujours dit « à partir de ». Un fleuriste ne peut pas annoncer
  * un prix ferme : ce qu'il compose dépend de l'arrivage du matin, et un prix
  * ferme affiché serait tenu contre lui.
+ *
+ * Chaque carte descend vers le formulaire de commande **avec son occasion déjà
+ * choisie**. Sans cela, le client qui vient de cliquer sur « Mariage » devait
+ * rouvrir la même liste trois écrans plus bas, et rien ne disait que les deux
+ * parlaient de la même chose.
  */
 
 interface Props {
@@ -29,6 +35,33 @@ const prix = new Intl.NumberFormat(`${lang}-BE`, {
   currency: "EUR",
   maximumFractionDigits: 0,
 });
+
+// Le lien ne s'affiche que si le formulaire est réellement sur la page.
+const commande = bookingTarget(lang);
+
+/*
+ * Report du choix sur le formulaire.
+ *
+ * Le rapprochement se fait sur le libellé traduit, qui est aussi la valeur des
+ * options — c'est ce que le formulaire envoie au commerçant. Une occasion qui
+ * ne s'y retrouve pas laisse simplement le choix vide : le client corrige,
+ * plutôt que de partir avec « Mariage » alors qu'il avait cliqué « Naissance ».
+ */
+const prefillScript = `(function(){
+  document.addEventListener("click", function (event) {
+    var lien = event.target.closest && event.target.closest("[data-occasion]");
+    if (!lien) return;
+    var champ = document.querySelector('.commande select[name="occasionName"]');
+    if (!champ) return;
+    var voulue = lien.getAttribute("data-occasion");
+    for (var i = 0; i < champ.options.length; i++) {
+      if (champ.options[i].value === voulue) {
+        champ.value = voulue;
+        break;
+      }
+    }
+  }, { passive: true });
+})();`;
 ---
 
 <section class="section" id="occasions">
@@ -60,6 +93,15 @@ const prix = new Intl.NumberFormat(`${lang}-BE`, {
                   {ui(lang, "from_price")} {prix.format(occasion.price)}
                 </p>
               )}
+              {commande.enabled && !commande.external && (
+                <a
+                  class="occasion__lien"
+                  href={commande.href}
+                  data-occasion={t(occasion.title, lang)}
+                >
+                  {ui(lang, "book")}
+                </a>
+              )}
             </div>
           </article>
         ))
@@ -67,3 +109,5 @@ const prix = new Intl.NumberFormat(`${lang}-BE`, {
     </div>
   </div>
 </section>
+
+{commande.enabled && !commande.external && <script is:inline set:html={prefillScript} />}

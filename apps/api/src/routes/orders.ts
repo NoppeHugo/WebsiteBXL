@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { OrderRequestInput, isAcceptableDate } from "@bxl/schema/booking";
 import { sql, findTenant } from "../db.ts";
 import { sendMail } from "../mail.ts";
-import { orderToBusiness } from "../templates.ts";
+import { orderToBusiness, orderToCustomer, type OrderMailData } from "../templates.ts";
 import { ok, rejected, returnTo } from "../respond.ts";
 
 /**
@@ -76,7 +76,7 @@ export function orderRoutes(app: FastifyInstance): void {
       returning id
     `;
 
-    const mail = orderToBusiness({
+    const donnees: OrderMailData = {
       businessName: tenant.business_name,
       name: input.name,
       email: input.email,
@@ -89,7 +89,9 @@ export function orderRoutes(app: FastifyInstance): void {
       card: input.card?.trim() || undefined,
       note: input.note?.trim() || undefined,
       locale: input.locale,
-    });
+    };
+
+    const mail = orderToBusiness(donnees);
 
     try {
       await sendMail({
@@ -107,6 +109,27 @@ export function orderRoutes(app: FastifyInstance): void {
       request.log.error(
         { err: error, orderId: row?.id, tenant: tenant.slug },
         "commande enregistrée mais non transmise au commerce",
+      );
+    }
+
+    /*
+     * Accusé de réception au client. Envoyé après celui du commerçant, et
+     * seulement consigné s'il échoue : ce qui ne doit jamais être perdu, c'est
+     * la commande côté commerce. Le client, lui, a déjà vu la confirmation à
+     * l'écran.
+     */
+    const accuse = orderToCustomer(donnees);
+    try {
+      await sendMail({
+        to: input.email,
+        replyTo: tenant.notify_email,
+        subject: accuse.subject,
+        text: accuse.text,
+      });
+    } catch (error) {
+      request.log.warn(
+        { err: error, orderId: row?.id, tenant: tenant.slug },
+        "accusé de réception non envoyé au client",
       );
     }
 

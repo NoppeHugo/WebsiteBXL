@@ -80,6 +80,8 @@ export interface MonthlySummary {
   calls: number;
   directions: number;
   bookings: number;
+  /** Demandes de commande — les fleuristes, là où les salons ont `bookings`. */
+  orders: number;
   contacts: number;
   mobileShare: number;
   topReferrers: Array<{ referrer: string; count: number }>;
@@ -100,6 +102,7 @@ export async function monthlySummary(
       calls: string;
       directions: string;
       bookings: string;
+      orders: string;
       contacts: string;
       mobile: string;
     }>
@@ -110,6 +113,7 @@ export async function monthlySummary(
       count(*) filter (where kind = 'call')        as calls,
       count(*) filter (where kind = 'directions')  as directions,
       count(*) filter (where kind = 'booking')     as bookings,
+      count(*) filter (where kind = 'order')       as orders,
       count(*) filter (where kind = 'contact')     as contacts,
       count(*) filter (where kind = 'view' and device = 'mobile') as mobile
     from page_events
@@ -139,6 +143,7 @@ export async function monthlySummary(
     calls: Number(totals?.calls ?? 0),
     directions: Number(totals?.directions ?? 0),
     bookings: Number(totals?.bookings ?? 0),
+    orders: Number(totals?.orders ?? 0),
     contacts: Number(totals?.contacts ?? 0),
     mobileShare: views === 0 ? 0 : Math.round((Number(totals?.mobile ?? 0) / views) * 100),
     topReferrers: referrers.map((r) => ({ referrer: r.referrer, count: Number(r.count) })),
@@ -190,6 +195,9 @@ export function reportText(
   }
   if (s.bookings > 0) {
     lines.push(`• ${plural(s.bookings, "demande")} de rendez-vous`);
+  }
+  if (s.orders > 0) {
+    lines.push(`• ${plural(s.orders, "demande")} de commande`);
   }
   if (s.contacts > 0) {
     lines.push(`• ${plural(s.contacts, "message")} via le formulaire`);

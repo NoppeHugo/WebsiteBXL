@@ -2621,6 +2621,30 @@ body[data-glass="true"] .rdv {
   color: var(--c-text);
 }
 
+/*
+ * Le lien vers le formulaire, avec l'occasion déjà choisie. Souligné plutôt que
+ * mis en bouton : trois ou six boutons pleins dans une grille de photos se
+ * disputent l'attention, et c'est la photo qui doit la garder.
+ */
+.occasion__lien {
+  align-self: start;
+  margin-top: 0.35rem;
+  font-size: var(--step--1);
+  letter-spacing: var(--ui-tracking);
+  text-transform: var(--ui-transform);
+  color: var(--c-text);
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--c-border);
+  transition: text-decoration-color 0.2s ease;
+}
+
+.occasion__lien:hover,
+.occasion__lien:focus-visible {
+  text-decoration-color: currentColor;
+}
+
 /* --- Deuil --------------------------------------------------------------- */
 /*
  * Le seul endroit du site où l'on ne cherche pas à séduire. Fond de surface,

@@ -143,7 +143,7 @@ export function contactToBusiness(data: {
  * l'écrira à la main : une reformulation « propre » de notre part se
  * retrouverait sur la carte, et ce n'est pas notre texte.
  */
-export function orderToBusiness(data: {
+export interface OrderMailData {
   businessName: string;
   name: string;
   email: string;
@@ -155,15 +155,33 @@ export function orderToBusiness(data: {
   address?: string;
   card?: string;
   note?: string;
-  locale: string;
-}): { subject: string; text: string } {
-  const quand = data.wantedDate
-    ? new Date(`${data.wantedDate}T12:00:00`).toLocaleDateString("fr-BE", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-      })
-    : "dès que possible";
+  locale: Language;
+}
+
+/**
+ * « samedi 12 septembre », dans la langue voulue, ou la formule d'attente
+ * quand aucune date n'a été donnée — une commande sans date reste une
+ * commande, et « (vide) » dans un courriel fait douter de tout le reste.
+ */
+function orderDate(wantedDate: string | undefined, lang: Language): string {
+  const asap: Record<Language, string> = {
+    fr: "dès que possible",
+    nl: "zo snel mogelijk",
+    en: "as soon as possible",
+  };
+  if (!wantedDate) return asap[lang];
+  return new Date(`${wantedDate}T12:00:00`).toLocaleDateString(`${lang}-BE`, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+}
+
+export function orderToBusiness(data: OrderMailData): {
+  subject: string;
+  text: string;
+} {
+  const quand = orderDate(data.wantedDate, "fr");
 
   const lignes = [
     `Nouvelle demande de commande pour ${data.businessName}.`,
@@ -202,4 +220,107 @@ export function orderToBusiness(data: {
     subject: `Demande de commande — ${quand} — ${data.name}`,
     text: lignes.join("\n"),
   };
+}
+
+/**
+ * Accusé de réception au client qui commande.
+ *
+ * Il manquait, alors que la demande de rendez-vous en avait un depuis le début.
+ * Quelqu'un venait de confier un budget, une adresse et le mot à écrire sur la
+ * carte — c'est-à-dire ce à quoi il tient le plus — et repartait sans la
+ * moindre trace écrite.
+ *
+ * Le mot de la carte lui est relu tel qu'il l'a écrit : c'est le seul moment où
+ * une faute de frappe peut encore être corrigée avant qu'elle ne se retrouve
+ * sur une photo de famille.
+ *
+ * Le message répète deux choses, parce que ce sont les deux malentendus qui
+ * coûteraient cher : rien n'a été payé, et rien n'est encore confirmé.
+ */
+export function orderToCustomer(data: OrderMailData): {
+  subject: string;
+  text: string;
+} {
+  const quand = orderDate(data.wantedDate, data.locale);
+
+  const recapitulatif: Record<Language, string[]> = {
+    fr: [
+      `Pour : ${quand}`,
+      data.mode === "delivery"
+        ? `Livraison : ${data.address ?? ""}`
+        : "À retirer en boutique",
+      ...(data.occasion ? [`Occasion : ${data.occasion}`] : []),
+      ...(data.budget !== undefined ? [`Budget indiqué : ${data.budget} €`] : []),
+    ],
+    nl: [
+      `Voor: ${quand}`,
+      data.mode === "delivery"
+        ? `Levering: ${data.address ?? ""}`
+        : "Af te halen in de winkel",
+      ...(data.occasion ? [`Gelegenheid: ${data.occasion}`] : []),
+      ...(data.budget !== undefined ? [`Opgegeven budget: ${data.budget} €`] : []),
+    ],
+    en: [
+      `For: ${quand}`,
+      data.mode === "delivery"
+        ? `Delivery: ${data.address ?? ""}`
+        : "To collect in the shop",
+      ...(data.occasion ? [`Occasion: ${data.occasion}`] : []),
+      ...(data.budget !== undefined ? [`Budget given: ${data.budget} €`] : []),
+    ],
+  };
+
+  const carte: Record<Language, string[]> = {
+    fr: ["", "Mot pour la carte, tel que nous l'avons reçu :", `« ${data.card} »`],
+    nl: ["", "Boodschap voor het kaartje, zoals ontvangen:", `« ${data.card} »`],
+    en: ["", "Message for the card, exactly as received:", `“${data.card}”`],
+  };
+
+  const corps: Record<Language, string[]> = {
+    fr: [
+      `Bonjour ${data.name},`,
+      "",
+      `Nous avons bien reçu votre demande de commande chez ${data.businessName} :`,
+      ...recapitulatif.fr,
+      ...(data.card ? carte.fr : []),
+      "",
+      "Rien n'a été payé et rien n'est encore confirmé : le fleuriste vous",
+      "recontacte pour convenir de ce qu'il peut composer avec les fleurs du",
+      "moment.",
+      "",
+      "À bientôt.",
+    ],
+    nl: [
+      `Beste ${data.name},`,
+      "",
+      `We hebben uw bestelaanvraag bij ${data.businessName} goed ontvangen:`,
+      ...recapitulatif.nl,
+      ...(data.card ? carte.nl : []),
+      "",
+      "Er is niets betaald en niets is al bevestigd: de bloemist neemt contact",
+      "met u op om te bespreken wat hij met de bloemen van het moment kan maken.",
+      "",
+      "Tot binnenkort.",
+    ],
+    en: [
+      `Hello ${data.name},`,
+      "",
+      `We have received your order request at ${data.businessName}:`,
+      ...recapitulatif.en,
+      ...(data.card ? carte.en : []),
+      "",
+      "Nothing has been paid and nothing is confirmed yet — the florist will",
+      "get back to you to agree on what can be made with the flowers of the day.",
+      "",
+      "See you soon.",
+    ],
+  };
+
+  const sujets: Record<Language, string> = {
+    fr: `Votre demande de commande — ${data.businessName}`,
+    nl: `Uw bestelaanvraag — ${data.businessName}`,
+    en: `Your order request — ${data.businessName}`,
+  };
+
+  return { subject: sujets[data.locale], text: corps[data.locale].join("\n") };
 }

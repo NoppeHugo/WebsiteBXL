@@ -108,7 +108,8 @@ const collectUrl = site.tenantId ? apiEndpoint("/v1/collect") : undefined;
  * Elle existe pour une raison commerciale précise : le rapport mensuel envoyé
  * au commerçant lui montre ce qu'il paie, et c'est la meilleure défense contre
  * la résiliation. Les événements suivis sont ceux qui le convainquent — appels,
- * itinéraires, demandes de rendez-vous — pas des indicateurs abstraits.
+ * itinéraires, demandes de rendez-vous, demandes de commande — pas des
+ * indicateurs abstraits.
  *
  * Aucune donnée n'est lue sur l'appareil du visiteur : ni cookie, ni stockage
  * local. D'où l'absence de bandeau de consentement, ce qui préserve aussi le
@@ -147,13 +148,17 @@ const collectScript = `(function(){
     if (href.indexOf("tel:") === 0) return send("call");
     if (href.indexOf("google.com/maps") !== -1 || href.indexOf("maps.app") !== -1) return send("directions");
     if (href.indexOf("#reservation") !== -1) return send("booking");
+    // Chez un fleuriste, le bouton principal descend vers « #commande ».
+    if (href.indexOf("#commande") !== -1) return send("order");
     if (link.rel && link.rel.indexOf("me") !== -1) return send("social");
   }, { passive: true });
 
-  // Envois de formulaire : la demande de rendez-vous et le message de contact.
+  // Envois de formulaire : demande de rendez-vous, demande de commande, et
+  // message de contact.
   document.addEventListener("submit", function (event) {
     var action = (event.target.getAttribute("action") || "");
     if (action.indexOf("/v1/booking-requests") !== -1) return send("booking");
+    if (action.indexOf("/v1/orders") !== -1) return send("order");
     if (action.indexOf("/v1/contact") !== -1) return send("contact");
   }, { passive: true });
 })();`;
