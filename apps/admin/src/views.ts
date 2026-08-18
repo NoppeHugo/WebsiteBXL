@@ -287,6 +287,14 @@ details.avance > div { padding: 0 1.2rem 1.2rem; }
    l'ancienne n'est plus qu'un souvenir, et deux cadres se disputeraient l'œil. */
 .choix.est-actif:not(:has(input:checked)) { border-color: var(--border); box-shadow: none; }
 
+/* Le partage de coordonnées entre deux clients ne casse rien : il envoie
+   simplement le courrier chez le voisin. Il faut donc que ça se voie. */
+.alerte-partage {
+  display: block; margin-top: 0.5rem;
+  color: var(--ko); font-weight: 500;
+}
+.alerte-partage a { color: inherit; }
+
 .marque {
   font-size: 0.68rem; font-weight: 400; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--ok);

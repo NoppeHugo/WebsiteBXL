@@ -71,11 +71,23 @@ if [[ -z "$DOMAINE" ]]; then
 fi
 
 echo "▸ 1/4  visuels de remplacement"
-# Toujours régénérés : ce script peut être relancé après un échec, et des
-# visuels à moitié écrits empêcheraient la construction. Ils sont abstraits et
-# ne remplacent aucune photo réelle — une photo envoyée depuis la console porte
-# un autre nom, ou écrase volontairement celle-ci.
-pnpm placeholders "$SLUG" 2>&1 | sed 's/^/    /'
+#
+# Générés seulement si le client n'a aucune image.
+#
+# Ils portent des noms fixes — hero.jpg, galerie-1.jpg… — et les régénérer
+# écraserait des photos existantes portant les mêmes noms. C'est précisément le
+# cas d'un site **dupliqué**, qui arrive avec la photothèque de son modèle : la
+# première mise en ligne aurait remplacé les vraies photos par des dégradés,
+# sans un mot.
+#
+# Un client créé de zéro a un dossier `media` vide : il les reçoit bien.
+if [[ -z "$(find "clients/$SLUG/media" -maxdepth 1 -type f \
+	\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
+	-print -quit 2>/dev/null)" ]]; then
+	pnpm placeholders "$SLUG" 2>&1 | sed 's/^/    /'
+else
+	echo "    le client a déjà ses images — rien à générer"
+fi
 
 git add "clients/$SLUG"
 if ! git diff --cached --quiet; then

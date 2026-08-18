@@ -822,6 +822,83 @@ pour tous les métiers qui ne sont pas la coiffure.
 
 ---
 
+## 7 quinquies. Dupliquer un site
+
+Préparer un site pour un nouveau client obligeait à repartir d'un squelette
+vide, alors qu'on a souvent sous la main un site abouti du même métier — mêmes
+sections, même ton, mêmes prestations à un prix près.
+
+Fiche du client → **Dupliquer ce site →**. On donne le nom du nouveau
+commerce, et l'on arrive directement dans l'éditeur de la copie.
+
+### 7 quinquies.1 La copie reste hors ligne
+
+Elle naît en **brouillon** : aucune adresse publique, aucun bloc nginx, aucun
+certificat, rien de déployé. C'est ce qui laisse tout le temps de corriger ce
+qui désigne encore l'autre commerce.
+
+Le site ne devient public qu'au moment où l'on appuie sur **Mettre en ligne**.
+Ce bouton fait alors trois choses d'un coup, pour un site jamais publié :
+il passe l'état en « En préparation », pose le bloc nginx et demande le
+certificat, puis construit et déploie.
+
+### 7 quinquies.2 Ce qui est repris, et ce qui ne l'est pas
+
+| Repris | Pas repris |
+| --- | --- |
+| Textes, horaires, prestations | Les avis |
+| Photos, équipe, déroulé | Les mentions légales |
+| Sections du métier (occasions, deuil, livraison, abonnements) | Les liens Google et les réseaux sociaux |
+| Le thème — style et couleurs | Les alias de domaine |
+
+Les trois familles écartées appartiennent au commerce d'origine, et aucune
+n'échouerait bruyamment si on la recopiait :
+
+- **les avis** : les reprendre publierait des témoignages qu'aucun client de ce
+  commerce-ci n'a écrits — ce n'est pas une négligence, c'est un faux ;
+- **les mentions légales** portent le numéro d'entreprise et la TVA d'une autre
+  société ;
+- **les liens Google** partent dans les données structurées : déclarer le
+  `placeId` du voisin, c'est dire à Google qu'on *est* le voisin.
+
+L'**identifiant technique du commerce** (`tenantId`) est régénéré. C'est la
+règle non négociable : c'est la clé sous laquelle l'API range les rendez-vous,
+les messages et les commandes. Partagée entre deux sites, elle ne produit
+aucune erreur — les deux salons reçoivent simplement le courrier l'un de
+l'autre.
+
+### 7 quinquies.3 Le téléphone et l'e-mail, eux, sont recopiés
+
+Volontairement : ils servent de repère à la saisie, et un formulaire de contact
+sans destinataire est refusé plus loin dans la chaîne.
+
+Mais ils désignent encore l'autre commerce, et **la fiche du nouveau site le
+dit en rouge** tant qu'ils n'ont pas changé :
+
+> ⚠ Ce site utilise encore le téléphone et l'e-mail de Fleurs Van Aken.
+
+La comparaison porte sur la valeur du numéro, pas sur son écriture :
+`+32 2 111 11 11` et `02/111.11.11` sont reconnus comme le même poste. Le cas
+arrive tout seul, en recopiant le numéro depuis une fiche Google qui l'écrit
+dans l'autre format.
+
+Le contrôle ne tourne que tant que le site est en brouillon ou en préparation —
+c'est là que la correction est encore gratuite.
+
+### 7 quinquies.4 Les photos
+
+Copiées, elles aussi : la galerie et l'accueil désignent des fichiers par leur
+nom, et sans elles le site ne se construirait pas. Ce sont les photos de
+l'autre commerce, et c'est assumé — la copie sert de base, et elle reste hors
+ligne jusqu'à ce qu'elles soient remplacées.
+
+Conséquence pour le script d'installation : `scripts/nouveau-site.sh` ne
+génère plus les visuels de remplacement que si le client n'a **aucune** image.
+Ils portent des noms fixes — `hero.jpg`, `galerie-1.jpg`… — et les régénérer
+aurait écrasé les photos copiées à la première mise en ligne, sans un mot.
+
+---
+
 ## 8. Sauvegardes
 
 Les sites se reconstruisent depuis git ; **la base, non**. Elle contient les
@@ -970,3 +1047,7 @@ mise en ligne rapide.
 | 2026-08-18 | — | Défaut trouvé en pilotant l'espace commerçant : la date d'une commande s'affichait « Fri Aug 21 ». Le pilote Postgres rend les colonnes `date` sous forme d'objets, et `String(date).slice(0, 10)` produisait une chaîne que `new Date()` refuse — la fonction rendait donc cette bouillie telle quelle au commerçant. | `dateLisible()` accepte les deux formes. Trouvé parce que la page a été ouverte pour de vrai, pas relue. |
 | 2026-08-18 | 7 ter | Le commerçant n'avait qu'un bouton grisé pour toute confirmation pendant la minute que dure une mise en ligne. On croit que ça a planté, on revient en arrière, et l'enregistrement se perd à mi-chemin. | Voile plein écran : grand rond qui tourne, ce que fait l'action, « ne fermez pas cette page ». Il n'apparaît qu'après 400 ms — les actions instantanées reviennent avant, et un voile qui clignote inquiète au lieu de rassurer. À quinze secondes il dit que c'est normal ; à trois minutes il admet que quelque chose ne va pas et rend la main avec un lien de rechargement, plutôt que d'enfermer. Il respire au lieu de tourner en « mouvement réduit ». |
 | 2026-08-18 | 7 ter | ⚠️ **L'avertissement « Quitter le site ? » a été essayé puis retiré.** `beforeunload` se déclenche sur **toute** navigation sortante — y compris celle du formulaire lui-même quand la réponse arrive. Le commerçant aurait donc vu la boîte de dialogue à **chaque enregistrement réussi**. | Constaté dans un vrai navigateur : le test automatisé s'est bloqué sur la boîte, ce qui a révélé le défaut avant la livraison. Un avertissement qui se trompe une fois sur deux apprend à cliquer « Quitter » sans lire, et ne protège alors plus de rien. Le voile suffit : il occupe l'écran et verrouille le bouton. |
+| 2026-08-18 | 7 quinquies | **Duplication d'un site.** Préparer un client obligeait à repartir d'un squelette vide alors qu'on a souvent sous la main un site abouti du même métier. La copie naît en brouillon — aucune adresse, aucun certificat, rien de déployé — et ne devient publique qu'à la mise en ligne, ce qui laisse le temps de corriger tout ce qui désigne encore l'autre commerce. | Le `tenantId` est régénéré : c'est la clé sous laquelle l'API range rendez-vous, messages et commandes, et deux sites qui la partagent reçoivent le courrier l'un de l'autre sans qu'aucune erreur ne le signale. Avis, mentions légales, liens Google et réseaux sociaux sont écartés — recopier des avis publierait des témoignages que personne n'a écrits pour ce commerce. Ce qui est retiré est annoncé à l'arrivée, jamais en silence. |
+| 2026-08-18 | 7 quinquies | Le téléphone et l'e-mail **sont** recopiés, pour servir de repère à la saisie — mais ils désignent encore l'autre commerce, et les deux valeurs sont parfaitement valides : rien ne le signalerait. | La fiche compare les coordonnées avec celles des autres clients tant que le site n'est pas en ligne, et le dit en rouge. Comparaison sur la valeur du numéro et non sur son écriture : `+32 2 111 11 11` et `02/111.11.11` sont le même poste, et le cas arrive en recopiant depuis une fiche Google. |
+| 2026-08-18 | 7 quinquies | « Mettre en ligne » ne faisait que construire et déployer. Sur un site jamais publié — donc sur tout doublon — il aurait déposé des fichiers que rien ne sert : pas de bloc nginx, pas de certificat, un site introuvable. | Le bouton installe complètement quand le site n'a jamais été mis en ligne, et se contente de publier ensuite. Il promeut aussi le brouillon en « En préparation » : c'est ce qu'il annonce, et refuser aurait obligé à changer un menu déroulant avant d'appuyer sur le bouton qui dit déjà ce qu'il fait. |
+| 2026-08-18 | — | ⚠️ Défaut évité : `scripts/nouveau-site.sh` régénérait toujours les visuels de remplacement, aux noms fixes `hero.jpg` et `galerie-*.jpg`. La première mise en ligne d'un site dupliqué aurait donc remplacé ses photos par des dégradés abstraits, sans un mot. | Les visuels ne sont générés que si le dossier `media` est vide. Un client créé de zéro les reçoit ; un doublon garde les siens. |

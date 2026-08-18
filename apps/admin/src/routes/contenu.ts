@@ -151,16 +151,24 @@ export function contenuRoutes(app: FastifyInstance): void {
 
   app.get<{
     Params: { slug: string };
-    Querystring: { ok?: string; erreur?: string };
+    Querystring: { ok?: string; erreur?: string; info?: string };
   }>("/clients/:slug/contenu", async (request, reply) => {
     // Le dépôt est rafraîchi avant affichage : éditer une version périmée
     // produirait un conflit au moment de pousser.
     await pull();
 
-    const { ok, erreur } = request.query;
+    const { ok, erreur, info } = request.query;
+    /*
+     * `info` porte une phrase entière, `ok` le nom d'une section. Deux
+     * paramètres plutôt qu'un : arriver ici après une duplication n'a rien à
+     * voir avec un enregistrement, et la phrase « … enregistré. Utilisez
+     * Mettre en ligne » collée derrière n'aurait aucun sens.
+     */
     const message = erreur
       ? { kind: "error" as const, text: erreur }
-      : ok
+      : info
+        ? { kind: "ok" as const, text: info }
+        : ok
         ? {
             kind: "ok" as const,
             text: `${TITRES[ok] ?? ok} enregistré. Utilisez « Mettre en ligne » pour l'appliquer au site public.`,

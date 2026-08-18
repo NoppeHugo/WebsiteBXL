@@ -10,6 +10,7 @@ import { utilisateurDe } from "./acces.ts";
 import { authRoutes, SESSION_COOKIE } from "./routes/auth.ts";
 import { clientRoutes } from "./routes/clients.ts";
 import { nouveauRoutes } from "./routes/nouveau.ts";
+import { dupliquerRoutes } from "./routes/dupliquer.ts";
 import { contenuRoutes } from "./routes/contenu.ts";
 import { apparenceRoutes } from "./routes/apparence.ts";
 import { requestRoutes } from "./routes/requests.ts";
@@ -166,6 +167,7 @@ authRoutes(app);
  * quel que soit l'ordre — mais l'ordre de lecture, lui, dit l'intention.
  */
 nouveauRoutes(app);
+dupliquerRoutes(app);
 clientRoutes(app);
 contenuRoutes(app);
 apparenceRoutes(app);

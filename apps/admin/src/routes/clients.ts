@@ -1,10 +1,20 @@
 import { createReadStream } from "node:fs";
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import { clients, client, readSiteRaw, writeSite, commitAndPush, publish, pull } from "../repo.ts";
+import {
+  clients,
+  client,
+  readSiteRaw,
+  writeSite,
+  commitAndPush,
+  publish,
+  installerSite,
+  pull,
+} from "../repo.ts";
 import { config } from "../config.ts";
 import { logPublish, etatPublication } from "../db.ts";
 import { layout, flash, escape, STATUTS, statutLisible, depuis } from "../views.ts";
 import { resteAFaire } from "../nouveau.ts";
+import { coordonneesPartagees } from "../duplication.ts";
 import { projeterCommerce } from "../tenant.ts";
 import {
   listMedia,
@@ -70,7 +80,51 @@ async function editPage(
    * dans son apparence ne rappelle qu'il est invisible pour Google — sans
    * cette liste, il y reste des semaines.
    */
-  const manque = site.status === "preview" ? resteAFaire(site) : [];
+  const enPreparation = site.status === "preview" || site.status === "draft";
+  const manque = enPreparation ? resteAFaire(site) : [];
+
+  /*
+   * Coordonnées encore partagées avec un autre client : le danger propre à la
+   * duplication. Le téléphone et l'e-mail sont recopiés volontairement, et rien
+   * ne signale qu'ils désignent toujours l'autre commerce — les deux valeurs
+   * sont parfaitement valides.
+   *
+   * Vérifié seulement tant que le site n'est pas en ligne : c'est là que la
+   * correction est encore gratuite, et cela évite de relire trente fichiers à
+   * chaque ouverture de la fiche d'un client établi.
+   */
+  const partagees = enPreparation
+    ? coordonneesPartagees(
+        site,
+        clients()
+          .filter((autre) => autre !== slug)
+          .flatMap((autre) => {
+            try {
+              const s = client(autre).site;
+              return [
+                {
+                  slug: autre,
+                  nom: s.business.name,
+                  phone: s.business.phone,
+                  email: s.business.email,
+                },
+              ];
+            } catch {
+              // Un client au fichier illisible ne doit pas empêcher d'ouvrir
+              // la fiche d'un autre.
+              return [];
+            }
+          }),
+      )
+    : [];
+
+  const alerteCoordonnees =
+    partagees.length > 0
+      ? `<span class="alerte-partage">⚠ Ce site utilise encore
+         ${partagees.map((p) => escape(p)).join(", ")}. À corriger dans
+         <a href="/clients/${escape(slug)}/contenu#presentation">Le commerce</a>
+         avant la mise en ligne : les demandes de contact partiraient chez lui.</span>`
+      : "";
 
   const bandeau =
     site.status === "preview"
@@ -84,6 +138,7 @@ async function editPage(
              ${manque.map((m) => escape(m)).join(", ")}.</span>`
           : `<span>Tout est renseigné : passez l'état sur « ${escape(STATUTS.live.nom)} » ci-dessous.</span>`
       }
+      ${alerteCoordonnees}
     </div>
     <form method="post" action="/clients/${escape(slug)}/publish">
       <button type="submit">Mettre en ligne</button>
@@ -94,6 +149,12 @@ async function editPage(
     <div class="etat__texte">
       <b>${escape(statutLisible(site.status))}</b>
       <span>${escape(STATUTS[site.status as keyof typeof STATUTS]?.aide ?? "")}</span>
+      ${
+        manque.length > 0
+          ? `<span>Reste à faire : ${manque.map((m) => escape(m)).join(", ")}.</span>`
+          : ""
+      }
+      ${alerteCoordonnees}
     </div>
   </div>`
       : etat.enAttente
@@ -132,6 +193,7 @@ ${bandeau}
 <p class="raccourci">
   <a class="btn-lien" href="/clients/${escape(slug)}/contenu">Modifier le contenu →</a>
   <a class="btn-lien btn-lien--second" href="/clients/${escape(slug)}/apparence">Changer l'apparence →</a>
+  <a class="btn-lien btn-lien--second" href="/clients/${escape(slug)}/dupliquer">Dupliquer ce site →</a>
 </p>
 <p class="aide" style="margin:-1.2rem 0 1.8rem">
   Le contenu, ce sont les textes et les photos. L'apparence, le style et les
@@ -174,9 +236,15 @@ ${bandeau}
     <button type="submit" class="secondary">Mettre en ligne</button>
   </div>
   <p class="aide">
-    Reconstruit le site avec le contenu enregistré et le déploie. Quelques
-    dizaines de secondes. Refusé tant que l'état n'est ni
-    « ${STATUTS.preview.nom} » ni « ${STATUTS.live.nom} ».
+    Reconstruit le site avec le contenu enregistré et le déploie. Comptez une
+    minute. ${
+      site.status === "draft"
+        ? `Ce site est en brouillon : la mise en ligne lui posera son adresse
+           publique et son certificat, et passera son état en
+           « ${STATUTS.preview.nom} » — donc visible à son adresse, mais
+           toujours refusé à Google.`
+        : `Refusé tant que l'état est « ${STATUTS.suspended.nom} ».`
+    }
   </p>
 </form>
 
@@ -427,16 +495,57 @@ export function clientRoutes(app: FastifyInstance): void {
     "/clients/:slug/publish",
     async (request, reply) => {
       const { slug } = request.params;
-      const result = await publish(slug);
+      const etat = await etatPublication(slug);
+
+      /*
+       * Un site en brouillon qu'on demande explicitement à mettre en ligne
+       * passe « en préparation ».
+       *
+       * C'est ce que dit le bouton, et c'est le cas d'un site dupliqué : il
+       * naît en brouillon pour rester hors ligne le temps qu'on corrige tout
+       * ce qui désignait encore l'autre commerce. Refuser ici obligerait à
+       * changer un menu déroulant avant d'appuyer sur le bouton qui dit déjà
+       * ce qu'il fait.
+       */
+      let promu = false;
+      const site = client(slug).site;
+      if (site.status === "draft") {
+        const raw = readSiteRaw(slug);
+        raw.status = "preview";
+        const ecrit = writeSite(slug, raw);
+        if (!ecrit.ok) {
+          return reply.code(400).type("text/html").send(
+            await editPage(slug, {
+              kind: "error",
+              text: `Impossible de passer le site en préparation : ${ecrit.errors.join(" · ")}`,
+            }),
+          );
+        }
+        await commitAndPush(slug, `mise en ligne(${slug}) : passage en préparation`);
+        promu = true;
+      }
+
+      /*
+       * Jamais mis en ligne : il lui manque son bloc nginx et son certificat,
+       * que seule l'installation complète pose. Publier ne ferait que déposer
+       * des fichiers que rien ne sert — un site construit, déployé, et
+       * pourtant introuvable.
+       *
+       * Le script hôte est sûr à relancer : il ne réécrit pas un bloc existant
+       * et ne régénère les visuels que si le client n'a aucune image.
+       */
+      const premiereFois = etat.derniereMiseEnLigne === null;
+      const result = premiereFois ? await installerSite(slug) : await publish(slug);
       await logPublish(adminId(request), slug, "publish", result.output.slice(0, 1000));
 
+      const dit = result.ok
+        ? premiereFois
+          ? `Site installé et en ligne${promu ? " — état passé en « En préparation »" : ""}. Il reste invisible pour Google jusqu'à ce que vous le passiez en « En ligne ».`
+          : "Site publié."
+        : result.output.slice(-600) || "échec du déploiement";
+
       return reply.type("text/html").send(
-        await editPage(slug, {
-          kind: result.ok ? "ok" : "error",
-          text: result.ok
-            ? "Site publié."
-            : result.output.slice(-600) || "échec du déploiement",
-        }),
+        await editPage(slug, { kind: result.ok ? "ok" : "error", text: dit }),
       );
     },
   );
