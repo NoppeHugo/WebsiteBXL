@@ -1,0 +1,343 @@
+{
+  "slug": "demo-cafe",
+  "status": "preview",
+  "plan": "essentiel",
+  "demo": true,
+  "domain": "cafe.hairbxl.be",
+  "aliases": [],
+  "languages": {
+    "default": "fr",
+    "available": [
+      "fr",
+      "nl"
+    ]
+  },
+  "business": {
+    "name": "Rue Verte Coffee",
+    "type": "cafe",
+    "tagline": {
+      "fr": "Torréfaction belge, pâtisseries du jour",
+      "nl": "Belgische branding, dagverse gebakjes"
+    },
+    "description": {
+      "fr": "Un comptoir de sept mètres, une machine à trois groupes et deux torréfacteurs belges qu'on change tous les mois. On sert le café qu'on aime boire : filtre le matin, espresso toute la journée, et ce que la pâtissière d'à côté nous descend vers dix heures.",
+      "nl": "Een toog van zeven meter, een machine met drie groepen en twee Belgische branderijen die we elke maand wisselen. Wij schenken de koffie die we zelf graag drinken."
+    },
+    "address": {
+      "street": "Rue Verte 84",
+      "postalCode": "1210",
+      "city": "Saint-Josse-ten-Noode",
+      "country": "BE"
+    },
+    "geo": {
+      "lat": 50.8579,
+      "lng": 4.3672
+    },
+    "phone": "+32 2 217 08 45",
+    "email": "bonjour@rueverte.coffee",
+    "social": {
+      "instagram": "https://instagram.com/rueverte.coffee"
+    }
+  },
+  "hero": {
+    "image": "hero.jpg",
+    "headline": {
+      "fr": "Rue Verte Coffee",
+      "nl": "Rue Verte Coffee"
+    },
+    "subline": {
+      "fr": "Café de spécialité à Saint-Josse — ouvert dès 7 h 30",
+      "nl": "Specialty coffee in Sint-Joost — open vanaf 7.30 uur"
+    }
+  },
+  "hours": {
+    "monday": [
+      {
+        "open": "07:30",
+        "close": "17:00"
+      }
+    ],
+    "tuesday": [
+      {
+        "open": "07:30",
+        "close": "17:00"
+      }
+    ],
+    "wednesday": [
+      {
+        "open": "07:30",
+        "close": "17:00"
+      }
+    ],
+    "thursday": [
+      {
+        "open": "07:30",
+        "close": "17:00"
+      }
+    ],
+    "friday": [
+      {
+        "open": "07:30",
+        "close": "17:00"
+      }
+    ],
+    "saturday": [
+      {
+        "open": "09:00",
+        "close": "18:00"
+      }
+    ],
+    "sunday": [
+      {
+        "open": "09:00",
+        "close": "16:00"
+      }
+    ]
+  },
+  "closures": [],
+  "menuNote": {
+    "fr": "Deux torréfacteurs par mois, écrits sur l'ardoise derrière le comptoir.",
+    "nl": "Twee branderijen per maand, op het bord achter de toog."
+  },
+  "menu": [
+    {
+      "id": "cafe",
+      "title": {
+        "fr": "Café",
+        "nl": "Koffie"
+      },
+      "items": [
+        {
+          "name": {
+            "fr": "Espresso",
+            "nl": "Espresso"
+          },
+          "price": 2.6,
+          "tags": []
+        },
+        {
+          "name": {
+            "fr": "Cortado",
+            "nl": "Cortado"
+          },
+          "price": 3.2,
+          "tags": []
+        },
+        {
+          "name": {
+            "fr": "Flat white",
+            "nl": "Flat white"
+          },
+          "price": 4.2,
+          "tags": []
+        },
+        {
+          "name": {
+            "fr": "Filtre V60",
+            "nl": "Filterkoffie V60"
+          },
+          "description": {
+            "fr": "Le grain du moment, servi en carafe.",
+            "nl": "De boon van het moment."
+          },
+          "price": 4.5,
+          "tags": []
+        },
+        {
+          "name": {
+            "fr": "Lait d'avoine",
+            "nl": "Haverdrank"
+          },
+          "description": {
+            "fr": "En supplément.",
+            "nl": "Supplement."
+          },
+          "price": 0.4,
+          "tags": [
+            "vegan"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "autres",
+      "title": {
+        "fr": "Thés & autres",
+        "nl": "Thee & andere"
+      },
+      "items": [
+        {
+          "name": {
+            "fr": "Thé en vrac",
+            "nl": "Losse thee"
+          },
+          "price": 3.5,
+          "tags": []
+        },
+        {
+          "name": {
+            "fr": "Chocolat chaud maison",
+            "nl": "Huisgemaakte warme chocolade"
+          },
+          "price": 4.2,
+          "tags": [
+            "maison"
+          ]
+        },
+        {
+          "name": {
+            "fr": "Limonade de saison",
+            "nl": "Seizoenslimonade"
+          },
+          "price": 3.8,
+          "tags": [
+            "vegan",
+            "maison"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manger",
+      "title": {
+        "fr": "À manger",
+        "nl": "Om te eten"
+      },
+      "note": {
+        "fr": "Livré chaque matin par la pâtisserie du coin. Quand c'est fini, c'est fini.",
+        "nl": "Elke ochtend geleverd door de patisserie om de hoek."
+      },
+      "items": [
+        {
+          "name": {
+            "fr": "Croissant au beurre",
+            "nl": "Boterkoffiekoek"
+          },
+          "price": 2.2,
+          "tags": [
+            "vegetarien"
+          ]
+        },
+        {
+          "name": {
+            "fr": "Banana bread",
+            "nl": "Banana bread"
+          },
+          "price": 4,
+          "tags": [
+            "vegetarien",
+            "maison"
+          ]
+        },
+        {
+          "name": {
+            "fr": "Tartine avocat, œuf poché",
+            "nl": "Toast avocado, gepocheerd ei"
+          },
+          "price": 11.5,
+          "tags": [
+            "vegetarien"
+          ]
+        },
+        {
+          "name": {
+            "fr": "Cookie sans gluten",
+            "nl": "Glutenvrije cookie"
+          },
+          "price": 3.5,
+          "tags": [
+            "vegetarien",
+            "sans-gluten",
+            "maison"
+          ]
+        }
+      ]
+    }
+  ],
+  "occasions": [],
+  "services": [],
+  "team": [
+    {
+      "name": "Lina Peeters",
+      "role": {
+        "fr": "Barista, fondatrice"
+      },
+      "photo": "equipe-1.jpg"
+    },
+    {
+      "name": "Tom Vandereyken",
+      "role": {
+        "fr": "Barista"
+      },
+      "photo": "equipe-2.jpg"
+    }
+  ],
+  "gallery": [
+    {
+      "src": "galerie-1.jpg",
+      "alt": {
+        "fr": "Le comptoir le matin"
+      }
+    },
+    {
+      "src": "galerie-2.jpg",
+      "alt": {
+        "fr": "La machine à trois groupes"
+      }
+    },
+    {
+      "src": "galerie-3.jpg",
+      "alt": {
+        "fr": "Filtre en préparation"
+      }
+    },
+    {
+      "src": "galerie-4.jpg",
+      "alt": {
+        "fr": "La salle, côté fenêtre"
+      }
+    },
+    {
+      "src": "galerie-5.jpg",
+      "alt": {
+        "fr": "Les pâtisseries du jour"
+      }
+    },
+    {
+      "src": "galerie-6.jpg",
+      "alt": {
+        "fr": "La devanture, rue Verte"
+      }
+    }
+  ],
+  "steps": [],
+  "reviews": [
+    {
+      "author": "Marie T.",
+      "rating": 5,
+      "text": {
+        "fr": "Le meilleur filtre de Bruxelles-Nord, et on peut y travailler sans qu'on vous regarde de travers."
+      },
+      "source": "google"
+    },
+    {
+      "author": "Youssef B.",
+      "rating": 5,
+      "text": {
+        "fr": "Ouvre à 7 h 30, ce qui sauve mes matins. Personnel adorable."
+      },
+      "source": "google"
+    }
+  ],
+  "booking": {
+    "mode": "none"
+  },
+  "seo": {},
+  "legal": {
+    "companyName": "Rue Verte Coffee SRL",
+    "legalForm": "SRL",
+    "registrationNumber": "0345.678.912",
+    "vatNumber": "BE0345.678.912"
+  },
+  "contact": {}
+}

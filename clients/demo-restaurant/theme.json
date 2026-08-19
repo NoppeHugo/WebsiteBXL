@@ -1,0 +1,38 @@
+{
+  "preset": {
+    "style": "comptoir",
+    "palette": "velours"
+  },
+  "palette": {
+    "bg": "#14100e",
+    "surface": "#221b17",
+    "text": "#f4efe9",
+    "muted": "#a1938a",
+    "accent": "#c9a227",
+    "accentText": "#14100e",
+    "border": "#332822"
+  },
+  "fonts": {
+    "display": "Bitter, Georgia, 'Times New Roman', serif",
+    "body": "Archivo, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    "displayWeight": 600,
+    "displayTracking": "-0.015em",
+    "displayTransform": "none",
+    "uiTransform": "uppercase",
+    "uiTracking": "0.16em"
+  },
+  "layout": {
+    "hero": "fullbleed",
+    "heroAlign": "center",
+    "gallery": "strip",
+    "nav": "overlay"
+  },
+  "radius": "none",
+  "grain": true,
+  "effects": {
+    "glass": false,
+    "blur": 0,
+    "reveal": true,
+    "parallax": true
+  }
+}

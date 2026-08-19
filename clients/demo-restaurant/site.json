@@ -1,0 +1,472 @@
+{
+  "slug": "demo-restaurant",
+  "status": "preview",
+  "plan": "pro",
+  "demo": true,
+  "domain": "resto.hairbxl.be",
+  "aliases": [],
+  "languages": {
+    "default": "fr",
+    "available": [
+      "fr",
+      "nl"
+    ]
+  },
+  "business": {
+    "name": "Le Comptoir Saint-Boniface",
+    "type": "restaurant",
+    "tagline": {
+      "fr": "Cuisine belge, ardoise du jour",
+      "nl": "Belgische keuken, dagsuggesties"
+    },
+    "description": {
+      "fr": "Une salle de quarante couverts derrière l'église Saint-Boniface. La carte tient sur une page et change avec le marché : ce qu'on trouve le matin décide de ce qu'on sert le soir. Cuisine belge, cuissons longues, et une carte de bières qui vient d'ici.",
+      "nl": "Een zaal met veertig couverts achter de Sint-Bonifaaskerk. De kaart past op één blad en verandert mee met de markt: wat we 's ochtends vinden, bepaalt wat we 's avonds serveren."
+    },
+    "address": {
+      "street": "Rue de la Paix 18",
+      "postalCode": "1050",
+      "city": "Ixelles",
+      "country": "BE"
+    },
+    "geo": {
+      "lat": 50.8377,
+      "lng": 4.3665
+    },
+    "phone": "+32 2 511 62 40",
+    "email": "bonjour@comptoirsaintboniface.be",
+    "social": {
+      "instagram": "https://instagram.com/comptoirsaintboniface"
+    }
+  },
+  "hero": {
+    "image": "hero.jpg",
+    "headline": {
+      "fr": "Le Comptoir Saint-Boniface",
+      "nl": "Le Comptoir Saint-Boniface"
+    },
+    "subline": {
+      "fr": "Cuisine belge à Ixelles — la carte change chaque semaine",
+      "nl": "Belgische keuken in Elsene — de kaart wisselt elke week"
+    }
+  },
+  "hours": {
+    "monday": [],
+    "tuesday": [
+      {
+        "open": "12:00",
+        "close": "14:30"
+      },
+      {
+        "open": "18:30",
+        "close": "22:00"
+      }
+    ],
+    "wednesday": [
+      {
+        "open": "12:00",
+        "close": "14:30"
+      },
+      {
+        "open": "18:30",
+        "close": "22:00"
+      }
+    ],
+    "thursday": [
+      {
+        "open": "12:00",
+        "close": "14:30"
+      },
+      {
+        "open": "18:30",
+        "close": "22:00"
+      }
+    ],
+    "friday": [
+      {
+        "open": "12:00",
+        "close": "14:30"
+      },
+      {
+        "open": "18:30",
+        "close": "23:00"
+      }
+    ],
+    "saturday": [
+      {
+        "open": "18:30",
+        "close": "23:00"
+      }
+    ],
+    "sunday": []
+  },
+  "hoursNote": {
+    "fr": "Dernière commande une demi-heure avant la fermeture. Fermé dimanche et lundi.",
+    "nl": "Laatste bestelling een half uur voor sluitingstijd. Zondag en maandag gesloten."
+  },
+  "closures": [],
+  "menuNote": {
+    "fr": "La carte change chaque semaine, selon le marché. Allergènes : demandez-nous, on connaît nos plats.",
+    "nl": "De kaart wisselt elke week, naargelang de markt. Allergenen: vraag het ons."
+  },
+  "menu": [
+    {
+      "id": "midi",
+      "title": {
+        "fr": "Formule du midi",
+        "nl": "Lunchformule"
+      },
+      "note": {
+        "fr": "Du mardi au vendredi, service de 12 h à 14 h 30.",
+        "nl": "Dinsdag tot vrijdag, van 12 tot 14.30 uur."
+      },
+      "items": [
+        {
+          "name": {
+            "fr": "Plat du jour",
+            "nl": "Dagschotel"
+          },
+          "description": {
+            "fr": "Écrit sur l'ardoise, changé tous les jours.",
+            "nl": "Op het bord, elke dag anders."
+          },
+          "price": 18,
+          "tags": [
+            "maison"
+          ]
+        },
+        {
+          "name": {
+            "fr": "Plat du jour + café",
+            "nl": "Dagschotel + koffie"
+          },
+          "price": 21,
+          "tags": []
+        },
+        {
+          "name": {
+            "fr": "Entrée + plat",
+            "nl": "Voorgerecht + hoofdgerecht"
+          },
+          "price": 26,
+          "tags": []
+        }
+      ]
+    },
+    {
+      "id": "entrees",
+      "title": {
+        "fr": "Entrées",
+        "nl": "Voorgerechten"
+      },
+      "items": [
+        {
+          "name": {
+            "fr": "Croquettes aux crevettes grises",
+            "nl": "Garnaalkroketten"
+          },
+          "description": {
+            "fr": "Deux pièces, persil frit, citron.",
+            "nl": "Twee stuks, gefrituurde peterselie, citroen."
+          },
+          "price": 17,
+          "tags": [
+            "maison"
+          ]
+        },
+        {
+          "name": {
+            "fr": "Chicons au gratin, jambon d'Ardenne",
+            "nl": "Witloof in het gratin"
+          },
+          "price": 14,
+          "tags": []
+        },
+        {
+          "name": {
+            "fr": "Soupe du jour",
+            "nl": "Soep van de dag"
+          },
+          "description": {
+            "fr": "Selon le marché.",
+            "nl": "Volgens de markt."
+          },
+          "price": 8,
+          "tags": [
+            "vegetarien",
+            "maison"
+          ]
+        },
+        {
+          "name": {
+            "fr": "Salade de chèvre chaud, miel de Forest",
+            "nl": "Salade met warme geitenkaas"
+          },
+          "price": 15,
+          "tags": [
+            "vegetarien"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "plats",
+      "title": {
+        "fr": "Plats",
+        "nl": "Hoofdgerechten"
+      },
+      "items": [
+        {
+          "name": {
+            "fr": "Carbonnades flamandes, frites maison",
+            "nl": "Stoofvlees met huisgemaakte frieten"
+          },
+          "description": {
+            "fr": "Mijotées quatre heures à la brune de Chimay.",
+            "nl": "Vier uur gesudderd in Chimay bruin."
+          },
+          "price": 24,
+          "tags": [
+            "maison"
+          ]
+        },
+        {
+          "name": {
+            "fr": "Waterzooi de volaille",
+            "nl": "Gevogeltewaterzooi"
+          },
+          "price": 25,
+          "tags": []
+        },
+        {
+          "name": {
+            "fr": "Filet de cabillaud, poireaux, beurre blanc",
+            "nl": "Kabeljauwfilet, prei, beurre blanc"
+          },
+          "price": 28,
+          "tags": []
+        },
+        {
+          "name": {
+            "fr": "Stoemp aux carottes, saucisse ou végétarien",
+            "nl": "Wortelstoemp, worst of vegetarisch"
+          },
+          "price": 21,
+          "tags": [
+            "vegetarien"
+          ]
+        },
+        {
+          "name": {
+            "fr": "Pièce du boucher",
+            "nl": "Stuk van de slager"
+          },
+          "description": {
+            "fr": "Selon arrivage, sauce au poivre ou béarnaise.",
+            "nl": "Volgens aanvoer."
+          },
+          "price": null,
+          "tags": []
+        }
+      ]
+    },
+    {
+      "id": "desserts",
+      "title": {
+        "fr": "Desserts",
+        "nl": "Desserten"
+      },
+      "items": [
+        {
+          "name": {
+            "fr": "Dame blanche",
+            "nl": "Dame blanche"
+          },
+          "price": 9,
+          "tags": [
+            "maison"
+          ]
+        },
+        {
+          "name": {
+            "fr": "Tarte au sucre tiède",
+            "nl": "Lauwe suikertaart"
+          },
+          "price": 8,
+          "tags": [
+            "vegetarien",
+            "maison"
+          ]
+        },
+        {
+          "name": {
+            "fr": "Mousse au chocolat de chez Frédéric Blondeel",
+            "nl": "Chocolademousse"
+          },
+          "price": 9,
+          "tags": [
+            "vegetarien"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "boissons",
+      "title": {
+        "fr": "Bières & vins",
+        "nl": "Bieren & wijnen"
+      },
+      "note": {
+        "fr": "Six bières à la pression, toutes belges. Carte des vins au verre à l'ardoise.",
+        "nl": "Zes bieren van het vat, allemaal Belgisch."
+      },
+      "items": [
+        {
+          "name": {
+            "fr": "Bière pression 25 cl",
+            "nl": "Bier van het vat 25 cl"
+          },
+          "price": 4,
+          "tags": []
+        },
+        {
+          "name": {
+            "fr": "Verre de vin",
+            "nl": "Glas wijn"
+          },
+          "price": 6.5,
+          "tags": []
+        },
+        {
+          "name": {
+            "fr": "Eau de source 50 cl",
+            "nl": "Bronwater 50 cl"
+          },
+          "price": 4,
+          "tags": []
+        }
+      ]
+    }
+  ],
+  "occasions": [
+    {
+      "id": "groupes",
+      "title": {
+        "fr": "Groupes jusqu'à 20",
+        "nl": "Groepen tot 20"
+      },
+      "text": {
+        "fr": "Menu unique à trois services, choisi avec vous une semaine avant. Le samedi midi ou en semaine.",
+        "nl": "Vast driegangenmenu, samen gekozen."
+      },
+      "photo": "galerie-2.jpg",
+      "price": 45
+    },
+    {
+      "id": "privatisation",
+      "title": {
+        "fr": "Privatiser la salle",
+        "nl": "De zaal privatiseren"
+      },
+      "text": {
+        "fr": "Quarante couverts assis, soixante debout. Le lundi et le dimanche, la salle est à vous.",
+        "nl": "Veertig zittend, zestig staand."
+      },
+      "photo": "galerie-4.jpg",
+      "price": null
+    }
+  ],
+  "services": [],
+  "team": [
+    {
+      "name": "Simon Delvaux",
+      "role": {
+        "fr": "Chef"
+      },
+      "photo": "equipe-1.jpg"
+    },
+    {
+      "name": "Nadia Cherif",
+      "role": {
+        "fr": "En salle"
+      },
+      "photo": "equipe-2.jpg"
+    }
+  ],
+  "gallery": [
+    {
+      "src": "galerie-1.jpg",
+      "alt": {
+        "fr": "La salle en début de service"
+      }
+    },
+    {
+      "src": "galerie-2.jpg",
+      "alt": {
+        "fr": "Table dressée pour un groupe"
+      }
+    },
+    {
+      "src": "galerie-3.jpg",
+      "alt": {
+        "fr": "Les carbonnades"
+      }
+    },
+    {
+      "src": "galerie-4.jpg",
+      "alt": {
+        "fr": "Le comptoir et les pompes à bière"
+      }
+    },
+    {
+      "src": "galerie-5.jpg",
+      "alt": {
+        "fr": "L'ardoise du jour"
+      }
+    },
+    {
+      "src": "galerie-6.jpg",
+      "alt": {
+        "fr": "La terrasse, rue de la Paix"
+      }
+    }
+  ],
+  "steps": [],
+  "reviews": [
+    {
+      "author": "Julien M.",
+      "rating": 5,
+      "text": {
+        "fr": "Les meilleures carbonnades du quartier, et on ne se sent pas pressé de partir."
+      },
+      "source": "google"
+    },
+    {
+      "author": "Anne-Sophie L.",
+      "rating": 5,
+      "text": {
+        "fr": "Réservé une table pour huit un vendredi soir, tout était prêt en arrivant. Carte courte, tout est bon."
+      },
+      "source": "google"
+    },
+    {
+      "author": "Peter V.",
+      "rating": 4,
+      "text": {
+        "fr": "Cuisine franche et prix honnêtes. La salle est bruyante quand elle est pleine, mais c'est bon signe."
+      },
+      "source": "google"
+    }
+  ],
+  "booking": {
+    "mode": "none"
+  },
+  "seo": {},
+  "legal": {
+    "companyName": "Comptoir Saint-Boniface SRL",
+    "legalForm": "SRL",
+    "registrationNumber": "0234.567.891",
+    "vatNumber": "BE0234.567.891"
+  },
+  "contact": {}
+}

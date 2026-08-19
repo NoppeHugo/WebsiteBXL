@@ -1,0 +1,383 @@
+{
+  "slug": "demo-salle",
+  "status": "preview",
+  "plan": "pro",
+  "demo": true,
+  "domain": "salle.hairbxl.be",
+  "aliases": [],
+  "languages": {
+    "default": "fr",
+    "available": [
+      "fr",
+      "nl"
+    ]
+  },
+  "business": {
+    "name": "Studio Nord — Yoga & Pilates",
+    "type": "yoga_studio",
+    "tagline": {
+      "fr": "Petits groupes, douze tapis",
+      "nl": "Kleine groepen, twaalf matten"
+    },
+    "description": {
+      "fr": "Deux salles, douze tapis par cours, et jamais plus. On ne vend pas d'abonnement à l'année qu'on oublie de résilier : une carte de dix séances, valable un an, et le premier cours est offert.",
+      "nl": "Twee zalen, twaalf matten per les, nooit meer. Geen jaarabonnement dat u vergeet op te zeggen: een tienbeurtenkaart, een jaar geldig, en de eerste les is gratis."
+    },
+    "address": {
+      "street": "Chaussée de Haecht 210",
+      "postalCode": "1030",
+      "city": "Schaerbeek",
+      "country": "BE"
+    },
+    "geo": {
+      "lat": 50.8631,
+      "lng": 4.3796
+    },
+    "phone": "+32 2 245 33 90",
+    "email": "bonjour@studionord.be",
+    "social": {
+      "instagram": "https://instagram.com/studionord.bxl"
+    }
+  },
+  "hero": {
+    "image": "hero.jpg",
+    "headline": {
+      "fr": "Studio Nord",
+      "nl": "Studio Nord"
+    },
+    "subline": {
+      "fr": "Yoga et pilates à Schaerbeek — douze tapis, pas un de plus",
+      "nl": "Yoga en pilates in Schaarbeek — twaalf matten, niet meer"
+    }
+  },
+  "hours": {
+    "monday": [
+      {
+        "open": "07:00",
+        "close": "21:00"
+      }
+    ],
+    "tuesday": [
+      {
+        "open": "07:00",
+        "close": "21:00"
+      }
+    ],
+    "wednesday": [
+      {
+        "open": "07:00",
+        "close": "21:00"
+      }
+    ],
+    "thursday": [
+      {
+        "open": "07:00",
+        "close": "21:00"
+      }
+    ],
+    "friday": [
+      {
+        "open": "07:00",
+        "close": "19:00"
+      }
+    ],
+    "saturday": [
+      {
+        "open": "09:00",
+        "close": "13:00"
+      }
+    ],
+    "sunday": []
+  },
+  "hoursNote": {
+    "fr": "La salle n'est ouverte que pendant les cours : voyez le planning.",
+    "nl": "De zaal is enkel open tijdens de lessen: zie het rooster."
+  },
+  "closures": [],
+  "courses": [
+    {
+      "id": "vinyasa-matin",
+      "name": {
+        "fr": "Vinyasa",
+        "nl": "Vinyasa"
+      },
+      "day": "monday",
+      "start": "07:15",
+      "end": "08:15",
+      "level": {
+        "fr": "Tous niveaux",
+        "nl": "Alle niveaus"
+      },
+      "coach": "Inès",
+      "capacity": 12
+    },
+    {
+      "id": "pilates-mat-lundi",
+      "name": {
+        "fr": "Pilates au sol",
+        "nl": "Pilates op de mat"
+      },
+      "day": "monday",
+      "start": "18:30",
+      "end": "19:30",
+      "level": {
+        "fr": "Débutants",
+        "nl": "Beginners"
+      },
+      "coach": "Marta",
+      "capacity": 12
+    },
+    {
+      "id": "yin",
+      "name": {
+        "fr": "Yin yoga",
+        "nl": "Yin yoga"
+      },
+      "day": "monday",
+      "start": "20:00",
+      "end": "21:00",
+      "level": {
+        "fr": "Tous niveaux",
+        "nl": "Alle niveaus"
+      },
+      "coach": "Inès",
+      "capacity": 12
+    },
+    {
+      "id": "hatha-mardi",
+      "name": {
+        "fr": "Hatha",
+        "nl": "Hatha"
+      },
+      "day": "tuesday",
+      "start": "12:30",
+      "end": "13:15",
+      "level": {
+        "fr": "Pause de midi",
+        "nl": "Middagpauze"
+      },
+      "coach": "Sofie",
+      "capacity": 12
+    },
+    {
+      "id": "renfo-mardi",
+      "name": {
+        "fr": "Renforcement",
+        "nl": "Versterking"
+      },
+      "day": "tuesday",
+      "start": "19:00",
+      "end": "20:00",
+      "level": {
+        "fr": "Intermédiaire",
+        "nl": "Gevorderd"
+      },
+      "coach": "Marta",
+      "capacity": 10
+    },
+    {
+      "id": "vinyasa-mercredi",
+      "name": {
+        "fr": "Vinyasa",
+        "nl": "Vinyasa"
+      },
+      "day": "wednesday",
+      "start": "18:30",
+      "end": "19:45",
+      "level": {
+        "fr": "Tous niveaux",
+        "nl": "Alle niveaus"
+      },
+      "coach": "Inès",
+      "capacity": 12
+    },
+    {
+      "id": "prenatal",
+      "name": {
+        "fr": "Yoga prénatal",
+        "nl": "Prenatale yoga"
+      },
+      "day": "thursday",
+      "start": "10:00",
+      "end": "11:00",
+      "level": {
+        "fr": "Sur inscription",
+        "nl": "Na inschrijving"
+      },
+      "coach": "Sofie",
+      "capacity": 8
+    },
+    {
+      "id": "pilates-jeudi",
+      "name": {
+        "fr": "Pilates au sol",
+        "nl": "Pilates op de mat"
+      },
+      "day": "thursday",
+      "start": "18:30",
+      "end": "19:30",
+      "level": {
+        "fr": "Tous niveaux",
+        "nl": "Alle niveaus"
+      },
+      "coach": "Marta",
+      "capacity": 12
+    },
+    {
+      "id": "vinyasa-samedi",
+      "name": {
+        "fr": "Vinyasa long",
+        "nl": "Lange vinyasa"
+      },
+      "day": "saturday",
+      "start": "10:00",
+      "end": "11:30",
+      "level": {
+        "fr": "Tous niveaux",
+        "nl": "Alle niveaus"
+      },
+      "coach": "Inès",
+      "capacity": 12
+    }
+  ],
+  "occasions": [],
+  "menu": [],
+  "services": [
+    {
+      "id": "premier-cours",
+      "name": {
+        "fr": "Premier cours",
+        "nl": "Eerste les"
+      },
+      "description": {
+        "fr": "Offert, tapis fourni."
+      },
+      "price": 0,
+      "priceFrom": false
+    },
+    {
+      "id": "seance",
+      "name": {
+        "fr": "Une séance",
+        "nl": "Eén les"
+      },
+      "price": 18,
+      "priceFrom": false
+    },
+    {
+      "id": "carte-10",
+      "name": {
+        "fr": "Carte de dix séances",
+        "nl": "Tienbeurtenkaart"
+      },
+      "description": {
+        "fr": "Valable un an, transmissible."
+      },
+      "price": 150,
+      "priceFrom": false
+    },
+    {
+      "id": "mensuel",
+      "name": {
+        "fr": "Illimité mensuel",
+        "nl": "Onbeperkt per maand"
+      },
+      "description": {
+        "fr": "Sans engagement, résiliable à tout moment."
+      },
+      "price": 79,
+      "priceFrom": false
+    }
+  ],
+  "team": [
+    {
+      "name": "Inès Lambert",
+      "role": {
+        "fr": "Yoga, fondatrice"
+      },
+      "photo": "equipe-1.jpg"
+    },
+    {
+      "name": "Marta Nowak",
+      "role": {
+        "fr": "Pilates"
+      },
+      "photo": "equipe-2.jpg"
+    },
+    {
+      "name": "Sofie De Backer",
+      "role": {
+        "fr": "Hatha, prénatal"
+      },
+      "photo": "equipe-3.jpg"
+    }
+  ],
+  "gallery": [
+    {
+      "src": "galerie-1.jpg",
+      "alt": {
+        "fr": "La grande salle"
+      }
+    },
+    {
+      "src": "galerie-2.jpg",
+      "alt": {
+        "fr": "Douze tapis, pas un de plus"
+      }
+    },
+    {
+      "src": "galerie-3.jpg",
+      "alt": {
+        "fr": "Le vestiaire"
+      }
+    },
+    {
+      "src": "galerie-4.jpg",
+      "alt": {
+        "fr": "Cours du matin"
+      }
+    },
+    {
+      "src": "galerie-5.jpg",
+      "alt": {
+        "fr": "La petite salle"
+      }
+    },
+    {
+      "src": "galerie-6.jpg",
+      "alt": {
+        "fr": "L'entrée, chaussée de Haecht"
+      }
+    }
+  ],
+  "steps": [],
+  "reviews": [
+    {
+      "author": "Claire V.",
+      "rating": 5,
+      "text": {
+        "fr": "Douze personnes maximum : on est corrigé, on progresse. Rien à voir avec les salles de quarante."
+      },
+      "source": "google"
+    },
+    {
+      "author": "Hakim R.",
+      "rating": 5,
+      "text": {
+        "fr": "Le planning est enfin lisible en ligne, je sais quoi faire de mes mardis."
+      },
+      "source": "google"
+    }
+  ],
+  "booking": {
+    "mode": "none"
+  },
+  "seo": {},
+  "legal": {
+    "companyName": "Studio Nord SRL",
+    "legalForm": "SRL",
+    "registrationNumber": "0456.789.123",
+    "vatNumber": "BE0456.789.123"
+  },
+  "contact": {}
+}

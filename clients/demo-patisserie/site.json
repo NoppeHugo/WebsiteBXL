@@ -1,0 +1,381 @@
+{
+  "slug": "demo-patisserie",
+  "status": "preview",
+  "plan": "pro",
+  "demo": true,
+  "domain": "gateaux.hairbxl.be",
+  "aliases": [],
+  "languages": {
+    "default": "fr",
+    "available": [
+      "fr",
+      "nl"
+    ]
+  },
+  "business": {
+    "name": "Pâtisserie Declercq",
+    "type": "pastry_shop",
+    "tagline": {
+      "fr": "Gâteaux de fête, sur commande",
+      "nl": "Feesttaarten, op bestelling"
+    },
+    "description": {
+      "fr": "Trois générations rue Wayez. On fait le pain le matin et les pièces de fête sur commande : mariage, communion, anniversaire. Tout est monté ici, y compris les décors — et le message sur le gâteau est écrit à la main, pas imprimé.",
+      "nl": "Drie generaties in de Wayezstraat. 's Ochtends brood, en feesttaarten op bestelling: huwelijk, communie, verjaardag. Alles wordt hier gemaakt."
+    },
+    "address": {
+      "street": "Rue Wayez 108",
+      "postalCode": "1070",
+      "city": "Anderlecht",
+      "country": "BE"
+    },
+    "geo": {
+      "lat": 50.8365,
+      "lng": 4.3128
+    },
+    "phone": "+32 2 523 71 30",
+    "email": "bonjour@patisserie-declercq.be",
+    "social": {
+      "instagram": "https://instagram.com/patisseriedeclercq"
+    }
+  },
+  "hero": {
+    "image": "hero.jpg",
+    "headline": {
+      "fr": "Pâtisserie Declercq",
+      "nl": "Patisserie Declercq"
+    },
+    "subline": {
+      "fr": "Anderlecht, depuis 1954 — commandez votre gâteau en ligne",
+      "nl": "Anderlecht, sinds 1954 — bestel uw taart online"
+    }
+  },
+  "hours": {
+    "monday": [],
+    "tuesday": [
+      {
+        "open": "06:30",
+        "close": "18:00"
+      }
+    ],
+    "wednesday": [
+      {
+        "open": "06:30",
+        "close": "18:00"
+      }
+    ],
+    "thursday": [
+      {
+        "open": "06:30",
+        "close": "18:00"
+      }
+    ],
+    "friday": [
+      {
+        "open": "06:30",
+        "close": "18:30"
+      }
+    ],
+    "saturday": [
+      {
+        "open": "06:30",
+        "close": "18:30"
+      }
+    ],
+    "sunday": [
+      {
+        "open": "07:00",
+        "close": "13:00"
+      }
+    ]
+  },
+  "hoursNote": {
+    "fr": "Fermé le lundi. Les commandes se retirent aux heures d'ouverture.",
+    "nl": "Maandag gesloten. Bestellingen af te halen tijdens de openingsuren."
+  },
+  "closures": [],
+  "occasions": [
+    {
+      "id": "anniversaire",
+      "title": {
+        "fr": "Anniversaire",
+        "nl": "Verjaardag"
+      },
+      "text": {
+        "fr": "De six à quarante parts. Le message est écrit à la main, dites-le-nous au moment de la commande.",
+        "nl": "Van zes tot veertig stukken. De boodschap schrijven we met de hand."
+      },
+      "photo": "galerie-1.jpg",
+      "price": 28
+    },
+    {
+      "id": "mariage",
+      "title": {
+        "fr": "Mariage",
+        "nl": "Huwelijk"
+      },
+      "text": {
+        "fr": "Pièce montée ou gâteau à étages, dégustation trois semaines avant. On se voit une fois, on goûte, on ajuste.",
+        "nl": "Bruidstaart of geschakelde taart, proeverij drie weken vooraf."
+      },
+      "photo": "galerie-2.jpg",
+      "price": 180
+    },
+    {
+      "id": "communion",
+      "title": {
+        "fr": "Communion & baptême",
+        "nl": "Communie & doopfeest"
+      },
+      "text": {
+        "fr": "Les classiques de la maison, en format familial. Prévoir dix jours en saison.",
+        "nl": "De klassiekers van het huis, in familieformaat."
+      },
+      "photo": "galerie-3.jpg",
+      "price": 45
+    },
+    {
+      "id": "entreprise",
+      "title": {
+        "fr": "Bureau & événement",
+        "nl": "Kantoor & evenement"
+      },
+      "text": {
+        "fr": "Plateaux de mignardises livrés le matin, facture mensuelle.",
+        "nl": "Schotels met mignardises, 's ochtends geleverd."
+      },
+      "photo": "galerie-4.jpg",
+      "price": 60
+    }
+  ],
+  "menu": [
+    {
+      "id": "vitrine",
+      "title": {
+        "fr": "En vitrine tous les jours",
+        "nl": "Elke dag in de vitrine"
+      },
+      "note": {
+        "fr": "Sans commande, dans la limite du disponible.",
+        "nl": "Zonder bestelling, zolang de voorraad strekt."
+      },
+      "items": [
+        {
+          "name": {
+            "fr": "Éclair au chocolat",
+            "nl": "Chocolade-éclair"
+          },
+          "price": 3.4,
+          "tags": [
+            "maison"
+          ]
+        },
+        {
+          "name": {
+            "fr": "Tarte au riz",
+            "nl": "Rijsttaart"
+          },
+          "description": {
+            "fr": "À la part ou entière.",
+            "nl": "Per stuk of heel."
+          },
+          "price": 3.2,
+          "tags": [
+            "maison"
+          ]
+        },
+        {
+          "name": {
+            "fr": "Merveilleux",
+            "nl": "Merveilleux"
+          },
+          "price": 3.8,
+          "tags": [
+            "vegetarien",
+            "maison"
+          ]
+        },
+        {
+          "name": {
+            "fr": "Couque au beurre",
+            "nl": "Boterkoek"
+          },
+          "price": 1.9,
+          "tags": []
+        },
+        {
+          "name": {
+            "fr": "Pain gris 800 g",
+            "nl": "Grijs brood 800 g"
+          },
+          "price": 3.1,
+          "tags": []
+        }
+      ]
+    }
+  ],
+  "delivery": {
+    "zones": [
+      "Anderlecht",
+      "Molenbeek",
+      "Bruxelles-Centre",
+      "Forest",
+      "Saint-Gilles"
+    ],
+    "cutoff": "16:00",
+    "fee": 9,
+    "freeFrom": 120,
+    "note": {
+      "fr": "Les pièces de mariage sont livrées et montées sur place, sur devis.",
+      "nl": "Bruidstaarten worden ter plaatse geleverd en opgebouwd, op offerte."
+    }
+  },
+  "services": [
+    {
+      "id": "gateau-6",
+      "name": {
+        "fr": "Gâteau 6 parts",
+        "nl": "Taart 6 stukken"
+      },
+      "price": 28,
+      "priceFrom": true
+    },
+    {
+      "id": "gateau-12",
+      "name": {
+        "fr": "Gâteau 12 parts",
+        "nl": "Taart 12 stukken"
+      },
+      "price": 48,
+      "priceFrom": true
+    },
+    {
+      "id": "piece-montee",
+      "name": {
+        "fr": "Pièce montée",
+        "nl": "Geschakelde taart"
+      },
+      "description": {
+        "fr": "À partir de trente parts."
+      },
+      "price": 180,
+      "priceFrom": true
+    },
+    {
+      "id": "mignardises",
+      "name": {
+        "fr": "Plateau de mignardises",
+        "nl": "Schotel mignardises"
+      },
+      "description": {
+        "fr": "Vingt-quatre pièces."
+      },
+      "price": 60,
+      "priceFrom": true
+    },
+    {
+      "id": "sur-mesure",
+      "name": {
+        "fr": "Gâteau sur mesure",
+        "nl": "Taart op maat"
+      },
+      "description": {
+        "fr": "Décor, forme et parfum décidés ensemble."
+      },
+      "price": null,
+      "priceFrom": false
+    }
+  ],
+  "team": [
+    {
+      "name": "Émilie Declercq",
+      "role": {
+        "fr": "Pâtissière, troisième génération"
+      },
+      "photo": "equipe-1.jpg"
+    },
+    {
+      "name": "Karim Belkacem",
+      "role": {
+        "fr": "Boulanger"
+      },
+      "photo": "equipe-2.jpg"
+    }
+  ],
+  "gallery": [
+    {
+      "src": "galerie-1.jpg",
+      "alt": {
+        "fr": "Gâteau d'anniversaire monté ce matin"
+      }
+    },
+    {
+      "src": "galerie-2.jpg",
+      "alt": {
+        "fr": "Pièce montée de mariage"
+      }
+    },
+    {
+      "src": "galerie-3.jpg",
+      "alt": {
+        "fr": "Les classiques de communion"
+      }
+    },
+    {
+      "src": "galerie-4.jpg",
+      "alt": {
+        "fr": "Plateau de mignardises"
+      }
+    },
+    {
+      "src": "galerie-5.jpg",
+      "alt": {
+        "fr": "Le fournil à cinq heures"
+      }
+    },
+    {
+      "src": "galerie-6.jpg",
+      "alt": {
+        "fr": "La vitrine, rue Wayez"
+      }
+    }
+  ],
+  "steps": [],
+  "reviews": [
+    {
+      "author": "Fatima E.",
+      "rating": 5,
+      "text": {
+        "fr": "Commandé le gâteau de communion en ligne un dimanche soir, rappelée le mardi. Exactement ce que j'avais demandé."
+      },
+      "source": "google"
+    },
+    {
+      "author": "Bernard L.",
+      "rating": 5,
+      "text": {
+        "fr": "La tarte au riz de mon enfance, toujours la même depuis quarante ans."
+      },
+      "source": "google"
+    },
+    {
+      "author": "Sarah D.",
+      "rating": 5,
+      "text": {
+        "fr": "Pièce montée pour 80 personnes, livrée et montée sur place. Zéro stress."
+      },
+      "source": "google"
+    }
+  ],
+  "booking": {
+    "mode": "none"
+  },
+  "seo": {},
+  "legal": {
+    "companyName": "Pâtisserie Declercq SRL",
+    "legalForm": "SRL",
+    "registrationNumber": "0567.891.234",
+    "vatNumber": "BE0567.891.234"
+  },
+  "contact": {}
+}
