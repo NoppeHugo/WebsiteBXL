@@ -24,6 +24,10 @@ const SCHEMA_TYPE: Record<string, string> = {
   veterinary: "VeterinaryCare",
   tattoo_parlor: "TattooParlor",
 
+  /* Projets sur devis. */
+  photographer: "ProfessionalService",
+  print_shop: "Store",
+
   /* Commerces de bouche et de détail. */
   florist: "Florist",
   bakery: "Bakery",
@@ -34,15 +38,47 @@ const SCHEMA_TYPE: Record<string, string> = {
   butcher: "Store",
   fishmonger: "Store",
   wine_store: "LiquorStore",
+  brewery: "Brewery",
   deli: "GroceryStore",
+  grocery: "GroceryStore",
+  greengrocer: "GroceryStore",
+  cheese_shop: "Store",
+  coffee_roaster: "Store",
 
   /* Table, comptoir, salle. */
   restaurant: "Restaurant",
   cafe: "CafeOrCoffeeShop",
   bar: "BarOrPub",
   tea_room: "CafeOrCoffeeShop",
+  fast_food: "FastFoodRestaurant",
+  food_truck: "FoodEstablishment",
+  sandwich_shop: "FastFoodRestaurant",
   gym: "HealthClub",
   yoga_studio: "HealthClub",
+  dance_studio: "SportsActivityLocation",
+  climbing_gym: "ExerciseGym",
+
+  /* Écoles, boutiques et services de quartier. */
+  driving_school: "EducationalOrganization",
+  language_school: "EducationalOrganization",
+  music_school: "EducationalOrganization",
+  clothing_store: "ClothingStore",
+  shoe_store: "ShoeStore",
+  jewelry_store: "JewelryStore",
+  book_store: "BookStore",
+  home_goods_store: "HomeGoodsStore",
+  bike_store: "BikeStore",
+  pet_store: "PetStore",
+  toy_store: "ToyStore",
+  dry_cleaner: "DryCleaningOrLaundry",
+  /*
+   * Ni cordonnier, ni retoucheur, ni réparateur chez schema.org. `LocalBusiness`
+   * est le parent commun : Google le lit, avec les horaires et l'adresse — ce
+   * qui est précisément ce qu'on cherche à faire remonter pour ces commerces.
+   */
+  shoe_repair: "LocalBusiness",
+  tailor: "LocalBusiness",
+  repair_shop: "LocalBusiness",
 
   other: "LocalBusiness",
 };

@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import sharp from "sharp";
-import { metierDe } from "../packages/schema/src/metiers.ts";
+import { METIERS, metierDe } from "../packages/schema/src/metiers.ts";
 import { repoRoot, info, ok, fail } from "./lib.ts";
 
 /**
@@ -23,32 +23,46 @@ import { repoRoot, info, ok, fail } from "./lib.ts";
  * inconnu comme employé d'un commerce l'expose, et expose l'exploitant.
  */
 
-export type Motif =
-  | "silhouette"
-  | "ciseaux"
-  | "peigne"
-  | "fut"
-  | "blaireau"
-  | "rayures"
-  /* --- fleuriste --- */
-  | "fleur"
-  | "feuillage"
-  | "vase"
-  | "bouquet"
-  | "ruban"
-  | "graine"
-  | "tasse"
-  | "epi"
-  | "gateau"
-  | "couvert"
-  | "bouteille"
-  | "carre"
-  | "petale"
-  | "lunettes"
-  | "patte"
-  | "aiguille"
-  | "haltere"
-  | "aucun";
+/**
+ * Les motifs dessinables.
+ *
+ * Liste plutôt qu'union de types : c'est elle que lit le test qui vérifie que
+ * chaque métier ne réclame que des motifs qui existent. Un nom inventé ne
+ * casse rien — le dessin retourne une chaîne vide — et le visuel sort en
+ * dégradé nu, ce que personne ne remarque avant de le montrer à un client.
+ */
+export const MOTIFS = [
+  "silhouette",
+  "ciseaux",
+  "peigne",
+  "fut",
+  "blaireau",
+  "rayures",
+  "fleur",
+  "feuillage",
+  "vase",
+  "bouquet",
+  "ruban",
+  "graine",
+  "tasse",
+  "epi",
+  "gateau",
+  "couvert",
+  "bouteille",
+  "carre",
+  "petale",
+  "lunettes",
+  "patte",
+  "aiguille",
+  "haltere",
+  "cornet",
+  "cintre",
+  "livre",
+  "appareil",
+  "aucun",
+] as const;
+
+export type Motif = (typeof MOTIFS)[number];
 
 export interface PlaceholderSpec {
   file: string;
@@ -488,6 +502,79 @@ function dessin(motif: Motif, w: number, h: number): string {
   </g>`;
     }
 
+    /* ------------------------------------------- boutique, école, atelier -- */
+
+    /*
+     * Un cornet de frites. Le trapèze seul se lit comme un pot de fleurs :
+     * ce sont les trois bâtonnets qui dépassent qui font la friterie.
+     */
+    case "cornet": {
+      const haut = u * 0.3;
+      const large = u * 0.2;
+      const bas = cy + haut * 0.55;
+      const frites = [-1, 0, 1]
+        .map((d) => {
+          const x = cx + d * u * 0.06;
+          const sommet = cy - haut * 0.55 - u * (0.1 - Math.abs(d) * 0.03);
+          return `<path d="M ${x.toFixed(1)} ${(cy - haut * 0.45).toFixed(1)} L ${(x + d * u * 0.02).toFixed(1)} ${sommet.toFixed(1)}"/>`;
+        })
+        .join("\n    ");
+      return `
+  <g ${encre}>
+    ${frites}
+    <path d="M ${cx - large} ${(cy - haut * 0.45).toFixed(1)} L ${(cx - large * 0.45).toFixed(1)} ${bas} h ${(large * 0.9).toFixed(1)} L ${cx + large} ${(cy - haut * 0.45).toFixed(1)} Z"/>
+    <path d="M ${(cx - large * 0.8).toFixed(1)} ${(cy - haut * 0.1).toFixed(1)} h ${(large * 1.6).toFixed(1)}"/>
+  </g>`;
+    }
+
+    /* Un cintre : le crochet, l'épaule, la barre. L'enseigne d'une boutique. */
+    case "cintre": {
+      const large = u * 0.2;
+      const epaule = cy + u * 0.04;
+      return `
+  <g ${encre}>
+    <path d="M ${cx} ${(epaule - u * 0.09).toFixed(1)} v ${(-u * 0.05).toFixed(1)} a ${(u * 0.035).toFixed(1)} ${(u * 0.035).toFixed(1)} 0 1 1 ${(u * 0.05).toFixed(1)} 0"/>
+    <path d="M ${cx} ${(epaule - u * 0.09).toFixed(1)} L ${cx - large} ${epaule} h ${(large * 2).toFixed(1)} Z"/>
+  </g>`;
+    }
+
+    /*
+     * Un livre ouvert. Deux pages en V léger et la reliure au milieu : à cette
+     * opacité, un livre fermé ne se distingue pas d'un rectangle.
+     */
+    case "livre": {
+      const large = u * 0.21;
+      const haut = u * 0.14;
+      return `
+  <g ${encre}>
+    <path d="M ${cx} ${cy - haut * 0.55} q ${(-large * 0.55).toFixed(1)} ${(-haut * 0.5).toFixed(1)} ${(-large).toFixed(1)} ${(-haut * 0.2).toFixed(1)} v ${(haut * 1.4).toFixed(1)} q ${(large * 0.45).toFixed(1)} ${(-haut * 0.3).toFixed(1)} ${large.toFixed(1)} ${(haut * 0.2).toFixed(1)} Z"/>
+    <path d="M ${cx} ${cy - haut * 0.55} q ${(large * 0.55).toFixed(1)} ${(-haut * 0.5).toFixed(1)} ${large.toFixed(1)} ${(-haut * 0.2).toFixed(1)} v ${(haut * 1.4).toFixed(1)} q ${(-large * 0.45).toFixed(1)} ${(-haut * 0.3).toFixed(1)} ${(-large).toFixed(1)} ${(haut * 0.2).toFixed(1)} Z"/>
+  </g>`;
+    }
+
+    /*
+     * Un appareil photo, de face : le boîtier, la bosse du viseur, l'objectif.
+     *
+     * Un diaphragme avait été dessiné d'abord — le cercle et ses six lamelles.
+     * À cette opacité et à cette taille, les lamelles se croisent au centre et
+     * la figure se lit comme une étoile à six branches inscrite dans un
+     * cercle. Sur le site d'un photographe, personne n'y verrait un
+     * diaphragme, et certains y verraient tout autre chose.
+     */
+    case "appareil": {
+      const large = u * 0.34;
+      const haut = u * 0.23;
+      const x = cx - large / 2;
+      const y = cy - haut / 2;
+      return `
+  <g ${encre}>
+    <path d="M ${(cx - large * 0.16).toFixed(1)} ${y} l ${(large * 0.06).toFixed(1)} ${(-haut * 0.18).toFixed(1)} h ${(large * 0.2).toFixed(1)} l ${(large * 0.06).toFixed(1)} ${(haut * 0.18).toFixed(1)}"/>
+    <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${large.toFixed(1)}" height="${haut.toFixed(1)}" rx="${(haut * 0.16).toFixed(1)}"/>
+    <circle cx="${cx}" cy="${cy}" r="${(haut * 0.3).toFixed(1)}"/>
+    <circle cx="${(x + large * 0.86).toFixed(1)}" cy="${(y + haut * 0.22).toFixed(1)}" r="${(u * 0.012).toFixed(1)}"/>
+  </g>`;
+    }
+
     case "rayures": {
       const pas = u * 0.14;
       const lignes = Math.ceil((w + h) / pas);
@@ -545,97 +632,30 @@ export async function generatePlaceholders(
   }
 }
 
+/**
+ * Un motif déclaré par un métier, ramené à un motif dessinable.
+ *
+ * `metiers.ts` ne peut pas dépendre de ce fichier — c'est le paquet de schéma
+ * qui décide, et il ne connaît pas les dessins. Les noms y sont donc de
+ * simples chaînes, et ce garde-fou les recolle au type. Un nom inconnu ne fait
+ * pas échouer une construction de site : le visuel sort en dégradé nu, ce qui
+ * est laid mais publiable, et `placeholders.test.ts` l'aura signalé bien
+ * avant qu'on en arrive là.
+ */
+function motifConnu(nom: string): Motif {
+  return (MOTIFS as readonly string[]).includes(nom) ? (nom as Motif) : "aucun";
+}
+
 /** Jeu standard : un hero, six photos de galerie, trois portraits. */
 export function defaultSpecs(metierId = "soins"): PlaceholderSpec[] {
   /*
-   * Les motifs suivent le métier. Un fût de barbier sur le site d'un fleuriste
-   * ne serait pas seulement hors sujet : le commerçant à qui on le montre en
-   * conclurait qu'on lui sert le site d'un autre, et il aurait raison.
+   * Les motifs suivent le métier, et c'est `metiers.ts` qui les décide — pas
+   * ce fichier. Ils y étaient décrits deux fois, et les deux listes avaient
+   * déjà divergé : un fût de barbier sur le site d'un fleuriste n'est pas
+   * seulement hors sujet, le commerçant à qui on le montre en conclut qu'on
+   * lui sert le site d'un autre.
    */
-  const parMetier: Record<string, { hero: Motif; galerie: Motif[]; portrait: Motif }> = {
-    soins: {
-      hero: "rayures",
-      galerie: ["ciseaux", "peigne", "fut", "blaireau", "ciseaux", "peigne"],
-      portrait: "silhouette",
-    },
-    fleuriste: {
-      hero: "feuillage",
-      galerie: ["fleur", "bouquet", "vase", "feuillage", "ruban", "graine"],
-      portrait: "silhouette",
-    },
-    ongles: {
-      hero: "rayures",
-      galerie: ["petale", "silhouette", "petale", "rayures", "petale", "silhouette"],
-      portrait: "silhouette",
-    },
-    spa: {
-      hero: "feuillage",
-      galerie: ["petale", "feuillage", "petale", "graine", "feuillage", "petale"],
-      portrait: "silhouette",
-    },
-    opticien: {
-      hero: "rayures",
-      galerie: ["lunettes", "silhouette", "lunettes", "rayures", "lunettes", "silhouette"],
-      portrait: "silhouette",
-    },
-    animaux: {
-      hero: "rayures",
-      galerie: ["patte", "silhouette", "patte", "rayures", "patte", "silhouette"],
-      portrait: "silhouette",
-    },
-    tatouage: {
-      hero: "rayures",
-      galerie: ["aiguille", "silhouette", "aiguille", "rayures", "aiguille", "silhouette"],
-      portrait: "silhouette",
-    },
-    patisserie: {
-      hero: "epi",
-      galerie: ["gateau", "epi", "gateau", "carre", "epi", "gateau"],
-      portrait: "silhouette",
-    },
-    chocolatier: {
-      hero: "carre",
-      galerie: ["carre", "ruban", "carre", "gateau", "ruban", "carre"],
-      portrait: "silhouette",
-    },
-    traiteur: {
-      hero: "couvert",
-      galerie: ["couvert", "epi", "couvert", "bouteille", "epi", "couvert"],
-      portrait: "silhouette",
-    },
-    boucherie: {
-      hero: "couvert",
-      galerie: ["couvert", "rayures", "couvert", "epi", "rayures", "couvert"],
-      portrait: "silhouette",
-    },
-    caviste: {
-      hero: "bouteille",
-      galerie: ["bouteille", "carre", "bouteille", "epi", "carre", "bouteille"],
-      portrait: "silhouette",
-    },
-    restaurant: {
-      hero: "couvert",
-      galerie: ["couvert", "bouteille", "couvert", "tasse", "bouteille", "couvert"],
-      portrait: "silhouette",
-    },
-    cafe: {
-      hero: "tasse",
-      galerie: ["tasse", "carre", "tasse", "epi", "carre", "tasse"],
-      portrait: "silhouette",
-    },
-    sport: {
-      hero: "haltere",
-      galerie: ["haltere", "silhouette", "haltere", "rayures", "silhouette", "haltere"],
-      portrait: "silhouette",
-    },
-    commerce: {
-      hero: "rayures",
-      galerie: ["rayures", "rayures", "rayures", "rayures", "rayures", "rayures"],
-      portrait: "silhouette",
-    },
-  };
-
-  const motifs = parMetier[metierId] ?? parMetier.soins!;
+  const motifs = (METIERS[metierId] ?? METIERS.soins!).motifs;
 
   /*
    * Les teintes aussi : la gamme chaude et brune convient au bois et au cuir
@@ -657,24 +677,30 @@ export function defaultSpecs(metierId = "soins"): PlaceholderSpec[] {
     opticien: 205,
     animaux: 40,
     tatouage: 220,
+    snack: 42,
+    epicerie: 60,
+    boutique: 300,
+    services: 200,
+    ecole: 230,
+    photo: 260,
   };
   const teinte = teintes[metierId] ?? 16;
 
   return [
-    { file: "hero.jpg", width: 2400, height: 1600, hue: teinte + 8, motif: motifs.hero },
+    { file: "hero.jpg", width: 2400, height: 1600, hue: teinte + 8, motif: motifConnu(motifs.hero) },
     ...Array.from({ length: 6 }, (_, i) => ({
       file: `galerie-${i + 1}.jpg`,
       width: 1400,
       height: 1750,
       hue: teinte + i * 6,
-      motif: motifs.galerie[i]!,
+      motif: motifConnu(motifs.galerie[i] ?? "aucun"),
     })),
     ...Array.from({ length: 3 }, (_, i) => ({
       file: `equipe-${i + 1}.jpg`,
       width: 900,
       height: 1200,
       hue: teinte + 6 + i * 8,
-      motif: motifs.portrait,
+      motif: motifConnu(motifs.portrait),
     })),
   ];
 }

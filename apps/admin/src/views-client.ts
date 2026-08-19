@@ -528,6 +528,11 @@ export const TITRES_METIER: Record<string, Partial<Record<PageClient, string>>> 
    */
   restaurant: { tarifs: "Mes formules", commandes: "Mes demandes de table" },
   cafe: { tarifs: "Mes formules" },
+  snack: { tarifs: "Mes formules" },
+  epicerie: { tarifs: "Ma sélection" },
+  boutique: { tarifs: "Mes services" },
+  ecole: { tarifs: "Mes formules", planning: "Mes cours" },
+  photo: { tarifs: "Mes formules", commandes: "Mes demandes de devis" },
 };
 
 export function titrePage(metierId: string, page: PageClient): string {

@@ -53,7 +53,7 @@ export const STYLES: Record<string, StyleDefini> = {
   maison: {
     nom: "Maison",
     pour: "Élégant et discret. Le blanc, des filets fins, rien qui dépasse.",
-    metiers: ["soins", "commerce", "ongles", "spa", "opticien", "animaux", "patisserie", "traiteur", "cafe"],
+    metiers: ["soins", "commerce", "ongles", "spa", "opticien", "animaux", "patisserie", "traiteur", "cafe", "epicerie", "boutique", "services", "ecole", "photo"],
     style: {
       fonts: {
         display: `Inter, ${PILE_SYSTEME}`,
@@ -79,7 +79,7 @@ export const STYLES: Record<string, StyleDefini> = {
   atelier: {
     nom: "Atelier",
     pour: "Barbier traditionnel. Chaud, artisanal, un peu d'usure.",
-    metiers: ["soins", "commerce", "animaux", "tatouage", "boucherie"],
+    metiers: ["soins", "commerce", "animaux", "tatouage", "boucherie", "services"],
     style: {
       fonts: {
         display: `Bitter, Georgia, 'Times New Roman', serif`,
@@ -105,7 +105,7 @@ export const STYLES: Record<string, StyleDefini> = {
   studio: {
     nom: "Studio",
     pour: "Urbain et direct. Grandes capitales, contrastes marqués.",
-    metiers: ["soins", "commerce", "opticien", "tatouage", "animaux", "sport"],
+    metiers: ["soins", "commerce", "opticien", "tatouage", "animaux", "sport", "snack", "boutique", "services", "ecole", "photo"],
     style: {
       fonts: {
         display: `Oswald, 'Arial Narrow', ${PILE_SYSTEME}`,
@@ -131,7 +131,7 @@ export const STYLES: Record<string, StyleDefini> = {
   signature: {
     nom: "Signature",
     pour: "Haut de gamme. Grande photo, titre posé dessus, très peu de texte.",
-    metiers: ["soins", "commerce", "ongles", "spa", "opticien", "chocolatier", "traiteur", "restaurant", "sport"],
+    metiers: ["soins", "commerce", "ongles", "spa", "opticien", "chocolatier", "traiteur", "restaurant", "sport", "boutique", "ecole", "photo"],
     style: {
       fonts: {
         display: `Archivo, ${PILE_SYSTEME}`,
@@ -157,7 +157,7 @@ export const STYLES: Record<string, StyleDefini> = {
   nuit: {
     nom: "Nuit",
     pour: "Salon contemporain. Fond sombre, surfaces vitrées, arrondis.",
-    metiers: ["soins", "commerce", "ongles", "opticien", "tatouage", "restaurant", "cafe", "sport"],
+    metiers: ["soins", "commerce", "ongles", "opticien", "tatouage", "restaurant", "cafe", "sport", "boutique", "photo"],
     style: {
       fonts: {
         display: `Inter, ${PILE_SYSTEME}`,
@@ -242,7 +242,7 @@ export const STYLES: Record<string, StyleDefini> = {
   marche: {
     nom: "Marché",
     pour: "Chaleureux et direct. Grandes capitales, prix assumés.",
-    metiers: ["fleuriste", "patisserie", "boucherie"],
+    metiers: ["fleuriste", "patisserie", "boucherie", "snack", "epicerie"],
     style: {
       fonts: {
         display: `Oswald, 'Arial Narrow', ${PILE_SYSTEME}`,
@@ -269,7 +269,7 @@ export const STYLES: Record<string, StyleDefini> = {
   herbier: {
     nom: "Herbier",
     pour: "Raffiné et botanique. Papier, petites capitales, presque un livre.",
-    metiers: ["fleuriste", "chocolatier", "traiteur", "caviste"],
+    metiers: ["fleuriste", "chocolatier", "traiteur", "caviste", "epicerie"],
     style: {
       fonts: {
         display: `Archivo, ${PILE_SYSTEME}`,
@@ -302,7 +302,7 @@ export const STYLES: Record<string, StyleDefini> = {
   terrazzo: {
     nom: "Terrazzo",
     pour: "Café moderne, très photogénique. Arrondis généreux, mosaïque de carrés, beaucoup d'air.",
-    metiers: ["cafe", "restaurant", "patisserie", "sport"],
+    metiers: ["cafe", "restaurant", "patisserie", "sport", "snack", "ecole"],
     style: {
       fonts: {
         display: `Archivo, ${PILE_SYSTEME}`,
@@ -329,7 +329,7 @@ export const STYLES: Record<string, StyleDefini> = {
   fournil: {
     nom: "Fournil",
     pour: "Boulangerie, pâtisserie. Chaud et artisanal, la vitrine avant le décor.",
-    metiers: ["patisserie", "traiteur", "boucherie", "cafe"],
+    metiers: ["patisserie", "traiteur", "boucherie", "cafe", "epicerie"],
     style: {
       fonts: {
         display: `Bitter, Georgia, 'Times New Roman', serif`,
@@ -382,7 +382,7 @@ export const STYLES: Record<string, StyleDefini> = {
   comptoir: {
     nom: "Comptoir",
     pour: "Bistrot, brasserie, bar. Ardoise, capitales, atmosphère du soir.",
-    metiers: ["restaurant", "cafe", "boucherie", "caviste"],
+    metiers: ["restaurant", "cafe", "boucherie", "caviste", "snack"],
     style: {
       fonts: {
         display: `Bitter, Georgia, 'Times New Roman', serif`,

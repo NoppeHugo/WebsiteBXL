@@ -8,10 +8,11 @@ tout site reçoit sans rien demander (§3), les sections qu'on lui ajoute (§4),
 puis sa fiche (§5). Les chiffres de prospects viennent de l'inventaire
 hub.brussels, extrapolés à la Région (§6).
 
-> **État au 19 août 2026 : les seize métiers ci-dessous sont ouverts.** Les
-> quatre mécaniques sont écrites et testées, y compris la carte et la demande
-> de table. Ce qui reste à faire n'est plus du code, mais des **photos et des
-> sites de démonstration** (§7).
+> **État au 19 août 2026 : les vingt-deux métiers ci-dessous sont ouverts**,
+> soit 54 types de commerce. Les quatre mécaniques sont écrites et testées, y
+> compris la carte et la demande de table. Ce qui reste à faire n'est plus du
+> code pour ces métiers-là, mais des **photos et des sites de démonstration**
+> (§7) — et une décision sur les quatre familles encore absentes (§7 bis).
 
 ---
 
@@ -26,7 +27,7 @@ Un métier **n'est pas un site de plus**. C'est une entrée dans
 | les **sections** affichées | au-delà du tronc commun |
 | le **vocabulaire** | remplace les clés de `i18n.ts`, dans les trois langues |
 | les **styles** proposés | la grille de la console et de l'espace commerçant |
-| les **motifs** de remplacement | visuels générés tant qu'il n'y a pas de photos |
+| les **motifs** de remplacement | visuels générés tant qu'il n'y a pas de photos, un par emplacement |
 
 Le métier se **déduit** de `business.type` : il n'y a pas de champ « métier »,
 parce que deux champs pour la même idée finiraient par se contredire.
@@ -44,7 +45,9 @@ qu'en clientèle :
 - tout type est proposé au formulaire de création de la console ;
 - les styles d'un métier et les métiers d'un style disent la même chose ;
 - aucun métier ne remplace une clé d'interface qui n'existe pas, et chaque clé
-  est traduite dans les trois langues.
+  est traduite dans les trois langues ;
+- aucun métier ne réclame un motif de remplacement que le script ne sait pas
+  dessiner — un motif inconnu ne casse rien, il sort un dégradé nu.
 
 ---
 
@@ -72,8 +75,8 @@ courriel au commerce et accusé de réception au client, page « Mes commandes �
 dans l'espace.
 
 *Pour tout métier qui compose sur demande :* fleuriste, pâtisserie, traiteur,
-chocolatier, boucherie, caviste — et le tatoueur, dont le « rendez-vous » est
-en réalité une demande de projet.
+chocolatier, boucherie, caviste, épicerie fine — et le tatoueur comme le
+photographe, dont le « rendez-vous » est en réalité une demande de projet.
 
 ### 2.3 `table` — livrée
 
@@ -160,18 +163,18 @@ Elles existent, elles sont testées, elles ne coûtent rien à réutiliser.
 | Section | Ce qu'elle fait | Utilisée par |
 |---|---|---|
 | `prestations` | carte des services, prix exact ou « à partir de », durée facultative | la plupart |
-| `carte` | plats et boissons groupés, prix, régimes, mot « la carte change » | restaurant, café, pâtisserie, traiteur |
-| `planning` | les cours de la semaine, jour par jour, avec coach et places | salles de sport, studios |
-| `occasions` | entrée par l'événement, photo, prix d'entrée, lien vers le formulaire **avec l'occasion préremplie** | fleuriste, pâtisserie, traiteur, chocolatier, boucherie, caviste, restaurant |
+| `carte` | plats et boissons groupés, prix, régimes, mot « la carte change » | restaurant, café, friterie, pâtisserie, traiteur |
+| `planning` | les cours de la semaine, jour par jour, avec coach et places | salles de sport, studios, écoles |
+| `occasions` | entrée par l'événement, photo, prix d'entrée, lien vers le formulaire **avec l'occasion préremplie** | fleuriste, pâtisserie, traiteur, chocolatier, boucherie, caviste, épicerie, restaurant, photographe |
 | `livraison` | zones, heure limite de commande, frais, franchise | fleuriste, métiers de bouche |
 | `deuil` | section à part, sans prix ni formulaire, ligne téléphonique dédiée | fleuriste |
-| `abonnement` | formules récurrentes, rythme, prix par livraison | fleuriste, caviste, traiteur, chocolatier |
+| `abonnement` | formules récurrentes, rythme, prix par livraison | fleuriste, caviste, traiteur, chocolatier, épicerie |
 | `equipe` | portraits, rôles ; sert aussi de capacité à l'agenda temps réel | tous |
 | `deroule` | les étapes d'une prestation, se retire seule sous deux étapes | soins, tatouage |
 
 ---
 
-## 5. Les seize métiers
+## 5. Les vingt-deux métiers
 
 Tous sont ouverts : vocabulaire traduit, sections choisies, styles filtrés,
 motifs de remplacement. La colonne « démonstration » dit ce qui manque encore
@@ -196,8 +199,10 @@ pour vendre — c'est là qu'est le travail restant.
 | Chocolatier | `chocolate_shop` | ~340 | occasions, prestations, abonnement, livraison, equipe | à faire |
 | Traiteur | `caterer` | ~100 | occasions, prestations, carte, livraison, abonnement, equipe | à faire |
 | Boucherie, poissonnerie | `butcher`, `fishmonger` | ~150 + ~80 | occasions, prestations, livraison, equipe | à faire |
-| Caviste, épicerie fine | `wine_store`, `deli` | ~80 + ~50 | occasions, prestations, abonnement, livraison, equipe | à faire |
+| Caviste, brasserie artisanale | `wine_store`, `brewery` | ~80 | occasions, prestations, abonnement, livraison, equipe | à faire |
+| Épicerie fine, fromagerie, torréfaction | `deli`, `grocery`, `greengrocer`, `cheese_shop`, `coffee_roaster` | ~50 + primeurs | occasions, prestations, abonnement, livraison, equipe | à faire |
 | Tatouage, piercing | `tattoo_parlor` | ~80 | prestations, equipe, deroule | à faire |
+| Photographe, imprimeur | `photographer`, `print_shop` | à compter | occasions, prestations, equipe | à faire |
 
 **Le tatoueur est rangé dans la commande, contre l'apparence.** On ne réserve
 pas une heure chez un tatoueur : on lui soumet un projet — emplacement, taille,
@@ -211,14 +216,33 @@ ses journées à déplacer des rendez-vous pris pour la mauvaise durée.
 |---|---|---|---|---|
 | Restaurant | `restaurant` | **~2 940** | carte, occasions, livraison, equipe | ✅ `demo-restaurant` |
 | Café, bar, salon de thé | `cafe`, `bar`, `tea_room` | **~1 670** | carte, equipe | ✅ `demo-cafe` |
-| Salle de sport, yoga | `gym`, `yoga_studio` | ~190 | planning, prestations, equipe | ✅ `demo-salle` |
+| Friterie, snack, sandwicherie | `fast_food`, `sandwich_shop`, `food_truck` | ~600 | carte, livraison, equipe | à faire |
+| Salle de sport, yoga, danse, escalade | `gym`, `yoga_studio`, `dance_studio`, `climbing_gym` | ~190 | planning, prestations, equipe | ✅ `demo-salle` |
+| École, cours, formation | `driving_school`, `language_school`, `music_school` | à compter | planning, prestations, equipe | à faire |
 
-### 5.4 Le repli
+### 5.4 Vitrine assumée
+
+Ils ne prennent ni rendez-vous ni commande : ils vendent en magasin. Ce qu'ils
+attendent d'un site est qu'on les trouve, qu'on voie ce qu'ils ont, et qu'on
+sache que c'est ouvert. La section des prestations sert aux services annexes,
+qui font souvent la différence : retouches, gravure, réparation, montage.
+
+| Métier | `business.type` | Sections | Démonstration |
+|---|---|---|---|
+| Boutique, commerce de détail | `clothing_store`, `shoe_store`, `jewelry_store`, `book_store`, `home_goods_store`, `bike_store`, `pet_store`, `toy_store` | prestations, equipe | à faire |
+| Pressing, cordonnerie, retouches | `dry_cleaner`, `shoe_repair`, `tailor`, `repair_shop` | prestations, livraison, equipe | à faire |
+
+Le second est le métier le plus mal servi par internet : on cherche
+« cordonnier » suivi d'un nom de quartier, on tombe sur une fiche Google sans
+horaires, et on se déplace pour rien. Un site qui dit ce qu'on répare, à quel
+prix et jusqu'à quelle heure suffit à gagner le client.
+
+### 5.5 Le repli
 
 `other` → vitrine complète : prestations et équipe. C'est aussi ce que reçoit
 tout type inconnu, plutôt qu'une construction qui échoue.
 
-### 5.5 Volontairement absents
+### 5.6 Volontairement absents
 
 Les **professions de santé réglementées** (médecins, dentistes, kinés,
 psychologues) ne sont pas ouvertes. Leur communication est encadrée par leur
@@ -235,19 +259,19 @@ en conclurait, à juste titre, que son site est raté.
 
 | Style | Ce qu'il évoque | Métiers |
 |---|---|---|
-| Maison | Blanc, filets fins, rien qui dépasse | soins, commerce, ongles, spa, opticien, animaux, pâtisserie, traiteur, café |
-| Atelier | Barbier traditionnel, chaud, un peu d'usure | soins, commerce, animaux, tatouage, boucherie |
-| Studio | Urbain, grandes capitales, contrastes | soins, commerce, opticien, tatouage, animaux, sport |
-| Signature | Haut de gamme, grande photo, peu de texte | soins, commerce, ongles, spa, opticien, chocolatier, traiteur, restaurant, sport |
-| Nuit | Fond sombre, surfaces vitrées, arrondis | soins, commerce, ongles, opticien, tatouage, restaurant, café, sport |
+| Maison | Blanc, filets fins, rien qui dépasse | soins, commerce, ongles, spa, opticien, animaux, pâtisserie, traiteur, café, épicerie, boutique, services, école, photo |
+| Atelier | Barbier traditionnel, chaud, un peu d'usure | soins, commerce, animaux, tatouage, boucherie, services |
+| Studio | Urbain, grandes capitales, contrastes | soins, commerce, opticien, tatouage, animaux, sport, snack, boutique, services, école, photo |
+| Signature | Haut de gamme, grande photo, peu de texte | soins, commerce, ongles, spa, opticien, chocolatier, traiteur, restaurant, sport, boutique, école, photo |
+| Nuit | Fond sombre, surfaces vitrées, arrondis | soins, commerce, ongles, opticien, tatouage, restaurant, café, sport, boutique, photo |
 | Serre | Clair et végétal | fleuriste, spa |
 | Nature morte | Fond sombre, sujet éclairé, très belge | fleuriste, chocolatier, caviste, restaurant |
-| Marché | Chaleureux, direct, prix assumés | fleuriste, pâtisserie, boucherie |
-| Herbier | Papier, petites capitales, presque un livre | fleuriste, chocolatier, traiteur, caviste |
-| **Terrazzo** | **Café moderne, arrondis généreux, mosaïque — le style « instagrammable »** | café, restaurant, pâtisserie, sport |
-| **Fournil** | Boulangerie, chaud, la vitrine avant le décor | pâtisserie, traiteur, boucherie, café |
+| Marché | Chaleureux, direct, prix assumés | fleuriste, pâtisserie, boucherie, snack, épicerie |
+| Herbier | Papier, petites capitales, presque un livre | fleuriste, chocolatier, traiteur, caviste, épicerie |
+| **Terrazzo** | **Café moderne, arrondis généreux, mosaïque — le style « instagrammable »** | café, restaurant, pâtisserie, sport, snack, école |
+| **Fournil** | Boulangerie, chaud, la vitrine avant le décor | pâtisserie, traiteur, boucherie, café, épicerie |
 | **Ganache** | Chocolatier, fond profond, cadrages serrés | chocolatier, caviste |
-| **Comptoir** | Bistrot, ardoise, atmosphère du soir | restaurant, café, boucherie, caviste |
+| **Comptoir** | Bistrot, ardoise, atmosphère du soir | restaurant, café, boucherie, caviste, snack |
 | **Pétale** | Onglerie, spa : doux, clair, arrondi | ongles, spa, animaux |
 | **Flash** | Tatouage : planches au mur, capitales, trait dur | tatouage |
 
@@ -269,8 +293,9 @@ Ce n'est plus du code.
    générés. Ils tiennent debout, mais une séance photo dans un vrai café vaut
    plus que trois métiers de plus.
 3. **Une démonstration par métier restant** : chocolatier, traiteur, boucherie,
-   caviste, onglerie, spa, opticien, tatouage, toilettage. Une demi-journée
-   chacune, contenu compris — le code, lui, est déjà là.
+   caviste, épicerie, onglerie, spa, opticien, tatouage, toilettage, friterie,
+   boutique, pressing, école, photographe. Une demi-journée chacune, contenu
+   compris — le code, lui, est déjà là.
 4. **Enregistrer les commerces de démonstration** (`pnpm tenant demo-restaurant`,
    `demo-patisserie`) : sans commerce en base, ni le bouton ni le formulaire de
    demande ne s'affichent. `pnpm check` le signale désormais.
@@ -278,6 +303,36 @@ Ce n'est plus du code.
 
 Plus tard, et seulement si ça se vend : la disponibilité réelle par service
 pour les restaurants, et l'inscription en ligne aux cours.
+
+---
+
+## 7 bis. Ce qui n'est **pas** couvert
+
+Quatre familles restent dehors, et chacune pour une raison qui tient.
+
+**Artisans du bâtiment** — plombier, électricien, peintre, menuisier,
+chauffagiste, jardinier, déménageur, nettoyage. Ils n'ont ni vitrine, ni
+horaires d'ouverture, ni prix affichables. Ils ont une **zone d'intervention**,
+des **réalisations avant/après**, une **demande de devis avec photos** et une
+urgence — « fuite, dépannage 24 h ». Le tronc commun lui-même leur va mal :
+horaires, plan et galerie de lieu sont à moitié hors sujet. **C'est le plus
+gros marché non couvert, et ce n'est pas un métier de plus — c'est un second
+produit.** À décider, pas à bricoler.
+
+**Hôtel, chambres d'hôtes** — la réservation de chambres suppose une
+disponibilité par nuit, des tarifs saisonniers et un paiement. Booking domine,
+et la commission est le vrai sujet. Gros chantier, à n'ouvrir que pour une
+raison précise.
+
+**Garage, carrosserie** — rendez-vous atelier **et** devis, les deux ensemble.
+Faisable, mais aucune des deux mécaniques ne suffit seule.
+
+**Agence immobilière** — un catalogue de biens avec fiches, photos et
+recherche. C'est un CMS, pas une section.
+
+Rappel utile : aucun de ces commerces n'est bloqué. Ils reçoivent le repli
+`other`, c'est-à-dire une vitrine complète et bilingue. Ce qui leur manque est
+le vocabulaire et la mécanique de leur métier, pas le site.
 
 ---
 
@@ -298,5 +353,5 @@ quartier. Pour ces derniers, le chiffre régional est un plancher.
 limitant. La coiffure seule tient les 30 sites visés à 3,5 % de pénétration. Le
 facteur limitant est le temps d'une seule personne — donc le bon critère n'est
 pas « quel métier est le plus gros » mais **« quel métier coûte le moins de
-jours par client gagné »**. Aujourd'hui que les seize entrées existent, ce coût
-est le même partout : celui d'une démonstration crédible.
+jours par client gagné »**. Aujourd'hui que les vingt-deux entrées existent, ce
+coût est le même partout : celui d'une démonstration crédible.

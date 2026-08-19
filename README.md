@@ -65,9 +65,11 @@ jeunes et attentifs à leur image, décideur présent sur place donc décision
 rapide, besoin réel de réservation en ligne, et forte densité dans les quartiers
 branchés — ce qui permet de démarcher une rue entière d'affilée.
 
-**Le reste du commerce de proximité est ouvert depuis le 19 août 2026.** Seize
-métiers, quatre mécaniques, un vocabulaire et des styles par métier : voir
-[docs/METIERS.md](docs/METIERS.md), qui fait foi sur la question. Ce qui limite
+**Le reste du commerce de proximité est ouvert depuis le 19 août 2026.**
+Vingt-deux métiers, 54 types de commerce, quatre mécaniques, un vocabulaire et
+des styles par métier : voir [docs/METIERS.md](docs/METIERS.md), qui fait foi
+sur la question — y compris sur ce qui n'est **pas** couvert (§7 bis :
+artisans du bâtiment, hôtellerie, garages, agences immobilières). Ce qui limite
 la vente n'est plus le logiciel mais une démonstration crédible par métier.
 
 **Ce paragraphe contredit ce que ce README disait jusqu'ici**, et c'est voulu.

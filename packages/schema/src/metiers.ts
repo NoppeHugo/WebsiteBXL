@@ -77,8 +77,22 @@ export interface Metier {
   sections: readonly SectionMetier[];
   /** Styles proposés à ce métier, par identifiant. */
   styles: readonly string[];
-  /** Motifs des visuels de remplacement (voir scripts/gen-placeholders.ts). */
-  motifs: readonly string[];
+  /**
+   * Motifs des visuels de remplacement, dessinés par
+   * `scripts/gen-placeholders.ts` tant que le commerce n'a pas fourni ses
+   * photos. Un motif par emplacement, parce qu'ils n'ont pas le même rôle :
+   * le hero couvre tout l'écran, les portraits d'équipe doivent rester des
+   * silhouettes — un visage dessiné donnerait une identité, donc une question.
+   *
+   * Décrits ici et nulle part ailleurs : ils l'étaient aussi dans le script,
+   * et les deux listes avaient divergé sans que rien ne le signale.
+   */
+  motifs: {
+    hero: string;
+    /** Six, comme la galerie par défaut. */
+    galerie: readonly string[];
+    portrait: string;
+  };
   /**
    * Vocabulaire propre au métier : ces clés remplacent celles de `i18n.ts`.
    * Une clé absente retombe sur le libellé commun — c'est ce qui permet
@@ -99,7 +113,11 @@ export const METIERS: Record<string, Metier> = {
     commande: "rendez-vous",
     sections: ["prestations", "equipe", "deroule"],
     styles: ["maison", "atelier", "studio", "signature", "nuit"],
-    motifs: ["silhouette", "ciseaux", "peigne", "fut", "blaireau", "rayures"],
+    motifs: {
+      hero: "rayures",
+      galerie: ["ciseaux", "peigne", "fut", "blaireau", "ciseaux", "peigne"],
+      portrait: "silhouette",
+    },
     vocabulaire: {},
   },
 
@@ -115,7 +133,11 @@ export const METIERS: Record<string, Metier> = {
     commande: "rendez-vous",
     sections: ["prestations", "equipe", "deroule"],
     styles: ["petale", "maison", "signature", "nuit"],
-    motifs: ["silhouette", "petale", "rayures"],
+    motifs: {
+      hero: "rayures",
+      galerie: ["petale", "silhouette", "petale", "rayures", "petale", "silhouette"],
+      portrait: "silhouette",
+    },
     vocabulaire: {
       gallery_title: { fr: "Nos réalisations", nl: "Ons werk", en: "Our work" },
       cta_title: {
@@ -138,7 +160,11 @@ export const METIERS: Record<string, Metier> = {
     commande: "rendez-vous",
     sections: ["prestations", "equipe", "deroule"],
     styles: ["petale", "serre", "maison", "signature"],
-    motifs: ["silhouette", "petale", "feuillage"],
+    motifs: {
+      hero: "feuillage",
+      galerie: ["petale", "feuillage", "petale", "graine", "feuillage", "petale"],
+      portrait: "silhouette",
+    },
     vocabulaire: {
       services_title: { fr: "Nos soins", nl: "Onze behandelingen", en: "Our treatments" },
       gallery_title: { fr: "Le lieu", nl: "De ruimte", en: "The space" },
@@ -164,7 +190,11 @@ export const METIERS: Record<string, Metier> = {
     commande: "rendez-vous",
     sections: ["prestations", "equipe", "deroule"],
     styles: ["maison", "studio", "signature", "nuit"],
-    motifs: ["lunettes", "silhouette", "rayures"],
+    motifs: {
+      hero: "rayures",
+      galerie: ["lunettes", "silhouette", "lunettes", "rayures", "lunettes", "silhouette"],
+      portrait: "silhouette",
+    },
     vocabulaire: {
       services_title: { fr: "Nos services", nl: "Onze diensten", en: "Our services" },
       gallery_title: { fr: "La boutique", nl: "De winkel", en: "The shop" },
@@ -184,7 +214,11 @@ export const METIERS: Record<string, Metier> = {
     commande: "rendez-vous",
     sections: ["prestations", "equipe", "deroule"],
     styles: ["maison", "atelier", "petale", "studio"],
-    motifs: ["patte", "silhouette", "rayures"],
+    motifs: {
+      hero: "rayures",
+      galerie: ["patte", "silhouette", "patte", "rayures", "patte", "silhouette"],
+      portrait: "silhouette",
+    },
     vocabulaire: {
       gallery_title: { fr: "Le cabinet", nl: "De praktijk", en: "The practice" },
       cta_title: {
@@ -212,7 +246,11 @@ export const METIERS: Record<string, Metier> = {
     commande: "commande",
     sections: ["prestations", "equipe", "deroule"],
     styles: ["flash", "studio", "nuit", "atelier"],
-    motifs: ["aiguille", "silhouette", "rayures"],
+    motifs: {
+      hero: "rayures",
+      galerie: ["aiguille", "silhouette", "aiguille", "rayures", "aiguille", "silhouette"],
+      portrait: "silhouette",
+    },
     vocabulaire: {
       services_title: { fr: "Nos tarifs", nl: "Onze tarieven", en: "Our rates" },
       gallery_title: { fr: "Le book", nl: "Het portfolio", en: "The portfolio" },
@@ -260,7 +298,11 @@ export const METIERS: Record<string, Metier> = {
     commande: "commande",
     sections: ["occasions", "prestations", "deuil", "abonnement", "livraison", "equipe"],
     styles: ["serre", "naturemorte", "marche", "herbier"],
-    motifs: ["fleur", "feuillage", "vase", "bouquet", "ruban", "graine"],
+    motifs: {
+      hero: "feuillage",
+      galerie: ["fleur", "bouquet", "vase", "feuillage", "ruban", "graine"],
+      portrait: "silhouette",
+    },
     vocabulaire: {
       services_title: { fr: "Nos compositions", nl: "Onze creaties", en: "Our arrangements" },
       gallery_title: { fr: "L'atelier", nl: "Het atelier", en: "The workshop" },
@@ -288,7 +330,11 @@ export const METIERS: Record<string, Metier> = {
     commande: "commande",
     sections: ["occasions", "prestations", "carte", "livraison", "equipe"],
     styles: ["fournil", "terrazzo", "maison", "marche"],
-    motifs: ["epi", "gateau", "rayures"],
+    motifs: {
+      hero: "epi",
+      galerie: ["gateau", "epi", "gateau", "carre", "epi", "gateau"],
+      portrait: "silhouette",
+    },
     vocabulaire: {
       services_title: { fr: "Nos gâteaux", nl: "Onze taarten", en: "Our cakes" },
       gallery_title: { fr: "La boutique", nl: "De winkel", en: "The shop" },
@@ -323,7 +369,11 @@ export const METIERS: Record<string, Metier> = {
     commande: "commande",
     sections: ["occasions", "prestations", "abonnement", "livraison", "equipe"],
     styles: ["ganache", "naturemorte", "signature", "herbier"],
-    motifs: ["carre", "ruban", "rayures"],
+    motifs: {
+      hero: "carre",
+      galerie: ["carre", "ruban", "carre", "gateau", "ruban", "carre"],
+      portrait: "silhouette",
+    },
     vocabulaire: {
       services_title: { fr: "Nos chocolats", nl: "Onze pralines", en: "Our chocolates" },
       gallery_title: { fr: "L'atelier", nl: "Het atelier", en: "The workshop" },
@@ -358,7 +408,11 @@ export const METIERS: Record<string, Metier> = {
     commande: "commande",
     sections: ["occasions", "prestations", "carte", "livraison", "abonnement", "equipe"],
     styles: ["signature", "herbier", "fournil", "maison"],
-    motifs: ["couvert", "epi", "rayures"],
+    motifs: {
+      hero: "couvert",
+      galerie: ["couvert", "epi", "couvert", "bouteille", "epi", "couvert"],
+      portrait: "silhouette",
+    },
     vocabulaire: {
       services_title: { fr: "Nos formules", nl: "Onze formules", en: "Our packages" },
       gallery_title: { fr: "Nos tables", nl: "Onze tafels", en: "Our tables" },
@@ -408,7 +462,11 @@ export const METIERS: Record<string, Metier> = {
     commande: "commande",
     sections: ["occasions", "prestations", "livraison", "equipe"],
     styles: ["marche", "atelier", "fournil", "comptoir"],
-    motifs: ["couvert", "rayures", "silhouette"],
+    motifs: {
+      hero: "couvert",
+      galerie: ["couvert", "rayures", "couvert", "epi", "rayures", "couvert"],
+      portrait: "silhouette",
+    },
     vocabulaire: {
       services_title: { fr: "Nos spécialités", nl: "Onze specialiteiten", en: "Our specialities" },
       gallery_title: { fr: "L'étal", nl: "De toonbank", en: "The counter" },
@@ -442,12 +500,16 @@ export const METIERS: Record<string, Metier> = {
    */
   caviste: {
     id: "caviste",
-    nom: "Caviste, épicerie fine",
-    types: ["wine_store", "deli"],
+    nom: "Caviste, brasserie artisanale",
+    types: ["wine_store", "brewery"],
     commande: "commande",
     sections: ["occasions", "prestations", "abonnement", "livraison", "equipe"],
     styles: ["naturemorte", "herbier", "comptoir", "ganache"],
-    motifs: ["bouteille", "carre", "rayures"],
+    motifs: {
+      hero: "bouteille",
+      galerie: ["bouteille", "carre", "bouteille", "epi", "carre", "bouteille"],
+      portrait: "silhouette",
+    },
     vocabulaire: {
       services_title: { fr: "Notre sélection", nl: "Onze selectie", en: "Our selection" },
       gallery_title: { fr: "La cave", nl: "De kelder", en: "The cellar" },
@@ -490,7 +552,11 @@ export const METIERS: Record<string, Metier> = {
     commande: "table",
     sections: ["carte", "occasions", "livraison", "equipe"],
     styles: ["comptoir", "terrazzo", "signature", "naturemorte", "nuit"],
-    motifs: ["couvert", "bouteille", "rayures"],
+    motifs: {
+      hero: "couvert",
+      galerie: ["couvert", "bouteille", "couvert", "tasse", "bouteille", "couvert"],
+      portrait: "silhouette",
+    },
     vocabulaire: {
       services_title: { fr: "Nos formules", nl: "Onze formules", en: "Our set menus" },
       gallery_title: { fr: "La salle", nl: "De zaal", en: "The dining room" },
@@ -528,7 +594,11 @@ export const METIERS: Record<string, Metier> = {
     commande: "aucun",
     sections: ["carte", "equipe"],
     styles: ["terrazzo", "comptoir", "maison", "fournil", "nuit"],
-    motifs: ["tasse", "carre", "rayures"],
+    motifs: {
+      hero: "tasse",
+      galerie: ["tasse", "carre", "tasse", "epi", "carre", "tasse"],
+      portrait: "silhouette",
+    },
     vocabulaire: {
       gallery_title: { fr: "Le lieu", nl: "De zaak", en: "The place" },
       team_title: { fr: "Derrière le comptoir", nl: "Achter de toog", en: "Behind the counter" },
@@ -552,16 +622,244 @@ export const METIERS: Record<string, Metier> = {
   sport: {
     id: "sport",
     nom: "Salle de sport, yoga",
-    types: ["gym", "yoga_studio"],
+    types: ["gym", "yoga_studio", "dance_studio", "climbing_gym"],
     commande: "aucun",
     sections: ["planning", "prestations", "equipe"],
     styles: ["studio", "nuit", "signature", "terrazzo"],
-    motifs: ["haltere", "silhouette", "rayures"],
+    motifs: {
+      hero: "haltere",
+      galerie: ["haltere", "silhouette", "haltere", "rayures", "silhouette", "haltere"],
+      portrait: "silhouette",
+    },
     vocabulaire: {
       services_title: { fr: "Nos formules", nl: "Onze formules", en: "Our memberships" },
       gallery_title: { fr: "La salle", nl: "De zaal", en: "The studio" },
       team_title: { fr: "Les coachs", nl: "De coaches", en: "The coaches" },
       cta_title: { fr: "Envie d'essayer ?", nl: "Zin om te proberen?", en: "Want to try?" },
+    },
+  },
+
+  /*
+   * Friterie, snack, sandwicherie, food truck.
+   *
+   * Une carte, et rien d'autre : on ne réserve pas de table dans une friterie
+   * et on n'y commande pas trois jours à l'avance. Le site répond à deux
+   * questions posées sur le trottoir — qu'est-ce qu'ils font, et c'est ouvert ?
+   */
+  snack: {
+    id: "snack",
+    nom: "Friterie, snack, sandwicherie",
+    types: ["fast_food", "food_truck", "sandwich_shop"],
+    commande: "aucun",
+    sections: ["carte", "livraison", "equipe"],
+    styles: ["comptoir", "marche", "studio", "terrazzo"],
+    motifs: {
+      hero: "cornet",
+      galerie: ["cornet", "couvert", "cornet", "rayures", "couvert", "cornet"],
+      portrait: "silhouette",
+    },
+    vocabulaire: {
+      gallery_title: { fr: "Le comptoir", nl: "De toog", en: "The counter" },
+      team_title: { fr: "Derrière le comptoir", nl: "Achter de toog", en: "Behind the counter" },
+      cta_title: { fr: "Un petit creux ?", nl: "Trek gekregen?", en: "Peckish?" },
+    },
+  },
+
+  /*
+   * Épicerie fine, fromagerie, primeur, torréfaction.
+   *
+   * Ce qui les réunit n'est pas le produit mais la façon de vendre : une
+   * sélection qu'on explique, un plateau ou un panier composé sur demande, et
+   * un abonnement — la caisse de légumes, la box de café, le plateau du
+   * dimanche. C'est ce dernier qui fait le revenu récurrent, et presque
+   * personne ne le présente en ligne.
+   */
+  epicerie: {
+    id: "epicerie",
+    nom: "Épicerie fine, fromagerie, torréfaction",
+    types: ["deli", "grocery", "greengrocer", "cheese_shop", "coffee_roaster"],
+    commande: "commande",
+    sections: ["occasions", "prestations", "abonnement", "livraison", "equipe"],
+    styles: ["marche", "fournil", "herbier", "maison"],
+    motifs: {
+      hero: "epi",
+      galerie: ["carre", "epi", "tasse", "carre", "epi", "carre"],
+      portrait: "silhouette",
+    },
+    vocabulaire: {
+      services_title: { fr: "Notre sélection", nl: "Onze selectie", en: "Our selection" },
+      gallery_title: { fr: "La boutique", nl: "De winkel", en: "The shop" },
+      team_title: { fr: "Qui vous conseille", nl: "Wie u adviseert", en: "Who advises you" },
+      cta_title: {
+        fr: "Une commande, un plateau ?",
+        nl: "Een bestelling of een schotel?",
+        en: "An order, or a platter?",
+      },
+      book: { fr: "Commander", nl: "Bestellen", en: "Order" },
+      book_short: { fr: "Commander", nl: "Bestellen", en: "Order" },
+      order_title: { fr: "Commander", nl: "Bestellen", en: "Order" },
+      order_card: { fr: "Votre commande", nl: "Uw bestelling", en: "Your order" },
+      order_card_help: {
+        fr: "Plateau, panier, quantités.",
+        nl: "Schotel, mand, hoeveelheden.",
+        en: "Platter, basket, quantities.",
+      },
+      subscription_title: {
+        fr: "Le panier qui revient",
+        nl: "De mand die terugkomt",
+        en: "The standing basket",
+      },
+      subscription_intro: {
+        fr: "Une sélection livrée chaque semaine ou chaque mois, choisie pour vous.",
+        nl: "Elke week of elke maand een selectie, voor u gekozen.",
+        en: "A selection delivered every week or every month, chosen for you.",
+      },
+    },
+  },
+
+  /*
+   * Boutique : mode, chaussures, bijouterie, librairie, décoration, vélo,
+   * animalerie, jouets.
+   *
+   * Vitrine assumée. Ces commerces ne prennent ni rendez-vous ni commande —
+   * ils vendent en magasin, et ce qu'ils attendent d'un site est qu'on les
+   * trouve, qu'on voie ce qu'ils ont, et qu'on sache que c'est ouvert. La
+   * section des prestations sert aux services annexes, qui font souvent la
+   * différence : retouches, gravure, réparation, montage d'un vélo.
+   */
+  boutique: {
+    id: "boutique",
+    nom: "Boutique, commerce de détail",
+    types: [
+      "clothing_store",
+      "shoe_store",
+      "jewelry_store",
+      "book_store",
+      "home_goods_store",
+      "bike_store",
+      "pet_store",
+      "toy_store",
+    ],
+    commande: "aucun",
+    sections: ["prestations", "equipe"],
+    styles: ["maison", "signature", "studio", "nuit"],
+    motifs: {
+      hero: "cintre",
+      galerie: ["cintre", "rayures", "cintre", "silhouette", "rayures", "cintre"],
+      portrait: "silhouette",
+    },
+    vocabulaire: {
+      services_title: { fr: "Nos services", nl: "Onze diensten", en: "Our services" },
+      gallery_title: { fr: "La boutique", nl: "De winkel", en: "The shop" },
+      cta_title: { fr: "Envie de passer ?", nl: "Zin om langs te komen?", en: "Care to drop by?" },
+    },
+  },
+
+  /*
+   * Pressing, cordonnerie, retouches, réparation.
+   *
+   * Le métier le plus mal servi par internet : on cherche « cordonnier »
+   * suivi d'un nom de quartier, on tombe sur une fiche Google sans horaires,
+   * et on se déplace pour rien. Un site qui dit ce qu'on répare, à quel prix
+   * et jusqu'à quelle heure suffit à gagner le client.
+   */
+  services: {
+    id: "services",
+    nom: "Pressing, cordonnerie, retouches",
+    types: ["dry_cleaner", "shoe_repair", "tailor", "repair_shop"],
+    commande: "aucun",
+    sections: ["prestations", "livraison", "equipe"],
+    styles: ["maison", "atelier", "studio"],
+    motifs: {
+      hero: "aiguille",
+      galerie: ["aiguille", "rayures", "aiguille", "silhouette", "rayures", "aiguille"],
+      portrait: "silhouette",
+    },
+    vocabulaire: {
+      services_title: { fr: "Nos tarifs", nl: "Onze tarieven", en: "Our rates" },
+      gallery_title: { fr: "L'atelier", nl: "Het atelier", en: "The workshop" },
+      cta_title: {
+        fr: "Quelque chose à réparer ?",
+        nl: "Iets te herstellen?",
+        en: "Something to repair?",
+      },
+    },
+  },
+
+  /*
+   * Auto-école, école de langues, école de musique.
+   *
+   * Elles partagent le planning des salles de sport — un horaire fixe, une
+   * capacité, plusieurs inscrits — et les formules des prestations : forfait
+   * code, dix heures de conduite, trimestre de solfège. L'inscription reste
+   * un rendez-vous humain, et c'est très bien ainsi : personne ne s'engage
+   * sur deux ans de cours par un formulaire.
+   */
+  ecole: {
+    id: "ecole",
+    nom: "École, cours, formation",
+    types: ["driving_school", "language_school", "music_school"],
+    commande: "aucun",
+    sections: ["planning", "prestations", "equipe"],
+    styles: ["maison", "studio", "signature", "terrazzo"],
+    motifs: {
+      hero: "livre",
+      galerie: ["livre", "silhouette", "livre", "rayures", "silhouette", "livre"],
+      portrait: "silhouette",
+    },
+    vocabulaire: {
+      services_title: { fr: "Nos formules", nl: "Onze formules", en: "Our courses" },
+      schedule_title: { fr: "Les cours", nl: "De lessen", en: "The classes" },
+      gallery_title: { fr: "Les locaux", nl: "De lokalen", en: "The premises" },
+      team_title: { fr: "Les professeurs", nl: "De lesgevers", en: "The teachers" },
+      cta_title: { fr: "Envie de commencer ?", nl: "Zin om te beginnen?", en: "Ready to start?" },
+    },
+  },
+
+  /*
+   * Photographe, imprimeur.
+   *
+   * Deux métiers qui ne se ressemblent pas, mais qui vendent de la même
+   * façon : on décrit un projet, on reçoit une proposition. Rien ne se
+   * commande sur étagère — un mariage et un tirage de mille affiches ont en
+   * commun de n'avoir aucun prix affichable.
+   */
+  photo: {
+    id: "photo",
+    nom: "Photographe, imprimeur",
+    types: ["photographer", "print_shop"],
+    commande: "commande",
+    sections: ["occasions", "prestations", "equipe"],
+    styles: ["signature", "studio", "nuit", "maison"],
+    motifs: {
+      hero: "appareil",
+      galerie: ["appareil", "carre", "appareil", "rayures", "carre", "appareil"],
+      portrait: "silhouette",
+    },
+    vocabulaire: {
+      services_title: { fr: "Nos formules", nl: "Onze formules", en: "Our packages" },
+      gallery_title: { fr: "Nos travaux", nl: "Ons werk", en: "Our work" },
+      occasions_title: { fr: "Pour quel projet ?", nl: "Voor welk project?", en: "For what project?" },
+      cta_title: {
+        fr: "Un projet en tête ?",
+        nl: "Een project in gedachten?",
+        en: "A project in mind?",
+      },
+      book: { fr: "Demander un devis", nl: "Offerte aanvragen", en: "Request a quote" },
+      book_short: { fr: "Un devis", nl: "Offerte", en: "Get a quote" },
+      order_title: { fr: "Demander un devis", nl: "Een offerte aanvragen", en: "Request a quote" },
+      order_intro: {
+        fr: "Dites-nous le projet, la date et le format. Nous revenons vers vous avec une proposition. Aucun paiement ici.",
+        nl: "Vertel ons het project, de datum en het formaat. Wij komen bij u terug met een voorstel. Geen betaling hier.",
+        en: "Tell us the project, the date and the format. We come back with a proposal. No payment here.",
+      },
+      order_occasion: { fr: "Le type de projet", nl: "Soort project", en: "Type of project" },
+      order_card: { fr: "Votre projet", nl: "Uw project", en: "Your project" },
+      order_card_help: {
+        fr: "Lieu, durée, quantités, format.",
+        nl: "Locatie, duur, aantallen, formaat.",
+        en: "Location, duration, quantities, format.",
+      },
     },
   },
 
@@ -578,7 +876,11 @@ export const METIERS: Record<string, Metier> = {
     commande: "aucun",
     sections: ["prestations", "equipe"],
     styles: ["maison", "atelier", "studio", "signature", "nuit"],
-    motifs: ["rayures", "silhouette"],
+    motifs: {
+      hero: "rayures",
+      galerie: ["rayures", "rayures", "rayures", "rayures", "rayures", "rayures"],
+      portrait: "silhouette",
+    },
     vocabulaire: {},
   },
 };

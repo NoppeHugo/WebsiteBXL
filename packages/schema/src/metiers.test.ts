@@ -27,7 +27,30 @@ describe("metierDe", () => {
     expect(metierDe("cafe").id).toBe("cafe");
     expect(metierDe("tattoo_parlor").id).toBe("tatouage");
     expect(metierDe("gym").id).toBe("sport");
+    expect(metierDe("fast_food").id).toBe("snack");
+    expect(metierDe("cheese_shop").id).toBe("epicerie");
+    expect(metierDe("jewelry_store").id).toBe("boutique");
+    expect(metierDe("dry_cleaner").id).toBe("services");
+    expect(metierDe("driving_school").id).toBe("ecole");
+    expect(metierDe("photographer").id).toBe("photo");
     expect(metierDe("other").id).toBe("commerce");
+  });
+
+  it("range les commerces voisins dans le même métier, et pas ailleurs", () => {
+    /*
+     * Un métier regroupe des types qui parlent la même langue, pas des types
+     * qui se ressemblent. Une friterie et un restaurant vendent tous deux à
+     * manger : l'une n'a qu'une carte, l'autre prend des tables.
+     */
+    expect(metierDe("sandwich_shop").commande).toBe("aucun");
+    expect(metierDe("restaurant").commande).toBe("table");
+    // Le torréfacteur vend un abonnement comme un caviste, mais ses mots sont
+    // ceux d'une épicerie fine, pas ceux d'une cave.
+    expect(metierDe("coffee_roaster").id).toBe("epicerie");
+    expect(metierDe("brewery").id).toBe("caviste");
+    // La danse et l'escalade tiennent au planning, comme le yoga.
+    expect(metierDe("dance_studio").id).toBe("sport");
+    expect(afficheSection("climbing_gym", "planning")).toBe(true);
   });
 
   it("ne laisse aucun type sans métier", () => {
