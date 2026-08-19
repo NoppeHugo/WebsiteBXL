@@ -149,7 +149,7 @@ const collectScript = `(function(){
     if (href.indexOf("google.com/maps") !== -1 || href.indexOf("maps.app") !== -1) return send("directions");
     if (href.indexOf("#reservation") !== -1) return send("booking");
     // Chez un fleuriste, le bouton principal descend vers « #commande ».
-    if (href.indexOf("#commande") !== -1) return send("order");
+    if (href.indexOf("#commande") !== -1 || href.indexOf("#table") !== -1) return send("order");
     if (link.rel && link.rel.indexOf("me") !== -1) return send("social");
   }, { passive: true });
 

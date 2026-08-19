@@ -201,11 +201,23 @@ export const ESPACE_JS = String.raw`
   const liste = $(document, "[data-liste-tarifs]");
   const modele = $(document, "[data-modele]");
 
+  /*
+   * Le préfixe des champs est lu sur la liste elle-même : « services » pour la
+   * page des tarifs, « carte » pour celle de la carte, « courses » pour le
+   * planning. Il était écrit en dur, et la deuxième page qui a réutilisé ce
+   * mécanisme renumérotait donc des champs qui n'existaient pas — sans rien
+   * dire, jusqu'à l'enregistrement.
+   */
+  const prefixe = (liste && liste.dataset.prefixe) || "services";
+
   const renumeroter = () => {
     if (!liste) return;
     $$(liste, "[data-ligne]").forEach((ligne, index) => {
       for (const champ of $$(ligne, "[name]")) {
-        champ.name = champ.name.replace(/^services\.[^.]+\./, "services." + index + ".");
+        champ.name = champ.name.replace(
+          new RegExp("^" + prefixe + "\\.[^.]+\\."),
+          prefixe + "." + index + ".",
+        );
       }
     });
   };
@@ -216,7 +228,7 @@ export const ESPACE_JS = String.raw`
       if (!bouton) return;
       const ligne = bouton.closest("[data-ligne]");
       const nom = $(ligne, "input[type=text]");
-      const quoi = nom && nom.value ? nom.value : "cette prestation";
+      const quoi = nom && nom.value ? nom.value : liste.dataset.quoi || "cette prestation";
       if (!confirm("Retirer " + quoi + " ? Le retrait prendra effet à l'enregistrement.")) return;
       ligne.remove();
       renumeroter();

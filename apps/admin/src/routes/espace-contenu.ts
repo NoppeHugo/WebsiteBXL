@@ -189,6 +189,221 @@ function pageTarifs(slug: string, flash?: { ton: "ok" | "ko"; texte: string }): 
 }
 
 /* -------------------------------------------------------------------------- */
+/* La carte                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * « Ma carte », pour un restaurant, un café, un salon de thé.
+ *
+ * Une ligne par plat, avec le groupe à côté du nom — et non des groupes à
+ * ouvrir avant de pouvoir écrire. C'est le geste de recopier une carte, dans
+ * l'ordre où elle est écrite ; le fichier, lui, la range en groupes.
+ *
+ * C'est la page qui décide si un restaurant reste client : une carte qui
+ * change le jeudi et qu'il faut nous demander de mettre à jour est une carte
+ * qui ne changera jamais sur le site, et un abonnement qu'on résilie au bout
+ * de trois mois.
+ */
+function pageCarte(slug: string, flash?: { ton: "ok" | "ko"; texte: string }): string {
+  const { site } = client(slug);
+  const langue = site.languages.default;
+
+  const TAGS: Array<[string, string]> = [
+    ["vegetarien", "Végé"],
+    ["vegan", "Vegan"],
+    ["sans-gluten", "Sans gluten"],
+    ["epice", "Épicé"],
+    ["maison", "Maison"],
+  ];
+
+  const plats = site.menu.flatMap((groupe) =>
+    groupe.items.map((plat) => ({ groupe, plat })),
+  );
+
+  const cases = (index: number, actifs: readonly string[]) =>
+    TAGS.map(
+      ([cle, libelle]) => `<label class="case">
+      <input type="checkbox" name="carte.${index}.tags.${cle}"${
+        actifs.includes(cle) ? " checked" : ""
+      }>
+      <span>${libelle}</span>
+    </label>`,
+    ).join("");
+
+  const lignes = plats
+    .map(
+      ({ groupe, plat }, i) => `<div class="ligne" data-ligne>
+  <div class="ligne__paire">
+    <label>Groupe
+      <input type="text" name="carte.${i}.group.${escape(langue)}"
+             value="${escape(groupe.title[langue] ?? Object.values(groupe.title)[0] ?? "")}"
+             maxlength="60" placeholder="Entrées">
+    </label>
+    <label>Prix (€)
+      <input type="text" inputmode="decimal" name="carte.${i}.price"
+             value="${plat.price === null ? "" : escape(String(plat.price))}"
+             placeholder="selon arrivage">
+    </label>
+  </div>
+  <label>Plat
+    <input type="text" name="carte.${i}.name.${escape(langue)}"
+           value="${escape(plat.name[langue] ?? Object.values(plat.name)[0] ?? "")}"
+           required maxlength="120">
+  </label>
+  <label>Description
+    <input type="text" name="carte.${i}.description.${escape(langue)}"
+           value="${escape(plat.description?.[langue] ?? "")}" maxlength="200">
+  </label>
+  <div class="ligne__cases">${cases(i, plat.tags)}</div>
+  <button type="button" class="ligne__retirer" data-retirer>Retirer ce plat</button>
+</div>`,
+    )
+    .join("");
+
+  return layoutClient(
+    "Ma carte",
+    `${flash ? message(flash.ton, flash.texte) : ""}
+<h1>Ma carte</h1>
+<p class="chapeau">
+  Les plats et les boissons, dans l'ordre où ils apparaissent sur le site.
+  Le groupe laissé vide reprend celui de la ligne du dessus : vous pouvez
+  écrire « Entrées » une seule fois.
+</p>
+
+<form method="post" action="/espace/carte">
+  <label>Mot au-dessus de la carte
+    <input type="text" name="menuNote.${escape(langue)}"
+           value="${escape(site.menuNote?.[langue] ?? "")}" maxlength="160"
+           placeholder="La carte change chaque semaine">
+  </label>
+
+  <div data-liste-tarifs data-prefixe="carte" data-quoi="ce plat">${lignes}</div>
+  <div class="actions">
+    <button type="button" class="second" data-ajouter>+ Ajouter un plat</button>
+    <button type="submit" data-lent="Mise à jour du site…">Enregistrer et mettre en ligne</button>
+  </div>
+  <p class="aide">
+    Prix laissé vide : le site affiche « sur devis ». Un plat retiré disparaît
+    du site à l'enregistrement.
+  </p>
+</form>
+
+<template data-modele>
+  <div class="ligne" data-ligne>
+    <div class="ligne__paire">
+      <label>Groupe
+        <input type="text" name="carte.X.group.${escape(langue)}" maxlength="60" placeholder="Entrées">
+      </label>
+      <label>Prix (€)
+        <input type="text" inputmode="decimal" name="carte.X.price" placeholder="selon arrivage">
+      </label>
+    </div>
+    <label>Plat
+      <input type="text" name="carte.X.name.${escape(langue)}" required maxlength="120">
+    </label>
+    <label>Description
+      <input type="text" name="carte.X.description.${escape(langue)}" maxlength="200">
+    </label>
+    <div class="ligne__cases">${cases(0, [])}</div>
+    <button type="button" class="ligne__retirer" data-retirer>Retirer ce plat</button>
+  </div>
+</template>`,
+    { nomCommerce: site.business.name, retour: "/espace", script: true },
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Le planning                                                                */
+/* -------------------------------------------------------------------------- */
+
+/** « Mon planning » : les cours de la semaine, affichés et non réservables. */
+function pagePlanning(slug: string, flash?: { ton: "ok" | "ko"; texte: string }): string {
+  const { site } = client(slug);
+  const langue = site.languages.default;
+
+  const options = (choisi?: string) =>
+    WEEKDAYS.map(
+      (jour) =>
+        `<option value="${jour}"${jour === choisi ? " selected" : ""}>${NOMS_JOURS[jour]}</option>`,
+    ).join("");
+
+  const lignes = site.courses
+    .map(
+      (cours, i) => `<div class="ligne" data-ligne>
+  <label>Cours
+    <input type="text" name="courses.${i}.name.${escape(langue)}"
+           value="${escape(cours.name[langue] ?? Object.values(cours.name)[0] ?? "")}"
+           required maxlength="80">
+  </label>
+  <div class="ligne__paire">
+    <label>Jour
+      <select name="courses.${i}.day">${options(cours.day)}</select>
+    </label>
+    <label>Coach
+      <input type="text" name="courses.${i}.coach" value="${escape(cours.coach ?? "")}" maxlength="60">
+    </label>
+  </div>
+  <div class="ligne__paire">
+    <label>Début
+      <input type="time" name="courses.${i}.start" value="${escape(cours.start)}">
+    </label>
+    <label>Fin
+      <input type="time" name="courses.${i}.end" value="${escape(cours.end)}">
+    </label>
+  </div>
+  <input type="hidden" name="courses.${i}.id" value="${escape(cours.id)}">
+  <button type="button" class="ligne__retirer" data-retirer>Retirer ce cours</button>
+</div>`,
+    )
+    .join("");
+
+  return layoutClient(
+    "Mon planning",
+    `${flash ? message(flash.ton, flash.texte) : ""}
+<h1>Mon planning</h1>
+<p class="chapeau">
+  Les cours de la semaine, tels qu'ils s'affichent sur le site. Ils ne se
+  réservent pas en ligne : c'est vous qui gérez les places.
+</p>
+
+<form method="post" action="/espace/planning">
+  <div data-liste-tarifs data-prefixe="courses" data-quoi="ce cours">${lignes}</div>
+  <div class="actions">
+    <button type="button" class="second" data-ajouter>+ Ajouter un cours</button>
+    <button type="submit" data-lent="Mise à jour du site…">Enregistrer et mettre en ligne</button>
+  </div>
+</form>
+
+<template data-modele>
+  <div class="ligne" data-ligne>
+    <label>Cours
+      <input type="text" name="courses.X.name.${escape(langue)}" required maxlength="80">
+    </label>
+    <div class="ligne__paire">
+      <label>Jour
+        <select name="courses.X.day">${options()}</select>
+      </label>
+      <label>Coach
+        <input type="text" name="courses.X.coach" maxlength="60">
+      </label>
+    </div>
+    <div class="ligne__paire">
+      <label>Début
+        <input type="time" name="courses.X.start" value="18:00">
+      </label>
+      <label>Fin
+        <input type="time" name="courses.X.end" value="19:00">
+      </label>
+    </div>
+    <input type="hidden" name="courses.X.id" value="">
+    <button type="button" class="ligne__retirer" data-retirer>Retirer ce cours</button>
+  </div>
+</template>`,
+    { nomCommerce: site.business.name, retour: "/espace", script: true },
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /* Photos                                                                     */
 /* -------------------------------------------------------------------------- */
 
@@ -431,6 +646,49 @@ export function espaceContenuRoutes(app: FastifyInstance): void {
       pageTarifs(slug, {
         ton: resultat.ok ? "ok" : "ko",
         texte: resultat.ok ? "Vos tarifs sont en ligne." : resultat.message,
+      }),
+    );
+  });
+
+  /* --- carte --- */
+
+  app.get("/espace/carte", async (request, reply) => {
+    await pull();
+    return reply.type("text/html").send(pageCarte(siteDuCommercant(utilisateur(request))));
+  });
+
+  app.post<{ Body: Record<string, string> }>("/espace/carte", async (request, reply) => {
+    const u = utilisateur(request);
+    const slug = siteDuCommercant(u);
+    const resultat = await enregistrerEtPublier(slug, u.id, "carte", (request.body ?? {}) as Champs);
+    return reply.type("text/html").send(
+      pageCarte(slug, {
+        ton: resultat.ok ? "ok" : "ko",
+        texte: resultat.ok ? "Votre carte est en ligne." : resultat.message,
+      }),
+    );
+  });
+
+  /* --- planning --- */
+
+  app.get("/espace/planning", async (request, reply) => {
+    await pull();
+    return reply.type("text/html").send(pagePlanning(siteDuCommercant(utilisateur(request))));
+  });
+
+  app.post<{ Body: Record<string, string> }>("/espace/planning", async (request, reply) => {
+    const u = utilisateur(request);
+    const slug = siteDuCommercant(u);
+    const resultat = await enregistrerEtPublier(
+      slug,
+      u.id,
+      "planning",
+      (request.body ?? {}) as Champs,
+    );
+    return reply.type("text/html").send(
+      pagePlanning(slug, {
+        ton: resultat.ok ? "ok" : "ko",
+        texte: resultat.ok ? "Votre planning est en ligne." : resultat.message,
       }),
     );
   });

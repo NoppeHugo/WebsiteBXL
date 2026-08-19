@@ -2,13 +2,48 @@ import type { Language } from "@bxl/schema";
 import { WEEKDAYS } from "@bxl/schema";
 import { site, t } from "./client.ts";
 
-/** Correspondance vers les types schema.org reconnus par Google. */
+/**
+ * Correspondance vers les types schema.org reconnus par Google.
+ *
+ * Tous nos types de commerce n'ont pas d'équivalent : schema.org ne connaît
+ * ni boucher, ni chocolatier, ni traiteur. On remonte alors au type parent le
+ * plus proche — `Store`, `FoodEstablishment` — plutôt que d'inventer un nom :
+ * un type inconnu de Google est ignoré en bloc, et le commerce perd du même
+ * coup ses horaires et son adresse, qui eux étaient bons.
+ */
 const SCHEMA_TYPE: Record<string, string> = {
+  /* Soins et rendez-vous. */
   hair_salon: "HairSalon",
   barbershop: "HairSalon",
   beauty_salon: "BeautySalon",
-  bakery: "Bakery",
+  nail_salon: "NailSalon",
+  day_spa: "DaySpa",
+  massage: "HealthAndBeautyBusiness",
+  optician: "Optician",
+  pet_grooming: "PetStore",
+  veterinary: "VeterinaryCare",
+  tattoo_parlor: "TattooParlor",
+
+  /* Commerces de bouche et de détail. */
   florist: "Florist",
+  bakery: "Bakery",
+  pastry_shop: "Bakery",
+  ice_cream: "IceCreamShop",
+  chocolate_shop: "Store",
+  caterer: "FoodEstablishment",
+  butcher: "Store",
+  fishmonger: "Store",
+  wine_store: "LiquorStore",
+  deli: "GroceryStore",
+
+  /* Table, comptoir, salle. */
+  restaurant: "Restaurant",
+  cafe: "CafeOrCoffeeShop",
+  bar: "BarOrPub",
+  tea_room: "CafeOrCoffeeShop",
+  gym: "HealthClub",
+  yoga_studio: "HealthClub",
+
   other: "LocalBusiness",
 };
 

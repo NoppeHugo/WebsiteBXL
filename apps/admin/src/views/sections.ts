@@ -412,6 +412,163 @@ export function sectionPrestations(slug: string, site: Site, defaut: Language): 
   );
 }
 
+
+/* ------------------------------------------------------------------- carte */
+
+/**
+ * La carte, à plat.
+ *
+ * Une ligne par plat, avec le nom de son groupe — comme la catégorie d'une
+ * prestation. Le fichier, lui, garde des groupes ordonnés : c'est
+ * `appliquerSection("carte")` qui les reconstitue, dans l'ordre de première
+ * apparition. Le gain est net à la saisie : on recopie une carte de haut en
+ * bas, sans ouvrir un groupe avant de pouvoir écrire un plat.
+ */
+export function sectionCarte(slug: string, site: Site, defaut: Language): string {
+  const TAGS: Array<[string, string]> = [
+    ["vegetarien", "Végétarien"],
+    ["vegan", "Vegan"],
+    ["sans-gluten", "Sans gluten"],
+    ["epice", "Épicé"],
+    ["maison", "Fait maison"],
+  ];
+
+  // La carte est aplatie pour l'édition, groupe par groupe et dans l'ordre.
+  const plats = site.menu.flatMap((groupe) =>
+    groupe.items.map((plat) => ({ groupe, plat })),
+  );
+
+  const ligne = (
+    index: number,
+    titreGroupe: Partial<Record<Language, string>> | undefined,
+    plat: Site["menu"][number]["items"][number] | undefined,
+  ): string => `<li class="element" data-element>
+  ${barreElement(index, plat?.name[defaut] ?? "Nouveau plat")}
+  <div class="element__corps">
+    ${texteTraduit(`carte.${index}.group`, "Groupe", titreGroupe, {
+      defaut,
+      aide: "Entrées, Plats, Desserts, Boissons… Laissé vide, le plat rejoint le groupe précédent.",
+    })}
+    ${texteTraduit(`carte.${index}.name`, "Plat", plat?.name, { defaut })}
+    ${texteTraduit(`carte.${index}.description`, "Description", plat?.description, {
+      defaut,
+      lignes: 2,
+    })}
+    ${texte(
+      `carte.${index}.price`,
+      "Prix (€)",
+      plat?.price === null || plat?.price === undefined ? "" : String(plat.price),
+      { aide: "Vide = « sur devis », pour ce qui change selon l'arrivage." },
+    )}
+    <div class="cases">
+      ${TAGS.map(
+        ([cle, libelle]) => `<label class="case">
+        <input type="checkbox" name="carte.${index}.tags.${cle}"${
+          plat?.tags.includes(cle as never) ? " checked" : ""
+        }>
+        <span>${libelle}</span>
+      </label>`,
+      ).join("")}
+    </div>
+  </div>
+</li>`;
+
+  const elements = plats.map(({ groupe, plat }, index) => ligne(index, groupe.title, plat)).join("");
+
+  return section(
+    slug,
+    "carte",
+    "La carte",
+    "Ce que le client vient chercher avant les photos : les plats, les boissons et leurs prix. Un groupe vide reprend celui de la ligne du dessus.",
+    `${texteTraduit("menuNote", "Mot au-dessus de la carte", site.menuNote, {
+      defaut,
+      aide: "« La carte change chaque semaine », « allergènes sur demande »…",
+    })}
+<ul class="liste" data-liste="carte">${elements}</ul>
+<div class="actions">
+  <button type="button" class="secondary" data-ajouter="carte">Ajouter un plat</button>
+</div>
+
+<template data-modele="carte">
+  ${ligne(0, undefined, undefined)}
+</template>`,
+  );
+}
+
+/* ---------------------------------------------------------------- planning */
+
+/**
+ * Le planning des cours.
+ *
+ * Affiché, pas réservable : voir `Planning.astro`. Le formulaire ne demande
+ * donc ni capacité obligatoire ni inscription — seulement de quoi répondre à
+ * « qu'est-ce qu'il y a le mardi soir ? ».
+ */
+export function sectionPlanning(slug: string, site: Site, defaut: Language): string {
+  const JOURS: Array<[string, string]> = [
+    ["monday", "Lundi"],
+    ["tuesday", "Mardi"],
+    ["wednesday", "Mercredi"],
+    ["thursday", "Jeudi"],
+    ["friday", "Vendredi"],
+    ["saturday", "Samedi"],
+    ["sunday", "Dimanche"],
+  ];
+
+  const ligne = (index: number, cours: Site["courses"][number] | undefined): string =>
+    `<li class="element" data-element>
+  ${barreElement(index, cours?.name[defaut] ?? "Nouveau cours")}
+  <div class="element__corps">
+    ${texteTraduit(`courses.${index}.name`, "Nom du cours", cours?.name, { defaut })}
+    <div class="row">
+      <label>Jour
+        <select name="courses.${index}.day">
+          ${JOURS.map(
+            ([cle, nom]) =>
+              `<option value="${cle}"${cours?.day === cle ? " selected" : ""}>${nom}</option>`,
+          ).join("")}
+        </select>
+      </label>
+      ${texte(`courses.${index}.start`, "Début", cours?.start ?? "18:00", { type: "time" })}
+      ${texte(`courses.${index}.end`, "Fin", cours?.end ?? "19:00", { type: "time" })}
+    </div>
+    <div class="row">
+      ${texte(`courses.${index}.coach`, "Coach", cours?.coach, {
+        aide: "Le prénom suffit : c'est lui qu'on suit.",
+      })}
+      ${texte(
+        `courses.${index}.capacity`,
+        "Places",
+        cours?.capacity === undefined ? "" : String(cours.capacity),
+        { type: "number", attributs: 'min="1" max="500" step="1"', aide: "Vide = non annoncé." },
+      )}
+    </div>
+    ${texteTraduit(`courses.${index}.level`, "Niveau", cours?.level, {
+      defaut,
+      aide: "« Tous niveaux », « débutants »…",
+    })}
+    <input type="hidden" name="courses.${index}.id" value="${escape(cours?.id ?? "")}">
+  </div>
+</li>`;
+
+  const elements = site.courses.map((cours, index) => ligne(index, cours)).join("");
+
+  return section(
+    slug,
+    "planning",
+    "Le planning",
+    "Les cours de la semaine, avec leur horaire fixe. Affiché sur le site, sans inscription en ligne : la salle confirme les places.",
+    `<ul class="liste" data-liste="courses">${elements}</ul>
+<div class="actions">
+  <button type="button" class="secondary" data-ajouter="courses">Ajouter un cours</button>
+</div>
+
+<template data-modele="courses">
+  ${ligne(0, undefined)}
+</template>`,
+  );
+}
+
 /* ---------------------------------------------------------------------- SEO */
 
 export function sectionReferencement(slug: string, site: Site, defaut: Language): string {

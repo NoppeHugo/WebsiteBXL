@@ -151,7 +151,11 @@ export interface OrderMailData {
   occasion?: string;
   budget?: number;
   wantedDate?: string;
-  mode: "delivery" | "pickup";
+  /** Heure souhaitée : une table seulement. */
+  wantedTime?: string;
+  /** Nombre de couverts : une table seulement. */
+  partySize?: number;
+  mode: "delivery" | "pickup" | "table";
   address?: string;
   card?: string;
   note?: string;
@@ -182,13 +186,27 @@ export function orderToBusiness(data: OrderMailData): {
   text: string;
 } {
   const quand = orderDate(data.wantedDate, "fr");
+  const table = data.mode === "table";
 
-  const lignes = [
-    `Nouvelle demande de commande pour ${data.businessName}.`,
-    "",
-    `Pour       : ${quand}`,
-    `Remise     : ${data.mode === "delivery" ? "livraison" : "retrait en boutique"}`,
-  ];
+  /*
+   * Une demande de table se lit debout, entre deux services, souvent sur un
+   * téléphone posé près de la caisse. L'heure et le nombre de couverts passent
+   * donc avant tout le reste : ce sont les deux seules choses qui décident si
+   * la table est possible.
+   */
+  const lignes = table
+    ? [
+        `Nouvelle demande de table pour ${data.businessName}.`,
+        "",
+        `Pour       : ${quand} à ${data.wantedTime ?? ""}`,
+        `Couverts   : ${data.partySize ?? ""}`,
+      ]
+    : [
+        `Nouvelle demande de commande pour ${data.businessName}.`,
+        "",
+        `Pour       : ${quand}`,
+        `Remise     : ${data.mode === "delivery" ? "livraison" : "retrait en boutique"}`,
+      ];
 
   if (data.address) lignes.push(`Adresse    : ${data.address}`);
   if (data.occasion) lignes.push(`Occasion   : ${data.occasion}`);
@@ -210,20 +228,24 @@ export function orderToBusiness(data: OrderMailData): {
 
   lignes.push(
     "",
-    "Rien n'a été encaissé et rien n'est confirmé : rappelez le client pour",
-    "convenir de ce que vous pouvez composer.",
+    table
+      ? "Rien n'est confirmé : la table n'est pas retenue tant que vous n'avez pas"
+      : "Rien n'a été encaissé et rien n'est confirmé : rappelez le client pour",
+    table ? "répondu au client." : "convenir de ce que vous pouvez composer.",
     "",
     "Répondre à ce courriel écrit directement au client.",
   );
 
   return {
-    subject: `Demande de commande — ${quand} — ${data.name}`,
+    subject: table
+      ? `Demande de table — ${quand} ${data.wantedTime ?? ""} — ${data.partySize ?? ""} couverts — ${data.name}`
+      : `Demande de commande — ${quand} — ${data.name}`,
     text: lignes.join("\n"),
   };
 }
 
 /**
- * Accusé de réception au client qui commande.
+ * Accusé de réception au client qui commande — ou qui demande une table.
  *
  * Il manquait, alors que la demande de rendez-vous en avait un depuis le début.
  * Quelqu'un venait de confier un budget, une adresse et le mot à écrire sur la
@@ -243,31 +265,39 @@ export function orderToCustomer(data: OrderMailData): {
 } {
   const quand = orderDate(data.wantedDate, data.locale);
 
+  const table = data.mode === "table";
+
   const recapitulatif: Record<Language, string[]> = {
-    fr: [
-      `Pour : ${quand}`,
-      data.mode === "delivery"
-        ? `Livraison : ${data.address ?? ""}`
-        : "À retirer en boutique",
-      ...(data.occasion ? [`Occasion : ${data.occasion}`] : []),
-      ...(data.budget !== undefined ? [`Budget indiqué : ${data.budget} €`] : []),
-    ],
-    nl: [
-      `Voor: ${quand}`,
-      data.mode === "delivery"
-        ? `Levering: ${data.address ?? ""}`
-        : "Af te halen in de winkel",
-      ...(data.occasion ? [`Gelegenheid: ${data.occasion}`] : []),
-      ...(data.budget !== undefined ? [`Opgegeven budget: ${data.budget} €`] : []),
-    ],
-    en: [
-      `For: ${quand}`,
-      data.mode === "delivery"
-        ? `Delivery: ${data.address ?? ""}`
-        : "To collect in the shop",
-      ...(data.occasion ? [`Occasion: ${data.occasion}`] : []),
-      ...(data.budget !== undefined ? [`Budget given: ${data.budget} €`] : []),
-    ],
+    fr: table
+      ? [`Pour : ${quand} à ${data.wantedTime ?? ""}`, `Couverts : ${data.partySize ?? ""}`]
+      : [
+          `Pour : ${quand}`,
+          data.mode === "delivery"
+            ? `Livraison : ${data.address ?? ""}`
+            : "À retirer en boutique",
+          ...(data.occasion ? [`Occasion : ${data.occasion}`] : []),
+          ...(data.budget !== undefined ? [`Budget indiqué : ${data.budget} €`] : []),
+        ],
+    nl: table
+      ? [`Voor: ${quand} om ${data.wantedTime ?? ""}`, `Personen: ${data.partySize ?? ""}`]
+      : [
+          `Voor: ${quand}`,
+          data.mode === "delivery"
+            ? `Levering: ${data.address ?? ""}`
+            : "Af te halen in de winkel",
+          ...(data.occasion ? [`Gelegenheid: ${data.occasion}`] : []),
+          ...(data.budget !== undefined ? [`Opgegeven budget: ${data.budget} €`] : []),
+        ],
+    en: table
+      ? [`For: ${quand} at ${data.wantedTime ?? ""}`, `Guests: ${data.partySize ?? ""}`]
+      : [
+          `For: ${quand}`,
+          data.mode === "delivery"
+            ? `Delivery: ${data.address ?? ""}`
+            : "To collect in the shop",
+          ...(data.occasion ? [`Occasion: ${data.occasion}`] : []),
+          ...(data.budget !== undefined ? [`Budget given: ${data.budget} €`] : []),
+        ],
   };
 
   const carte: Record<Language, string[]> = {
@@ -276,50 +306,101 @@ export function orderToCustomer(data: OrderMailData): {
     en: ["", "Message for the card, exactly as received:", `“${data.card}”`],
   };
 
+  /*
+   * La phrase du milieu disait « le fleuriste vous recontacte ». Elle était
+   * juste tant qu'un seul métier commandait ; elle est devenue fausse le jour
+   * où une boucherie, un traiteur et un restaurant ont utilisé la même route.
+   * « Nous » vaut pour tous, et c'est de toute façon le commerce lui-même qui
+   * signe ce courriel.
+   */
+  const attente: Record<Language, string[]> = {
+    fr: table
+      ? [
+          "Rien n'est payé et la table n'est pas encore retenue : nous vous",
+          "confirmons la réservation par téléphone ou par courriel.",
+        ]
+      : [
+          "Rien n'a été payé et rien n'est encore confirmé : nous vous",
+          "recontactons pour convenir de ce qui est possible.",
+        ],
+    nl: table
+      ? [
+          "Er is niets betaald en de tafel is nog niet vastgelegd: wij bevestigen",
+          "de reservering telefonisch of per e-mail.",
+        ]
+      : [
+          "Er is niets betaald en niets is al bevestigd: wij nemen contact met u",
+          "op om te bespreken wat mogelijk is.",
+        ],
+    en: table
+      ? [
+          "Nothing has been paid and the table is not held yet — we will confirm",
+          "the booking by phone or email.",
+        ]
+      : [
+          "Nothing has been paid and nothing is confirmed yet — we will get back",
+          "to you to agree on what is possible.",
+        ],
+  };
+
+  const entete: Record<Language, string> = {
+    fr: table
+      ? `Nous avons bien reçu votre demande de table chez ${data.businessName} :`
+      : `Nous avons bien reçu votre demande de commande chez ${data.businessName} :`,
+    nl: table
+      ? `We hebben uw tafelaanvraag bij ${data.businessName} goed ontvangen:`
+      : `We hebben uw bestelaanvraag bij ${data.businessName} goed ontvangen:`,
+    en: table
+      ? `We have received your table request at ${data.businessName}:`
+      : `We have received your order request at ${data.businessName}:`,
+  };
+
   const corps: Record<Language, string[]> = {
     fr: [
       `Bonjour ${data.name},`,
       "",
-      `Nous avons bien reçu votre demande de commande chez ${data.businessName} :`,
+      entete.fr,
       ...recapitulatif.fr,
       ...(data.card ? carte.fr : []),
       "",
-      "Rien n'a été payé et rien n'est encore confirmé : le fleuriste vous",
-      "recontacte pour convenir de ce qu'il peut composer avec les fleurs du",
-      "moment.",
+      ...attente.fr,
       "",
       "À bientôt.",
     ],
     nl: [
       `Beste ${data.name},`,
       "",
-      `We hebben uw bestelaanvraag bij ${data.businessName} goed ontvangen:`,
+      entete.nl,
       ...recapitulatif.nl,
       ...(data.card ? carte.nl : []),
       "",
-      "Er is niets betaald en niets is al bevestigd: de bloemist neemt contact",
-      "met u op om te bespreken wat hij met de bloemen van het moment kan maken.",
+      ...attente.nl,
       "",
       "Tot binnenkort.",
     ],
     en: [
       `Hello ${data.name},`,
       "",
-      `We have received your order request at ${data.businessName}:`,
+      entete.en,
       ...recapitulatif.en,
       ...(data.card ? carte.en : []),
       "",
-      "Nothing has been paid and nothing is confirmed yet — the florist will",
-      "get back to you to agree on what can be made with the flowers of the day.",
+      ...attente.en,
       "",
       "See you soon.",
     ],
   };
 
   const sujets: Record<Language, string> = {
-    fr: `Votre demande de commande — ${data.businessName}`,
-    nl: `Uw bestelaanvraag — ${data.businessName}`,
-    en: `Your order request — ${data.businessName}`,
+    fr: table
+      ? `Votre demande de table — ${data.businessName}`
+      : `Votre demande de commande — ${data.businessName}`,
+    nl: table
+      ? `Uw tafelaanvraag — ${data.businessName}`
+      : `Uw bestelaanvraag — ${data.businessName}`,
+    en: table
+      ? `Your table request — ${data.businessName}`
+      : `Your order request — ${data.businessName}`,
   };
 
   return { subject: sujets[data.locale], text: corps[data.locale].join("\n") };

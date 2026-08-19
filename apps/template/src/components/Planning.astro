@@ -1,0 +1,84 @@
+---
+import type { Language } from "@bxl/schema";
+import { WEEKDAYS } from "@bxl/schema";
+import { site, t } from "../lib/client.ts";
+import { ui, weekday } from "../lib/i18n.ts";
+
+/**
+ * Le planning des cours.
+ *
+ * Ce n'est pas un agenda, et la différence est structurante : un cours a un
+ * horaire fixe, il revient chaque semaine, et plusieurs personnes occupent le
+ * même créneau. L'agenda de rendez-vous, lui, découpe des créneaux
+ * individuels à partir de la durée d'une prestation — appliqué à un cours de
+ * yoga, il proposerait « 19 h 00 libre » à une seule personne, et refuserait
+ * les onze suivantes.
+ *
+ * Le planning est affiché, pas réservable, et c'est un choix assumé : il
+ * répond à la seule question qu'on se pose avant de pousser la porte d'une
+ * salle — « qu'est-ce qu'il y a le mardi soir ? ». Un site qui y répond bat
+ * un site qui prend des inscriptions pour des cours dont l'horaire reste
+ * introuvable.
+ *
+ * Les jours sans cours ne sont pas affichés. Sept colonnes dont quatre vides
+ * se lisent comme une salle à l'abandon, exactement comme les sept « Fermé »
+ * de la grille d'horaires avant qu'on ne les retire.
+ */
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const jours = WEEKDAYS.map((jour) => ({
+  jour,
+  cours: site.courses
+    .filter((c) => c.day === jour)
+    .sort((a, b) => a.start.localeCompare(b.start)),
+})).filter((j) => j.cours.length > 0);
+---
+
+<section class="section section--planning" id="planning">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="section__title">{ui(lang, "schedule_title")}</h2>
+    </div>
+
+    <div class="planning">
+      {
+        jours.map(({ jour, cours }) => (
+          <div class="planning__jour">
+            <h3 class="planning__nom">{weekday(lang, jour)}</h3>
+            <ul class="planning__liste">
+              {cours.map((c) => (
+                <li class="cours">
+                  <p class="cours__heure">
+                    <time datetime={c.start}>{c.start}</time>
+                    <span aria-hidden="true"> – </span>
+                    <time datetime={c.end}>{c.end}</time>
+                  </p>
+                  <p class="cours__nom">{t(c.name, lang)}</p>
+                  {(c.level || c.coach || c.capacity !== undefined) && (
+                    <p class="cours__meta">
+                      {c.level && <span>{t(c.level, lang)}</span>}
+                      {c.coach && (
+                        <span>
+                          {ui(lang, "schedule_with")} {c.coach}
+                        </span>
+                      )}
+                      {c.capacity !== undefined && (
+                        <span>
+                          {c.capacity} {ui(lang, "schedule_places")}
+                        </span>
+                      )}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { loadClient, listClients } from "../packages/schema/src/load.ts";
 import type { LocalizedText, Language } from "../packages/schema/src/index.ts";
+import { metierDe } from "../packages/schema/src/metiers.ts";
 import { repoRoot, colors, ok, fail } from "./lib.ts";
 
 /**
@@ -100,8 +101,35 @@ for (const slug of slugs) {
           " la répétition sera visible, en prévoir au moins cinq",
       );
     }
-    if (site.services.length === 0) {
+    /*
+     * Ce qui manque dépend du métier, et le dire au hasard use l'attention.
+     * Un restaurant n'a pas de prestations — il a une carte ; une salle de
+     * yoga n'a ni l'une ni l'autre, elle a un planning. Réclamer des tarifs à
+     * un restaurant apprend à ignorer les avertissements, et le jour où l'un
+     * d'eux compte, il passe avec les autres.
+     */
+    const metier = metierDe(site.business.type);
+    if (metier.sections.includes("prestations") && site.services.length === 0) {
       report.warnings.push("aucune prestation : la section tarifs sera absente");
+    }
+    if (metier.sections.includes("carte") && site.menu.length === 0) {
+      report.warnings.push(
+        "aucune carte : c'est pourtant la première chose qu'un client vient y chercher",
+      );
+    }
+    if (metier.sections.includes("planning") && site.courses.length === 0) {
+      report.warnings.push("aucun cours au planning : la section sera absente");
+    }
+    /*
+     * Un métier qui prend des commandes ou des tables sans commerce enregistré
+     * affiche un site sans son bouton principal : la condition est la même que
+     * dans `bookingTarget()`. C'est la panne qu'on ne voit qu'en démonstration.
+     */
+    if ((metier.commande === "commande" || metier.commande === "table") && !site.tenantId) {
+      report.warnings.push(
+        `métier « ${metier.nom} » sans tenantId : ni bouton ni formulaire de` +
+          " demande — enregistrer le commerce avec `pnpm tenant <slug>`",
+      );
     }
     /*
      * Un site de démonstration a vocation à être en ligne — c'est l'outil de

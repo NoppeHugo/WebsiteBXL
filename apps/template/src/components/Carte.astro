@@ -1,0 +1,100 @@
+---
+import type { Language } from "@bxl/schema";
+import { site, t } from "../lib/client.ts";
+import { ui, type UiKey } from "../lib/i18n.ts";
+
+/**
+ * La carte.
+ *
+ * Le premier motif de visite du site d'un restaurant ou d'un café — avant les
+ * photos, avant l'adresse, avant les horaires. Un restaurant sans carte en
+ * ligne perd le client qui compare trois adresses à midi moins dix, et c'est
+ * pour cette raison que la carte passe juste sous l'accroche.
+ *
+ * Trois choix méritent d'être dits :
+ *
+ *  - **Le prix peut manquer.** « Selon arrivage » est une réponse honnête, et
+ *    fréquente. Un montant inventé pour remplir la colonne engagerait le
+ *    commerce sur ce qu'il ne veut pas promettre.
+ *  - **Les groupes viennent du commerce**, pas d'une liste figée : une
+ *    friterie, un salon de thé et une brasserie ne découpent pas leur carte de
+ *    la même façon.
+ *  - **Aucune commande.** La carte informe ; elle ne vend pas. Le jour où l'on
+ *    prendra des commandes de plats, ce sera une décision, pas une dérive.
+ */
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const prix = new Intl.NumberFormat(`${lang}-BE`, {
+  style: "currency",
+  currency: "EUR",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+});
+
+/*
+ * Les régimes sont un vocabulaire fermé côté schéma : ils se traduisent donc
+ * comme le reste de l'interface, et non comme du contenu client. C'est ce qui
+ * permet à une carte saisie en français de s'afficher en néerlandais sans que
+ * le commerçant ait à retaper « végétarien » dans les deux langues.
+ */
+const LIBELLE_TAG: Record<string, UiKey> = {
+  vegetarien: "tag_vegetarien",
+  vegan: "tag_vegan",
+  "sans-gluten": "tag_sans_gluten",
+  epice: "tag_epice",
+  maison: "tag_maison",
+};
+---
+
+<section class="section section--carte" id="carte">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 class="section__title">{ui(lang, "menu_title")}</h2>
+      {site.menuNote && <p class="section__intro">{t(site.menuNote, lang)}</p>}
+    </div>
+
+    <div class={`carte${site.menu.length > 1 ? " carte--colonnes" : ""}`}>
+      {
+        site.menu.map((groupe) => (
+          <div class="carte__groupe" id={`carte-${groupe.id}`}>
+            <h3 class="carte__groupe-titre">{t(groupe.title, lang)}</h3>
+            {groupe.note && <p class="carte__groupe-note">{t(groupe.note, lang)}</p>}
+
+            <ul class="carte__liste">
+              {groupe.items.map((plat) => (
+                <li class="plat">
+                  <div class="plat__ligne">
+                    <span class="plat__nom">{t(plat.name, lang)}</span>
+                    {/*
+                      Les points de conduite sont décoratifs et posés en CSS :
+                      un lecteur d'écran qui les lirait annoncerait une
+                      cinquantaine de points entre chaque plat et son prix.
+                    */}
+                    <span class="plat__points" aria-hidden="true" />
+                    <span class="plat__prix">
+                      {plat.price === null ? ui(lang, "on_request") : prix.format(plat.price)}
+                    </span>
+                  </div>
+                  {plat.description && (
+                    <p class="plat__desc">{t(plat.description, lang)}</p>
+                  )}
+                  {plat.tags.length > 0 && (
+                    <p class="plat__tags">
+                      {plat.tags.map((tag) => (
+                        <span class="plat__tag">{ui(lang, LIBELLE_TAG[tag]!)}</span>
+                      ))}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

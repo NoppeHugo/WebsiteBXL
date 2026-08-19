@@ -19,6 +19,9 @@ import Deuil from "./Deuil.astro";
 import Livraison from "./Livraison.astro";
 import Abonnement from "./Abonnement.astro";
 import Commande from "./Commande.astro";
+import Carte from "./Carte.astro";
+import Planning from "./Planning.astro";
+import Table from "./Table.astro";
 import { metierDe } from "@bxl/schema/metiers";
 
 interface Props {
@@ -49,6 +52,15 @@ const suspended = site.status === "suspended";
           compositions ne vient qu'après. Chez un coiffeur, la prestation est
           l'entrée : on sait déjà ce qu'on vient faire.
         */}
+        {/*
+          La carte et le planning passent avant tout le reste, pour la même
+          raison : ce sont eux qu'on vient chercher. Un client qui compare
+          trois restaurants à midi moins dix veut la carte, pas la galerie ;
+          quelqu'un qui hésite devant une salle de sport veut savoir ce qu'il
+          y a le mardi soir.
+        */}
+        {site.menu.length > 0 && <Carte lang={lang} />}
+        {site.courses.length > 0 && <Planning lang={lang} />}
         {site.occasions.length > 0 && <Occasions lang={lang} />}
         {site.services.length > 0 && <Services lang={lang} />}
         {site.gallery.length > 0 && <Gallery lang={lang} />}
@@ -65,9 +77,9 @@ const suspended = site.status === "suspended";
         {site.mourning && <Deuil lang={lang} />}
         {site.subscriptions.length > 0 && <Abonnement lang={lang} />}
         {site.delivery && <Livraison lang={lang} />}
-        {metier.commande === "commande" ? (
-          <Commande lang={lang} />
-        ) : (
+        {metier.commande === "commande" && <Commande lang={lang} />}
+        {metier.commande === "table" && <Table lang={lang} />}
+        {metier.commande !== "commande" && metier.commande !== "table" && (
           <BookingCta lang={lang} />
         )}
         <Info lang={lang} />

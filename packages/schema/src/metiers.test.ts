@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { METIERS, metierDe, afficheSection, styleParDefaut } from "./metiers.ts";
+import { BUSINESS_TYPES } from "./index.ts";
+import {
+  METIERS,
+  metierDe,
+  afficheSection,
+  prendCommandes,
+  styleParDefaut,
+} from "./metiers.ts";
 import { STYLES, stylesPour, palettesPour } from "./presets.ts";
 
 /**
@@ -15,7 +22,12 @@ describe("metierDe", () => {
     expect(metierDe("barbershop").id).toBe("soins");
     expect(metierDe("beauty_salon").id).toBe("soins");
     expect(metierDe("florist").id).toBe("fleuriste");
-    expect(metierDe("bakery").id).toBe("commerce");
+    expect(metierDe("bakery").id).toBe("patisserie");
+    expect(metierDe("restaurant").id).toBe("restaurant");
+    expect(metierDe("cafe").id).toBe("cafe");
+    expect(metierDe("tattoo_parlor").id).toBe("tatouage");
+    expect(metierDe("gym").id).toBe("sport");
+    expect(metierDe("other").id).toBe("commerce");
   });
 
   it("ne laisse aucun type sans métier", () => {
@@ -24,10 +36,21 @@ describe("metierDe", () => {
      * sans être rangé ici donnerait un site en vitrine sans que personne le
      * décide. Ce test le signale au moment de l'ajout.
      */
-    const types = ["hair_salon", "barbershop", "beauty_salon", "florist", "bakery", "other"];
     const ranges = new Set(Object.values(METIERS).flatMap((m) => m.types));
-    for (const type of types) {
+    for (const type of BUSINESS_TYPES) {
       expect(ranges.has(type), `type non rangé : ${type}`).toBe(true);
+    }
+  });
+
+  it("ne range aucun type qui n'existe pas au schéma", () => {
+    // L'inverse du précédent : un métier qui réclamerait « boulangerie »
+    // plutôt que « bakery » n'attraperait jamais aucun client, et rien ne le
+    // dirait — le repli vitrine masque exactement cette faute de frappe.
+    const connus = new Set<string>(BUSINESS_TYPES);
+    for (const metier of Object.values(METIERS)) {
+      for (const type of metier.types) {
+        expect(connus.has(type), `type inconnu du schéma : ${type} (${metier.id})`).toBe(true);
+      }
     }
   });
 
@@ -55,7 +78,22 @@ describe("mode de commande", () => {
     // créneau, il reçoit une intention et rappelle.
     expect(metierDe("hair_salon").commande).toBe("rendez-vous");
     expect(metierDe("florist").commande).toBe("commande");
-    expect(metierDe("bakery").commande).toBe("aucun");
+    expect(metierDe("restaurant").commande).toBe("table");
+    expect(metierDe("cafe").commande).toBe("aucun");
+  });
+
+  it("range la table avec la commande, et non avec le rendez-vous", () => {
+    /*
+     * Les deux remplissent la même table `orders` et la même page « Mes
+     * commandes » : une intention datée que le commerce rappelle pour
+     * confirmer. Quatre endroits du code comparaient à `"commande"` — c'est
+     * cette fonction qu'ils lisent désormais, pour qu'un cinquième mode ne
+     * demande pas de les retrouver.
+     */
+    expect(prendCommandes("florist")).toBe(true);
+    expect(prendCommandes("restaurant")).toBe(true);
+    expect(prendCommandes("hair_salon")).toBe(false);
+    expect(prendCommandes("cafe")).toBe(false);
   });
 });
 
@@ -65,6 +103,21 @@ describe("sections", () => {
       expect(afficheSection("florist", section), section).toBe(true);
       expect(afficheSection("hair_salon", section), section).toBe(false);
     }
+  });
+
+  it("donne la carte aux métiers qui en ont une, et à eux seuls", () => {
+    // La carte est le premier motif de visite d'un site de restaurant, avant
+    // même les photos. Sur un site de coiffeur, elle n'a aucun sens.
+    expect(afficheSection("restaurant", "carte")).toBe(true);
+    expect(afficheSection("cafe", "carte")).toBe(true);
+    expect(afficheSection("hair_salon", "carte")).toBe(false);
+    expect(afficheSection("florist", "carte")).toBe(false);
+  });
+
+  it("réserve le planning aux salles de cours", () => {
+    expect(afficheSection("gym", "planning")).toBe(true);
+    expect(afficheSection("yoga_studio", "planning")).toBe(true);
+    expect(afficheSection("restaurant", "planning")).toBe(false);
   });
 
   it("garde le déroulé et l'équipe pour les soins", () => {
@@ -90,6 +143,29 @@ describe("styles proposés", () => {
       "signature",
       "nuit",
     ]);
+  });
+
+  it("dit la même chose des deux côtés", () => {
+    /*
+     * Deux listes décrivent le même lien : `METIERS[x].styles` et le champ
+     * `metiers` de chaque style. La console lit la seconde, la création de
+     * client lit la première. Si elles divergent, un style apparaît dans la
+     * grille et se fait refuser à l'enregistrement — ou l'inverse, un style
+     * par défaut qui n'est jamais proposé.
+     */
+    for (const metier of Object.values(METIERS)) {
+      expect(Object.keys(stylesPour(metier.id)).sort(), metier.id).toEqual(
+        [...metier.styles].sort(),
+      );
+    }
+  });
+
+  it("propose au moins trois styles à chaque métier", () => {
+    // En dessous, le choix ne se vit pas comme un choix : le commerçant a le
+    // sentiment qu'on lui impose un modèle et qu'il paie pour un gabarit.
+    for (const metier of Object.values(METIERS)) {
+      expect(metier.styles.length, metier.id).toBeGreaterThanOrEqual(3);
+    }
   });
 
   it("déclare tous les styles listés par un métier", () => {

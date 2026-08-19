@@ -65,12 +65,26 @@ jeunes et attentifs à leur image, décideur présent sur place donc décision
 rapide, besoin réel de réservation en ligne, et forte densité dans les quartiers
 branchés — ce qui permet de démarcher une rue entière d'affilée.
 
-**Niche secondaire :** métiers de bouche artisanaux (boulangeries, pâtisseries,
-chocolatiers, traiteurs, cavistes).
+**Le reste du commerce de proximité est ouvert depuis le 19 août 2026.** Seize
+métiers, quatre mécaniques, un vocabulaire et des styles par métier : voir
+[docs/METIERS.md](docs/METIERS.md), qui fait foi sur la question. Ce qui limite
+la vente n'est plus le logiciel mais une démonstration crédible par métier.
 
-**À éviter au démarrage :** restaurants (marges fines, patrons débordés, déjà
-saturés par TheFork/Deliveroo, fort taux d'échec) et fleuristes (petites marges,
-saisonniers). On y reviendra avec des références en poche.
+**Ce paragraphe contredit ce que ce README disait jusqu'ici**, et c'est voulu.
+Il déconseillait les restaurants (marges fines, patrons débordés, saturés par
+TheFork) et les fleuristes (petites marges, saisonniers). Deux choses ont
+changé :
+
+- **les fleuristes** ont servi à éprouver la mécanique de commande, et le site
+  livré a montré que le problème n'était pas la marge mais le devis — d'où un
+  formulaire qui n'encaisse rien ;
+- **les restaurants** sont le plus gros gisement de Bruxelles (~2 900), et leur
+  besoin n'est pas une plateforme de réservation de plus : c'est **une carte à
+  jour**, qu'ils modifient eux-mêmes le jeudi soir. C'est exactement ce que
+  TheFork ne fait pas, et ce que la page « Ma carte » fait.
+
+Reste vrai : un restaurant est un client plus difficile qu'un salon. On y va
+avec des références en poche, pas en premier.
 
 **Zones de prospection, une rue à la fois :** Châtelain, Parvis de Saint-Gilles,
 Flagey / Chaussée d'Ixelles, Dansaert, Bascule (Uccle). La densité est

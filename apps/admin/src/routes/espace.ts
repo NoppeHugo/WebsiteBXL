@@ -4,7 +4,7 @@ import { comptesDuCommerce, changerMotDePasse, findAdminById, commandesEnAttente
 import { hashPassword, verifyPassword } from "../auth.ts";
 import { utilisateur, siteDuCommercant } from "../acces.ts";
 import { layoutClient, message, PAGES, periodeLisible, titrePage } from "../views-client.ts";
-import { metierDe } from "@bxl/schema/metiers";
+import { metierDe, prendCommandes } from "@bxl/schema/metiers";
 import { escape } from "../views.ts";
 import { ESPACE_JS } from "../views/espace-js.ts";
 import { espaceFermeturesRoutes } from "./espace-fermetures.ts";
@@ -37,7 +37,7 @@ async function pageAccueil(
   const { site } = client(slug);
   const metier = metierDe(site.business.type);
   const comptes = await comptesDuCommerce(slug);
-  const commandes = metier.commande === "commande" ? await commandesEnAttente(slug) : 0;
+  const commandes = prendCommandes(site.business.type) ? await commandesEnAttente(slug) : 0;
 
   const aujourdhui = new Date().toISOString().slice(0, 10);
   const prochaines = site.closures
@@ -95,6 +95,8 @@ ${bandeau}
   ${carte("fermetures")}
   ${carte("horaires")}
   ${carte("tarifs")}
+  ${metier.sections.includes("carte") ? carte("carte") : ""}
+  ${metier.sections.includes("planning") ? carte("planning") : ""}
   ${carte("photos")}
   ${carte("presentation")}
   ${carte("apparence")}
@@ -102,9 +104,10 @@ ${bandeau}
     /*
      * Un fleuriste voit ses commandes, un coiffeur ses rendez-vous. Jamais les
      * deux : proposer une page vide dont le nom ne veut rien dire pour son
-     * métier fait douter de tout le reste.
+     * métier fait douter de tout le reste. Un restaurant voit ses demandes de
+     * table au même endroit — c'est la même liste, remplie par la même route.
      */
-    metier.commande === "commande"
+    prendCommandes(site.business.type)
       ? carte("commandes", commandes)
       : site.booking.mode === "live"
         ? carte("rendez-vous", comptes.rendezVous)

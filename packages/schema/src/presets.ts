@@ -53,7 +53,7 @@ export const STYLES: Record<string, StyleDefini> = {
   maison: {
     nom: "Maison",
     pour: "Élégant et discret. Le blanc, des filets fins, rien qui dépasse.",
-    metiers: ["soins", "commerce"],
+    metiers: ["soins", "commerce", "ongles", "spa", "opticien", "animaux", "patisserie", "traiteur", "cafe"],
     style: {
       fonts: {
         display: `Inter, ${PILE_SYSTEME}`,
@@ -79,7 +79,7 @@ export const STYLES: Record<string, StyleDefini> = {
   atelier: {
     nom: "Atelier",
     pour: "Barbier traditionnel. Chaud, artisanal, un peu d'usure.",
-    metiers: ["soins", "commerce"],
+    metiers: ["soins", "commerce", "animaux", "tatouage", "boucherie"],
     style: {
       fonts: {
         display: `Bitter, Georgia, 'Times New Roman', serif`,
@@ -105,7 +105,7 @@ export const STYLES: Record<string, StyleDefini> = {
   studio: {
     nom: "Studio",
     pour: "Urbain et direct. Grandes capitales, contrastes marqués.",
-    metiers: ["soins", "commerce"],
+    metiers: ["soins", "commerce", "opticien", "tatouage", "animaux", "sport"],
     style: {
       fonts: {
         display: `Oswald, 'Arial Narrow', ${PILE_SYSTEME}`,
@@ -131,7 +131,7 @@ export const STYLES: Record<string, StyleDefini> = {
   signature: {
     nom: "Signature",
     pour: "Haut de gamme. Grande photo, titre posé dessus, très peu de texte.",
-    metiers: ["soins", "commerce"],
+    metiers: ["soins", "commerce", "ongles", "spa", "opticien", "chocolatier", "traiteur", "restaurant", "sport"],
     style: {
       fonts: {
         display: `Archivo, ${PILE_SYSTEME}`,
@@ -157,7 +157,7 @@ export const STYLES: Record<string, StyleDefini> = {
   nuit: {
     nom: "Nuit",
     pour: "Salon contemporain. Fond sombre, surfaces vitrées, arrondis.",
-    metiers: ["soins", "commerce"],
+    metiers: ["soins", "commerce", "ongles", "opticien", "tatouage", "restaurant", "cafe", "sport"],
     style: {
       fonts: {
         display: `Inter, ${PILE_SYSTEME}`,
@@ -186,7 +186,7 @@ export const STYLES: Record<string, StyleDefini> = {
   serre: {
     nom: "Serre",
     pour: "Clair et végétal. Beaucoup de blanc, la couleur vient des fleurs.",
-    metiers: ["fleuriste"],
+    metiers: ["fleuriste", "spa"],
     style: {
       fonts: {
         display: `Bitter, Georgia, 'Times New Roman', serif`,
@@ -216,7 +216,7 @@ export const STYLES: Record<string, StyleDefini> = {
   naturemorte: {
     nom: "Nature morte",
     pour: "Fond sombre, fleurs éclairées. Somptueux, très belge. Demande de belles photos.",
-    metiers: ["fleuriste"],
+    metiers: ["fleuriste", "chocolatier", "caviste", "restaurant"],
     style: {
       fonts: {
         display: `Bitter, Georgia, 'Times New Roman', serif`,
@@ -242,7 +242,7 @@ export const STYLES: Record<string, StyleDefini> = {
   marche: {
     nom: "Marché",
     pour: "Chaleureux et direct. Grandes capitales, prix assumés.",
-    metiers: ["fleuriste"],
+    metiers: ["fleuriste", "patisserie", "boucherie"],
     style: {
       fonts: {
         display: `Oswald, 'Arial Narrow', ${PILE_SYSTEME}`,
@@ -269,7 +269,7 @@ export const STYLES: Record<string, StyleDefini> = {
   herbier: {
     nom: "Herbier",
     pour: "Raffiné et botanique. Papier, petites capitales, presque un livre.",
-    metiers: ["fleuriste"],
+    metiers: ["fleuriste", "chocolatier", "traiteur", "caviste"],
     style: {
       fonts: {
         display: `Archivo, ${PILE_SYSTEME}`,
@@ -283,6 +283,174 @@ export const STYLES: Record<string, StyleDefini> = {
       layout: { hero: "overlap", heroAlign: "start", gallery: "strip", nav: "solid" },
       radius: "none",
       grain: false,
+      effects: { glass: false, blur: 0, reveal: true, parallax: false },
+    },
+  },
+
+  /* -------------------------------------------------- métiers de bouche -- */
+
+  /*
+   * Le café moderne, celui qu'on photographie : angles très arrondis, grande
+   * mosaïque de carrés, beaucoup d'air, une sans-serif neutre. C'est le style
+   * qui se vend tout seul dans les cafés de spécialité — le commerçant y
+   * reconnaît les comptes Instagram qu'il suit, et il n'a rien à décrire pour
+   * qu'on comprenne ce qu'il veut.
+   *
+   * Il n'a de sens qu'avec de vraies photos carrées, ce qui tombe bien : un
+   * café en a déjà des centaines sur son téléphone.
+   */
+  terrazzo: {
+    nom: "Terrazzo",
+    pour: "Café moderne, très photogénique. Arrondis généreux, mosaïque de carrés, beaucoup d'air.",
+    metiers: ["cafe", "restaurant", "patisserie", "sport"],
+    style: {
+      fonts: {
+        display: `Archivo, ${PILE_SYSTEME}`,
+        body: `Inter, ${PILE_SYSTEME}`,
+        displayWeight: 500,
+        displayTracking: "-0.025em",
+        displayTransform: "none",
+        uiTransform: "none",
+        uiTracking: "0.02em",
+      },
+      layout: { hero: "split", heroAlign: "center", gallery: "mosaic", nav: "solid" },
+      radius: "round",
+      grain: false,
+      effects: { glass: false, blur: 0, reveal: true, parallax: true },
+    },
+  },
+
+  /*
+   * Le fournil : une serif à empattements carrés, du grain, une grille sage.
+   * Le vocabulaire du papier kraft et de la farine — chaud sans être rustique.
+   * Contrairement à « Atelier », la photo ne prend pas tout l'écran : une
+   * boulangerie se juge sur ses produits, pas sur sa devanture.
+   */
+  fournil: {
+    nom: "Fournil",
+    pour: "Boulangerie, pâtisserie. Chaud et artisanal, la vitrine avant le décor.",
+    metiers: ["patisserie", "traiteur", "boucherie", "cafe"],
+    style: {
+      fonts: {
+        display: `Bitter, Georgia, 'Times New Roman', serif`,
+        body: `Inter, ${PILE_SYSTEME}`,
+        displayWeight: 500,
+        displayTracking: "-0.005em",
+        displayTransform: "none",
+        uiTransform: "uppercase",
+        uiTracking: "0.12em",
+      },
+      layout: { hero: "split", heroAlign: "start", gallery: "grid", nav: "solid" },
+      radius: "soft",
+      grain: true,
+      effects: { glass: false, blur: 0, reveal: true, parallax: false },
+    },
+  },
+
+  /*
+   * Ganache : fond profond, cadrages serrés, une bande de photos qui défile
+   * lentement. Le chocolat se photographie de près et sur fond sombre — c'est
+   * la seule façon de faire lire le brillant d'une couverture bien tempérée.
+   */
+  ganache: {
+    nom: "Ganache",
+    pour: "Chocolatier. Fond profond, cadrages serrés, matière brillante.",
+    metiers: ["chocolatier", "caviste"],
+    style: {
+      fonts: {
+        display: `Bitter, Georgia, 'Times New Roman', serif`,
+        body: `Archivo, ${PILE_SYSTEME}`,
+        displayWeight: 400,
+        displayTracking: "-0.02em",
+        displayTransform: "none",
+        uiTransform: "uppercase",
+        uiTracking: "0.2em",
+      },
+      layout: { hero: "overlap", heroAlign: "start", gallery: "mosaic", nav: "overlay" },
+      radius: "soft",
+      grain: false,
+      effects: { glass: false, blur: 0, reveal: true, parallax: true },
+    },
+  },
+
+  /*
+   * Le comptoir : capitales espacées, photo pleine largeur, grain. L'ardoise
+   * d'une brasserie, pas la carte d'un étoilé. Fait pour les lieux qui ont
+   * plus de caractère que de moyens photographiques — le grain pardonne
+   * beaucoup à une photo prise au téléphone un soir de service.
+   */
+  comptoir: {
+    nom: "Comptoir",
+    pour: "Bistrot, brasserie, bar. Ardoise, capitales, atmosphère du soir.",
+    metiers: ["restaurant", "cafe", "boucherie", "caviste"],
+    style: {
+      fonts: {
+        display: `Bitter, Georgia, 'Times New Roman', serif`,
+        body: `Archivo, ${PILE_SYSTEME}`,
+        displayWeight: 600,
+        displayTracking: "-0.015em",
+        displayTransform: "none",
+        uiTransform: "uppercase",
+        uiTracking: "0.16em",
+      },
+      layout: { hero: "fullbleed", heroAlign: "center", gallery: "strip", nav: "overlay" },
+      radius: "none",
+      grain: true,
+      effects: { glass: false, blur: 0, reveal: true, parallax: true },
+    },
+  },
+
+  /* ------------------------------------------------- soins et corps -- */
+
+  /*
+   * Pétale : tout est arrondi, clair et espacé, et le titre est très fin. Les
+   * photos d'onglerie et de spa sont serrées, douces et peu contrastées — un
+   * style anguleux les fait paraître ratées, alors que le même cliché dans un
+   * cadre arrondi passe pour délicat.
+   */
+  petale: {
+    nom: "Pétale",
+    pour: "Onglerie, spa. Doux, clair, arrondi — la peau et la lumière.",
+    metiers: ["ongles", "spa", "animaux"],
+    style: {
+      fonts: {
+        display: `Archivo, ${PILE_SYSTEME}`,
+        body: `Inter, ${PILE_SYSTEME}`,
+        displayWeight: 300,
+        displayTracking: "-0.03em",
+        displayTransform: "none",
+        uiTransform: "uppercase",
+        uiTracking: "0.16em",
+      },
+      layout: { hero: "split", heroAlign: "center", gallery: "strip", nav: "solid" },
+      radius: "round",
+      grain: false,
+      effects: { glass: false, blur: 0, reveal: true, parallax: false },
+    },
+  },
+
+  /*
+   * Flash : le nom des planches de dessins punaisées au mur d'un salon de
+   * tatouage. Capitales à empattements, grille régulière, grain de papier.
+   * Le titre déborde sur la photo comme un tampon.
+   */
+  flash: {
+    nom: "Flash",
+    pour: "Tatouage, piercing. Planches au mur, capitales, trait dur.",
+    metiers: ["tatouage"],
+    style: {
+      fonts: {
+        display: `Bitter, Georgia, 'Times New Roman', serif`,
+        body: `Archivo, ${PILE_SYSTEME}`,
+        displayWeight: 600,
+        displayTracking: "0.02em",
+        displayTransform: "uppercase",
+        uiTransform: "uppercase",
+        uiTracking: "0.2em",
+      },
+      layout: { hero: "overlap", heroAlign: "start", gallery: "grid", nav: "overlay" },
+      radius: "none",
+      grain: true,
       effects: { glass: false, blur: 0, reveal: true, parallax: false },
     },
   },
@@ -448,6 +616,47 @@ export const PALETTES: Record<string, PaletteDefinie> = {
       accent: "#6b2740",
       accentText: "#fdf7f5",
       border: "#eed9d5",
+    },
+  },
+
+  /* --- Pensées pour les métiers de bouche, ouvertes à tous. -------------- */
+
+  /*
+   * Le crème d'un café au lait : un fond chaud, un accent brun torréfié. Le
+   * blanc pur donne aux photos de pain et de gâteaux une froideur d'hôpital ;
+   * ce fond-là les réchauffe sans les jaunir.
+   */
+  latte: {
+    nom: "Latte",
+    sombre: false,
+    palette: {
+      bg: "#faf5ef",
+      surface: "#f1e7da",
+      text: "#221a12",
+      muted: "#6b5b49",
+      accent: "#7b4a24",
+      accentText: "#ffffff",
+      border: "#e6d9c8",
+    },
+  },
+
+  /*
+   * Le vert pistache des cafés de spécialité — la couleur la plus demandée du
+   * moment dans ce métier, et celle qu'un patron de café montre sur son
+   * téléphone quand on lui demande ce qu'il aime. Plus franc que « Sauge »,
+   * qui est un vert de lin ; celui-ci est un vert de carrelage.
+   */
+  menthe: {
+    nom: "Menthe",
+    sombre: false,
+    palette: {
+      bg: "#f2f7f4",
+      surface: "#e2eee7",
+      text: "#12211a",
+      muted: "#556b60",
+      accent: "#14503a",
+      accentText: "#f2f7f4",
+      border: "#d1e2d8",
     },
   },
 

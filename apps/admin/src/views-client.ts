@@ -28,6 +28,8 @@ export const PAGES = {
   },
   horaires: { titre: "Mes horaires", sous: "Les heures d'ouverture habituelles", icone: "🕘" },
   tarifs: { titre: "Mes tarifs", sous: "Les prestations et leurs prix", icone: "💶" },
+  carte: { titre: "Ma carte", sous: "Les plats, les boissons et leurs prix", icone: "📋" },
+  planning: { titre: "Mon planning", sous: "Les cours de la semaine", icone: "🗓️" },
   photos: { titre: "Mes photos", sous: "Les images du salon", icone: "📷" },
   presentation: { titre: "Mon texte", sous: "Ce qui est écrit sur le salon", icone: "✍️" },
   apparence: { titre: "Mon style", sous: "L'allure du site et ses couleurs", icone: "🎨" },
@@ -241,6 +243,16 @@ button.danger { background: transparent; color: var(--ko); border: 1px solid var
   background: none; border: 0; color: var(--ko); font-size: 0.92rem;
   width: auto; min-height: 2.2rem; padding: 0; text-align: left; font-weight: 500;
 }
+/* Les régimes : des cases larges, atteignables au pouce. Le doigt vise une
+   pastille entière, pas une case à cocher de trois millimètres. */
+.ligne__cases { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.7rem; }
+.case {
+  display: flex; align-items: center; gap: 0.45rem; margin: 0; cursor: pointer;
+  border: 1px solid var(--bord); border-radius: 980px;
+  padding: 0.4em 0.9em; font-size: 0.92rem; background: var(--carte);
+}
+.case:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.case input { margin: 0; width: auto; }
 
 /* --- Photos ------------------------------------------------------------- */
 .photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 0.7rem; }
@@ -500,6 +512,22 @@ export const TITRES_METIER: Record<string, Partial<Record<PageClient, string>>> 
     tarifs: "Mes compositions",
     photos: "Mes photos",
   },
+  patisserie: { tarifs: "Mes produits" },
+  chocolatier: { tarifs: "Mes chocolats" },
+  boucherie: { tarifs: "Mes produits" },
+  caviste: { tarifs: "Ma sélection" },
+  traiteur: { tarifs: "Mes formules", commandes: "Mes demandes de devis" },
+  spa: { tarifs: "Mes soins" },
+  ongles: { photos: "Mes réalisations" },
+  tatouage: { photos: "Mon book", commandes: "Mes demandes de projet" },
+  sport: { tarifs: "Mes formules" },
+  /*
+   * Un restaurateur ne dit pas « mes commandes » : il dit « mes réservations ».
+   * Le mot compte plus qu'ailleurs — c'est la page qu'il ouvrira en service,
+   * entre deux tables.
+   */
+  restaurant: { tarifs: "Mes formules", commandes: "Mes demandes de table" },
+  cafe: { tarifs: "Mes formules" },
 };
 
 export function titrePage(metierId: string, page: PageClient): string {

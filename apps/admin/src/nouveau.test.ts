@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { SiteConfig } from "@bxl/schema";
+import { SiteConfig, BUSINESS_TYPES } from "@bxl/schema";
 import { reconnaitrePreset } from "@bxl/schema/presets";
 import {
   identifiant,
@@ -76,6 +76,15 @@ describe("identifiant", () => {
 describe("squelette", () => {
   it("passe la validation du schéma, comme le ferait le build", () => {
     expect(valider(squelette(demande()))).toEqual({ ok: true });
+  });
+
+  it("propose au formulaire tous les types que le schéma connaît", () => {
+    /*
+     * La console est l'endroit où l'on crée un site devant le commerçant. Un
+     * type absent de cette liste n'est pas vendable : il faudrait rouvrir le
+     * `site.json` à la main après le rendez-vous, et personne ne le ferait.
+     */
+    expect(Object.keys(TYPES_COMMERCE).sort()).toEqual([...BUSINESS_TYPES].sort());
   });
 
   it("accepte chaque type de commerce proposé au formulaire", () => {

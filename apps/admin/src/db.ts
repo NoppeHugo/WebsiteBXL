@@ -354,6 +354,9 @@ export interface CommandeRecue {
   budget_cents: number | null;
   /** Le pilote Postgres rend les colonnes `date` sous forme d'objets Date. */
   wanted_day: Date | null;
+  /** Heure et couverts : une demande de table seulement. */
+  wanted_time: string | null;
+  party_size: number | null;
   mode: string;
   address: string | null;
   card_message: string | null;
@@ -379,6 +382,7 @@ export async function commandesDuCommerce(
 ): Promise<CommandeRecue[]> {
   return sql<CommandeRecue[]>`
     select o.id, o.occasion_name, o.budget_cents, o.wanted_day, o.mode,
+           to_char(o.wanted_time, 'HH24:MI') as wanted_time, o.party_size,
            o.address, o.card_message, o.customer_name, o.customer_email,
            o.customer_phone, o.note, o.status, o.created_at
     from orders o

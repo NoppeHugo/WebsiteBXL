@@ -37,6 +37,17 @@ export type Motif =
   | "bouquet"
   | "ruban"
   | "graine"
+  | "tasse"
+  | "epi"
+  | "gateau"
+  | "couvert"
+  | "bouteille"
+  | "carre"
+  | "petale"
+  | "lunettes"
+  | "patte"
+  | "aiguille"
+  | "haltere"
   | "aucun";
 
 export interface PlaceholderSpec {
@@ -299,6 +310,184 @@ function dessin(motif: Motif, w: number, h: number): string {
   </g>`;
     }
 
+    /* ------------------------------------------------ métiers de bouche -- */
+
+    /*
+     * Une tasse sur sa soucoupe, vue de côté. L'anse fait tout le travail :
+     * sans elle, l'ellipse et le trait se lisent comme un chapeau.
+     */
+    case "tasse": {
+      const larg = u * 0.2;
+      const haut = u * 0.16;
+      const y = cy - haut / 2;
+      return `
+  <g ${encre}>
+    <path d="M ${cx - larg} ${y} h ${larg * 2} v ${haut} q 0 ${(haut * 0.55).toFixed(1)} ${(-larg * 0.55).toFixed(1)} ${(haut * 0.55).toFixed(1)} h ${(-larg * 0.9).toFixed(1)} q ${(-larg * 0.55).toFixed(1)} 0 ${(-larg * 0.55).toFixed(1)} ${(-haut * 0.55).toFixed(1)} Z"/>
+    <path d="M ${cx + larg} ${y + haut * 0.25} q ${(larg * 0.5).toFixed(1)} 0 ${(larg * 0.5).toFixed(1)} ${(haut * 0.35).toFixed(1)} q 0 ${(haut * 0.35).toFixed(1)} ${(-larg * 0.5).toFixed(1)} ${(haut * 0.35).toFixed(1)}"/>
+    <path d="M ${cx - larg * 1.5} ${(y + haut * 1.75).toFixed(1)} h ${(larg * 3).toFixed(1)}"/>
+  </g>`;
+    }
+
+    /*
+     * Un épi de blé. Les grains sont posés en chevrons de part et d'autre de
+     * la tige, en diminuant vers la pointe : c'est cette diminution qui fait
+     * lire « épi » plutôt que « arête de poisson ».
+     */
+    case "epi": {
+      const base = cy + u * 0.22;
+      const sommet = cy - u * 0.24;
+      const rangs = 7;
+      const grains = Array.from({ length: rangs }, (_, i) => {
+        const t = i / (rangs - 1);
+        const y = base - (base - sommet) * (0.25 + t * 0.72);
+        const l = u * 0.11 * (1 - t * 0.65);
+        return `<path d="M ${cx} ${y.toFixed(1)} q ${(-l).toFixed(1)} ${(-l * 0.35).toFixed(1)} ${(-l * 0.9).toFixed(1)} ${(-l * 1.1).toFixed(1)}"/>
+    <path d="M ${cx} ${y.toFixed(1)} q ${l.toFixed(1)} ${(-l * 0.35).toFixed(1)} ${(l * 0.9).toFixed(1)} ${(-l * 1.1).toFixed(1)}"/>`;
+      }).join("\n    ");
+      return `
+  <g ${encre}>
+    <path d="M ${cx} ${base} V ${sommet}"/>
+    ${grains}
+  </g>`;
+    }
+
+    /*
+     * Un gâteau à étages, une bougie dessus. C'est la pièce de fête — celle
+     * qui se commande — et non la vitrine du quotidien.
+     */
+    case "gateau": {
+      const larg = u * 0.34;
+      const etage = u * 0.1;
+      const sol = cy + u * 0.2;
+      return `
+  <g ${encre}>
+    <path d="M ${cx - larg / 2} ${sol} v ${(-etage).toFixed(1)} h ${larg} v ${etage} Z"/>
+    <path d="M ${cx - larg * 0.35} ${(sol - etage).toFixed(1)} v ${(-etage).toFixed(1)} h ${(larg * 0.7).toFixed(1)} v ${etage} Z"/>
+    <path d="M ${cx} ${(sol - etage * 2).toFixed(1)} v ${(-u * 0.09).toFixed(1)}"/>
+    <circle cx="${cx}" cy="${(sol - etage * 2 - u * 0.12).toFixed(1)}" r="${(u * 0.025).toFixed(1)}"/>
+  </g>`;
+    }
+
+    /* Une fourchette et un couteau, croisés. L'enseigne universelle du repas. */
+    case "couvert": {
+      const haut = u * 0.42;
+      const y = cy - haut / 2;
+      const dents = [-1, 0, 1].map(
+        (d) =>
+          `<path d="M ${(cx - u * 0.14 + d * u * 0.035).toFixed(1)} ${y} v ${(haut * 0.26).toFixed(1)}"/>`,
+      ).join("\n    ");
+      return `
+  <g ${encre}>
+    ${dents}
+    <path d="M ${(cx - u * 0.175).toFixed(1)} ${(y + haut * 0.26).toFixed(1)} h ${(u * 0.07).toFixed(1)}"/>
+    <path d="M ${(cx - u * 0.14).toFixed(1)} ${(y + haut * 0.26).toFixed(1)} V ${(y + haut).toFixed(1)}"/>
+    <path d="M ${(cx + u * 0.14).toFixed(1)} ${(y + haut).toFixed(1)} V ${y} q ${(u * 0.07).toFixed(1)} ${(haut * 0.18).toFixed(1)} 0 ${(haut * 0.42).toFixed(1)}"/>
+  </g>`;
+    }
+
+    /* Une bouteille, épaule marquée. Caviste, bar, restaurant. */
+    case "bouteille": {
+      const larg = u * 0.14;
+      const haut = u * 0.44;
+      const bas = cy + haut / 2;
+      const col = bas - haut * 0.62;
+      return `
+  <g ${encre}>
+    <path d="M ${cx - larg} ${bas} v ${(-haut * 0.5).toFixed(1)} q 0 ${(-haut * 0.14).toFixed(1)} ${(larg * 0.55).toFixed(1)} ${(-haut * 0.2).toFixed(1)} V ${(col - haut * 0.18).toFixed(1)} h ${(larg * 0.9).toFixed(1)} v ${(haut * 0.16).toFixed(1)} q ${(larg * 0.55).toFixed(1)} ${(haut * 0.06).toFixed(1)} ${(larg * 0.55).toFixed(1)} ${(haut * 0.22).toFixed(1)} V ${bas} Z"/>
+    <path d="M ${cx - larg} ${(bas - haut * 0.28).toFixed(1)} h ${(larg * 2).toFixed(1)}"/>
+  </g>`;
+    }
+
+    /*
+     * Une tablette : quatre carrés séparés par leurs rainures. Le chocolat ne
+     * se dessine pas — sa forme, si.
+     */
+    case "carre": {
+      const cote = u * 0.34;
+      const x = cx - cote / 2;
+      const y = cy - cote / 2;
+      return `
+  <g ${encre}>
+    <rect x="${x}" y="${y}" width="${cote}" height="${cote}" rx="${(cote * 0.06).toFixed(1)}"/>
+    <path d="M ${cx} ${y} v ${cote}"/>
+    <path d="M ${x} ${cy} h ${cote}"/>
+  </g>`;
+    }
+
+    /* ---------------------------------------------------- soins et corps -- */
+
+    /*
+     * Un pétale seul, posé en biais. Assez doux pour une onglerie ou un spa,
+     * et assez neutre pour ne rien promettre du soin lui-même.
+     */
+    case "petale": {
+      const l = u * 0.2;
+      return `
+  <g ${encre}>
+    <path d="M ${cx} ${cy - l} q ${l.toFixed(1)} ${l.toFixed(1)} 0 ${(l * 2).toFixed(1)} q ${(-l).toFixed(1)} ${(-l).toFixed(1)} 0 ${(-l * 2).toFixed(1)} Z"/>
+    <path d="M ${cx} ${(cy - l * 0.5).toFixed(1)} v ${l.toFixed(1)}"/>
+  </g>`;
+    }
+
+    /* Une paire de lunettes : deux cercles et un pont. */
+    case "lunettes": {
+      const r = u * 0.1;
+      const ecart = u * 0.15;
+      return `
+  <g ${encre}>
+    <circle cx="${cx - ecart}" cy="${cy}" r="${r}"/>
+    <circle cx="${cx + ecart}" cy="${cy}" r="${r}"/>
+    <path d="M ${(cx - ecart + r).toFixed(1)} ${cy} q ${(ecart - r).toFixed(1)} ${(-r * 0.5).toFixed(1)} ${((ecart - r) * 2).toFixed(1)} 0"/>
+    <path d="M ${(cx - ecart - r).toFixed(1)} ${cy} h ${(-u * 0.09).toFixed(1)}"/>
+    <path d="M ${(cx + ecart + r).toFixed(1)} ${cy} h ${(u * 0.09).toFixed(1)}"/>
+  </g>`;
+    }
+
+    /* Une empreinte : quatre coussinets et une paume. */
+    case "patte": {
+      const r = u * 0.045;
+      const doigts = [-1.5, -0.5, 0.5, 1.5]
+        .map(
+          (d, i) =>
+            `<ellipse cx="${(cx + d * u * 0.085).toFixed(1)}" cy="${(cy - u * 0.08 - (i === 1 || i === 2 ? u * 0.035 : 0)).toFixed(1)}" rx="${r}" ry="${(r * 1.25).toFixed(1)}"/>`,
+        )
+        .join("\n    ");
+      return `
+  <g ${encre}>
+    ${doigts}
+    <ellipse cx="${cx}" cy="${(cy + u * 0.07).toFixed(1)}" rx="${(u * 0.11).toFixed(1)}" ry="${(u * 0.085).toFixed(1)}"/>
+  </g>`;
+    }
+
+    /*
+     * Une aiguille et sa trace : la pointe, et la ligne qu'elle laisse. Un
+     * dermographe entier serait illisible à cette opacité, et une tête de
+     * mort ferait choisir un style à la place du commerçant.
+     */
+    case "aiguille": {
+      const l = u * 0.26;
+      return `
+  <g ${encre}>
+    <path d="M ${(cx - l * 0.7).toFixed(1)} ${(cy - l * 0.7).toFixed(1)} L ${(cx + l * 0.35).toFixed(1)} ${(cy + l * 0.45).toFixed(1)}"/>
+    <path d="M ${(cx + l * 0.35).toFixed(1)} ${(cy + l * 0.45).toFixed(1)} l ${(l * 0.2).toFixed(1)} ${(l * 0.35).toFixed(1)} l ${(-l * 0.35).toFixed(1)} ${(-l * 0.2).toFixed(1)} Z"/>
+    <path d="M ${(cx - l * 0.9).toFixed(1)} ${(cy + l * 0.85).toFixed(1)} q ${(l * 0.6).toFixed(1)} ${(-l * 0.5).toFixed(1)} ${(l * 1.2).toFixed(1)} 0"/>
+  </g>`;
+    }
+
+    /* Un haltère court : barre, deux disques. */
+    case "haltere": {
+      const l = u * 0.19;
+      const h = u * 0.12;
+      return `
+  <g ${encre}>
+    <path d="M ${cx - l} ${cy} h ${(l * 2).toFixed(1)}"/>
+    <path d="M ${cx - l} ${cy - h} v ${(h * 2).toFixed(1)}"/>
+    <path d="M ${cx + l} ${cy - h} v ${(h * 2).toFixed(1)}"/>
+    <path d="M ${(cx - l * 1.25).toFixed(1)} ${(cy - h * 0.6).toFixed(1)} v ${(h * 1.2).toFixed(1)}"/>
+    <path d="M ${(cx + l * 1.25).toFixed(1)} ${(cy - h * 0.6).toFixed(1)} v ${(h * 1.2).toFixed(1)}"/>
+  </g>`;
+    }
+
     case "rayures": {
       const pas = u * 0.14;
       const lignes = Math.ceil((w + h) / pas);
@@ -374,6 +563,71 @@ export function defaultSpecs(metierId = "soins"): PlaceholderSpec[] {
       galerie: ["fleur", "bouquet", "vase", "feuillage", "ruban", "graine"],
       portrait: "silhouette",
     },
+    ongles: {
+      hero: "rayures",
+      galerie: ["petale", "silhouette", "petale", "rayures", "petale", "silhouette"],
+      portrait: "silhouette",
+    },
+    spa: {
+      hero: "feuillage",
+      galerie: ["petale", "feuillage", "petale", "graine", "feuillage", "petale"],
+      portrait: "silhouette",
+    },
+    opticien: {
+      hero: "rayures",
+      galerie: ["lunettes", "silhouette", "lunettes", "rayures", "lunettes", "silhouette"],
+      portrait: "silhouette",
+    },
+    animaux: {
+      hero: "rayures",
+      galerie: ["patte", "silhouette", "patte", "rayures", "patte", "silhouette"],
+      portrait: "silhouette",
+    },
+    tatouage: {
+      hero: "rayures",
+      galerie: ["aiguille", "silhouette", "aiguille", "rayures", "aiguille", "silhouette"],
+      portrait: "silhouette",
+    },
+    patisserie: {
+      hero: "epi",
+      galerie: ["gateau", "epi", "gateau", "carre", "epi", "gateau"],
+      portrait: "silhouette",
+    },
+    chocolatier: {
+      hero: "carre",
+      galerie: ["carre", "ruban", "carre", "gateau", "ruban", "carre"],
+      portrait: "silhouette",
+    },
+    traiteur: {
+      hero: "couvert",
+      galerie: ["couvert", "epi", "couvert", "bouteille", "epi", "couvert"],
+      portrait: "silhouette",
+    },
+    boucherie: {
+      hero: "couvert",
+      galerie: ["couvert", "rayures", "couvert", "epi", "rayures", "couvert"],
+      portrait: "silhouette",
+    },
+    caviste: {
+      hero: "bouteille",
+      galerie: ["bouteille", "carre", "bouteille", "epi", "carre", "bouteille"],
+      portrait: "silhouette",
+    },
+    restaurant: {
+      hero: "couvert",
+      galerie: ["couvert", "bouteille", "couvert", "tasse", "bouteille", "couvert"],
+      portrait: "silhouette",
+    },
+    cafe: {
+      hero: "tasse",
+      galerie: ["tasse", "carre", "tasse", "epi", "carre", "tasse"],
+      portrait: "silhouette",
+    },
+    sport: {
+      hero: "haltere",
+      galerie: ["haltere", "silhouette", "haltere", "rayures", "silhouette", "haltere"],
+      portrait: "silhouette",
+    },
     commerce: {
       hero: "rayures",
       galerie: ["rayures", "rayures", "rayures", "rayures", "rayures", "rayures"],
@@ -388,7 +642,23 @@ export function defaultSpecs(metierId = "soins"): PlaceholderSpec[] {
    * d'un salon de barbier, et donne à un fleuriste des visuels couleur terre
    * cuite là où on attend du végétal.
    */
-  const teinte = metierId === "fleuriste" ? 96 : 16;
+  const teintes: Record<string, number> = {
+    fleuriste: 96,
+    spa: 128,
+    ongles: 330,
+    patisserie: 32,
+    chocolatier: 20,
+    traiteur: 28,
+    boucherie: 8,
+    caviste: 340,
+    restaurant: 24,
+    cafe: 30,
+    sport: 210,
+    opticien: 205,
+    animaux: 40,
+    tatouage: 220,
+  };
+  const teinte = teintes[metierId] ?? 16;
 
   return [
     { file: "hero.jpg", width: 2400, height: 1600, hue: teinte + 8, motif: motifs.hero },

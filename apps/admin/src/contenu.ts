@@ -118,6 +118,9 @@ export const SECTIONS = [
   "livraison",
   "deuil",
   "abonnements",
+  /* --- Restauration et salles de cours. --- */
+  "carte",
+  "planning",
   "referencement",
 ] as const;
 
@@ -373,6 +376,157 @@ export function appliquerSection(
           return occasion;
         })
         .filter((o): o is Record<string, unknown> => o !== undefined);
+      return;
+    }
+
+    case "carte": {
+      /*
+       * La carte, saisie à plat et rangée en groupes ici.
+       *
+       * Le formulaire montre une ligne par plat, avec le nom de son groupe —
+       * exactement comme la catégorie d'une prestation. C'est le même geste
+       * que recopier une carte sur une feuille, et cela évite au commerçant
+       * d'ouvrir un groupe avant de pouvoir écrire un plat. Le fichier, lui,
+       * garde des groupes : ce sont eux que la page affiche, avec leur ordre.
+       *
+       * L'ordre des groupes est celui de leur première apparition. Un plat
+       * déplacé d'un groupe à l'autre suffit donc à réorganiser la carte, sans
+       * qu'aucun bouton « monter / descendre » soit nécessaire.
+       */
+      poserTraduit(raw, "menuNote", champs, "menuNote");
+
+      const langueSite = String(
+        (raw.languages as { default?: unknown } | undefined)?.default ?? "fr",
+      );
+      const GROUPE_SANS_NOM: Record<string, string> = {
+        fr: "La carte",
+        nl: "De kaart",
+        en: "The menu",
+      };
+
+      const anciensGroupes = (raw.menu as Array<Record<string, unknown>>) ?? [];
+      const prisGroupes = new Set(anciensGroupes.map((g) => String(g.id)));
+      const parLibelle = new Map<string, Record<string, unknown>>();
+      const ordre: Array<Record<string, unknown>> = [];
+      let dernierTitre: Record<string, string> | undefined;
+
+      const TAGS = ["vegetarien", "vegan", "sans-gluten", "epice", "maison"] as const;
+
+      for (const i of indices(champs, "carte")) {
+        const nom = texteTraduit(champs, `carte.${i}.name`);
+        // Une ligne sans nom est une ligne ajoutée puis abandonnée.
+        if (Object.keys(nom).length === 0) continue;
+
+        /*
+         * Un groupe laissé vide reprend celui de la ligne précédente : on
+         * saisit une carte de haut en bas, et retaper « Entrées » sur chaque
+         * ligne est le genre de corvée qui fait renoncer à tenir sa carte à
+         * jour — c'est-à-dire l'argument de vente du site.
+         */
+        let titre = texteTraduit(champs, `carte.${i}.group`);
+        if (Object.keys(titre).length === 0) {
+          titre = dernierTitre ?? { [langueSite]: GROUPE_SANS_NOM[langueSite] ?? "Carte" };
+        }
+        dernierTitre = titre;
+
+        const libelle = (Object.values(titre)[0] ?? "").toLowerCase();
+        let groupe = parLibelle.get(libelle);
+        if (!groupe) {
+          /*
+           * Un groupe déjà connu garde son identifiant et sa note : la note
+           * (« servi le midi en semaine ») n'est pas dans ce formulaire, et
+           * régénérer le groupe l'effacerait sans que rien ne le dise.
+           */
+          const connu = anciensGroupes.find(
+            (g) =>
+              (Object.values((g.title as Record<string, string>) ?? {})[0] ?? "").toLowerCase() ===
+              libelle,
+          );
+          groupe = connu
+            ? { ...connu }
+            : { id: identifiantLibre(Object.values(titre)[0]!, prisGroupes) };
+          prisGroupes.add(String(groupe.id));
+          groupe.title = titre;
+          groupe.items = [];
+          parLibelle.set(libelle, groupe);
+          ordre.push(groupe);
+        }
+
+        const plat: Record<string, unknown> = { name: nom };
+
+        const description = texteTraduit(champs, `carte.${i}.description`);
+        if (Object.keys(description).length > 0) plat.description = description;
+
+        // Vide vaut « selon arrivage », pas « gratuit ». La virgule décimale
+        // est ce que produit un clavier belge.
+        const prix = (champs[`carte.${i}.price`] ?? "").trim();
+        const montant = Number(prix.replace(",", "."));
+        plat.price = prix === "" || !Number.isFinite(montant) ? null : montant;
+
+        const tags = TAGS.filter((tag) => Boolean(champs[`carte.${i}.tags.${tag}`]));
+        if (tags.length > 0) plat.tags = tags;
+
+        (groupe.items as Array<Record<string, unknown>>).push(plat);
+      }
+
+      raw.menu = ordre;
+      return;
+    }
+
+    case "planning": {
+      /*
+       * Le planning des cours. Même règle que partout : la liste complète est
+       * renvoyée, l'absence vaut retrait.
+       */
+      const existants = (raw.courses as Array<Record<string, unknown>>) ?? [];
+      const pris = new Set(existants.map((c) => String(c.id)));
+
+      raw.courses = indices(champs, "courses")
+        .map((i) => {
+          const nom = texteTraduit(champs, `courses.${i}.name`);
+          if (Object.keys(nom).length === 0) return undefined;
+
+          const fourni = (champs[`courses.${i}.id`] ?? "").trim();
+          const connu = fourni ? existants.find((c) => c.id === fourni) : undefined;
+          const cours = connu ?? { id: identifiantLibre(Object.values(nom)[0]!, pris) };
+          pris.add(String(cours.id));
+
+          cours.name = nom;
+
+          const jour = (champs[`courses.${i}.day`] ?? "").trim();
+          cours.day = (WEEKDAYS as readonly string[]).includes(jour) ? jour : "monday";
+
+          const heure = (valeur: string | undefined, defaut: string) =>
+            /^([01]\d|2[0-3]):[0-5]\d$/.test((valeur ?? "").trim())
+              ? (valeur ?? "").trim()
+              : defaut;
+
+          cours.start = heure(champs[`courses.${i}.start`], "18:00");
+          /*
+           * Une fin qui précède le début est refusée par le schéma, et le
+           * message qui en sort ne veut rien dire pour un gérant de salle. On
+           * ajoute une heure : le cours est visible, l'horaire se corrige d'un
+           * clic, et personne ne perd sa saisie.
+           */
+          const fin = heure(champs[`courses.${i}.end`], "");
+          cours.end =
+            fin && fin > String(cours.start)
+              ? fin
+              : `${String(Math.min(23, Number(String(cours.start).slice(0, 2)) + 1)).padStart(2, "0")}${String(cours.start).slice(2)}`;
+
+          const niveau = texteTraduit(champs, `courses.${i}.level`);
+          if (Object.keys(niveau).length > 0) cours.level = niveau;
+          else delete cours.level;
+
+          poser(cours, "coach", champs[`courses.${i}.coach`]);
+
+          const places = Number((champs[`courses.${i}.capacity`] ?? "").trim());
+          if (Number.isFinite(places) && places > 0) cours.capacity = Math.round(places);
+          else delete cours.capacity;
+
+          return cours;
+        })
+        .filter((c): c is Record<string, unknown> => c !== undefined);
       return;
     }
 

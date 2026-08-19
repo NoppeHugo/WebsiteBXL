@@ -224,6 +224,89 @@ export const Subscription = z.object({
 });
 
 /* -------------------------------------------------------------------------- */
+/* Restauration                                                               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Un plat, une boisson, une pâtisserie : une ligne de la carte.
+ *
+ * Le prix est nullable comme partout ailleurs — « selon arrivage » est une
+ * réponse fréquente et honnête chez un restaurant, et inventer un montant pour
+ * remplir la colonne engagerait le commerce sur ce qu'il ne veut pas promettre.
+ */
+export const MenuItem = z.object({
+  name: LocalizedText,
+  description: LocalizedText.optional(),
+  /** En euros. `null` = « selon arrivage » ou « sur ardoise ». */
+  price: z.number().nonnegative().nullable().default(null),
+  /**
+   * Régimes et allergènes, dans un vocabulaire fermé.
+   *
+   * Fermé à dessein : un champ libre donnerait « végé », « veggie », « VG »
+   * et « sans viande » sur la même carte, et rien ne pourrait les afficher de
+   * la même façon ni les traduire. La liste couvre ce qu'un client cherche
+   * réellement avant de choisir un restaurant, et rien de plus — elle ne
+   * remplace pas l'information sur les allergènes due en salle.
+   */
+  tags: z
+    .array(z.enum(["vegetarien", "vegan", "sans-gluten", "epice", "maison"]))
+    .default([]),
+});
+
+export type MenuItem = z.infer<typeof MenuItem>;
+
+/**
+ * Un groupe de la carte : entrées, plats, desserts, boissons, formule du midi.
+ *
+ * La carte est découpée par le commerce lui-même, et non par une liste fixe de
+ * services : une friterie, un salon de thé et une brasserie ne découpent pas
+ * leur carte de la même façon, et imposer « entrée / plat / dessert » à un
+ * café obligerait à mentir dans deux groupes sur trois.
+ */
+export const MenuSection = z.object({
+  id: Slug,
+  title: LocalizedText,
+  /** « Servi le midi en semaine », « change chaque semaine »… */
+  note: LocalizedText.optional(),
+  items: z.array(MenuItem).default([]),
+});
+
+export type MenuSection = z.infer<typeof MenuSection>;
+
+/* -------------------------------------------------------------------------- */
+/* Cours                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Un cours au planning.
+ *
+ * Ce n'est **pas** un rendez-vous, et c'est pourquoi il ne passe pas par
+ * l'agenda : un cours a un horaire fixe, il revient chaque semaine, et
+ * plusieurs personnes occupent le même créneau. L'agenda, lui, découpe des
+ * créneaux individuels à partir de la durée d'une prestation.
+ *
+ * Le planning est affiché, pas réservable. Il répond à la seule question qu'on
+ * se pose avant de pousser la porte d'une salle — « qu'est-ce qu'il y a le
+ * mardi soir ? » — et un site qui y répond bat un site qui prend des
+ * inscriptions pour des cours dont on ignore l'horaire.
+ */
+export const Course = z.object({
+  id: Slug,
+  name: LocalizedText,
+  day: z.enum(WEEKDAYS),
+  start: Time,
+  end: Time,
+  /** « Tous niveaux », « débutants »… tel que la salle le dit. */
+  level: LocalizedText.optional(),
+  /** Le prénom du coach : c'est lui qu'on suit, pas la salle. */
+  coach: z.string().optional(),
+  /** Nombre de places, quand la salle l'annonce. */
+  capacity: z.number().int().positive().max(500).optional(),
+});
+
+export type Course = z.infer<typeof Course>;
+
+/* -------------------------------------------------------------------------- */
 /* Réservation                                                                */
 /* -------------------------------------------------------------------------- */
 
@@ -242,6 +325,57 @@ export const Booking = z
     z.object({ mode: z.literal("live") }),
   ])
   .default({ mode: "none" });
+
+/**
+ * Les types de commerce.
+ *
+ * Le type décide du métier (`metiers.ts`), donc du vocabulaire du site, des
+ * sections affichées et des styles proposés. Il part aussi dans les données
+ * structurées lues par Google (`apps/template/src/lib/seo.ts`).
+ *
+ * Un type manquant n'empêche jamais de vendre : `other` donne une vitrine
+ * complète. Il fait perdre les mots du métier, pas le site.
+ *
+ * Exporté pour que les tests puissent vérifier qu'aucun type n'a été ajouté
+ * ici sans être rangé dans un métier — divergence qui ne se verrait autrement
+ * qu'à la première démonstration, sur un site qui parle de rendez-vous à un
+ * restaurant.
+ */
+export const BUSINESS_TYPES = [
+  // Rendez-vous.
+  "hair_salon",
+  "barbershop",
+  "beauty_salon",
+  "nail_salon",
+  "day_spa",
+  "massage",
+  "optician",
+  "pet_grooming",
+  "veterinary",
+  // Commande.
+  "tattoo_parlor",
+  "florist",
+  "bakery",
+  "pastry_shop",
+  "ice_cream",
+  "chocolate_shop",
+  "caterer",
+  "butcher",
+  "fishmonger",
+  "wine_store",
+  "deli",
+  // Table, carte, planning.
+  "restaurant",
+  "cafe",
+  "bar",
+  "tea_room",
+  "gym",
+  "yoga_studio",
+  // Vitrine.
+  "other",
+] as const;
+
+export type BusinessType = (typeof BUSINESS_TYPES)[number];
 
 /* -------------------------------------------------------------------------- */
 /* site.json                                                                  */
@@ -297,14 +431,7 @@ export const SiteConfig = z
 
     business: z.object({
       name: z.string().min(1),
-      type: z.enum([
-        "hair_salon",
-        "barbershop",
-        "beauty_salon",
-        "bakery",
-        "florist",
-        "other",
-      ]),
+      type: z.enum(BUSINESS_TYPES),
       tagline: LocalizedText.optional(),
       description: LocalizedText,
       address: z.object({
@@ -339,6 +466,14 @@ export const SiteConfig = z
     closures: z.array(Closure).default([]),
 
     services: z.array(Service).default([]),
+    /* --- Restauration. Vides pour les autres métiers, donc section absente. -- */
+    /** La carte, groupe par groupe. Vide = pas de section carte. */
+    menu: z.array(MenuSection).default([]),
+    /** « La carte change chaque semaine » — la phrase qui évite un appel. */
+    menuNote: LocalizedText.optional(),
+    /* --- Salles de sport et studios. ---------------------------------------- */
+    /** Planning des cours, affiché et non réservable. */
+    courses: z.array(Course).default([]),
     /* --- Fleuriste. Vides pour les autres métiers, donc sections absentes. --- */
     occasions: z.array(Occasion).default([]),
     delivery: Delivery.optional(),
@@ -441,6 +576,48 @@ export const SiteConfig = z
         });
       }
       ids.add(s.id);
+    }
+
+    /*
+     * Mêmes contrôles pour la carte et le planning : un identifiant en double
+     * donne deux ancres identiques dans la page, et le lien du menu n'en
+     * atteint jamais qu'une.
+     */
+    const groupes = new Set<string>();
+    for (const [i, groupe] of cfg.menu.entries()) {
+      if (groupes.has(groupe.id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["menu", i, "id"],
+          message: `identifiant de groupe de carte en double : ${groupe.id}`,
+        });
+      }
+      groupes.add(groupe.id);
+    }
+
+    const cours = new Set<string>();
+    for (const [i, c] of cfg.courses.entries()) {
+      if (cours.has(c.id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["courses", i, "id"],
+          message: `identifiant de cours en double : ${c.id}`,
+        });
+      }
+      cours.add(c.id);
+
+      /*
+       * Un cours qui finit avant de commencer se range n'importe où dans la
+       * grille horaire, et personne ne le remarque avant qu'un élève se
+       * présente à la mauvaise heure.
+       */
+      if (c.end <= c.start) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["courses", i, "end"],
+          message: "l'heure de fin doit suivre l'heure de début",
+        });
+      }
     }
 
     // La langue par défaut doit être renseignée partout, sinon le repli

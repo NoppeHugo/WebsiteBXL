@@ -13,6 +13,10 @@ const IsoDate = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "date au format YYYY-MM-DD");
 
+const Time = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "heure au format HH:MM");
+
 /**
  * Créneau souhaité, volontairement approximatif en v1 : le salon confirme
  * manuellement, donc demander une heure précise donnerait au client
@@ -91,11 +95,16 @@ export type BookingRequestInput = z.infer<typeof BookingRequestInput>;
 /**
  * Comment le client veut récupérer ses fleurs.
  *
- * Deux valeurs seulement. Un fleuriste qui ne livre pas n'affiche pas le
- * choix, et le formulaire poste alors « pickup » — plutôt qu'un troisième
- * état « non précisé » dont personne ne saurait quoi faire.
+ * Un fleuriste qui ne livre pas n'affiche pas le choix, et le formulaire poste
+ * alors « pickup » — plutôt qu'un état « non précisé » dont personne ne
+ * saurait quoi faire.
+ *
+ * `table` est la demande de table d'un restaurant. Elle passe par la même
+ * route et la même table en base : c'est la même chose — une intention datée
+ * que le commerce rappelle pour confirmer — avec une heure et un nombre de
+ * couverts à la place de l'occasion et de l'adresse.
  */
-export const OrderMode = z.enum(["delivery", "pickup"]);
+export const OrderMode = z.enum(["delivery", "pickup", "table"]);
 export type OrderMode = z.infer<typeof OrderMode>;
 
 /**
@@ -120,6 +129,13 @@ export const OrderRequestInput = z.object({
   /** Date souhaitée. Facultative : « dès que possible » est une réponse. */
   wantedDate: IsoDate.optional().or(z.literal("")),
   mode: OrderMode.default("pickup"),
+  /**
+   * Heure souhaitée, pour une table. La route l'exige quand le mode est
+   * `table`, et l'ignore partout ailleurs — un bouquet n'a pas d'heure.
+   */
+  wantedTime: Time.optional().or(z.literal("")),
+  /** Nombre de couverts. Borné haut : au-delà, c'est une privatisation. */
+  partySize: z.coerce.number().int().min(1).max(200).optional(),
   /** Adresse de livraison, exigée par la route quand le mode est `delivery`. */
   address: z.string().trim().max(300).optional().or(z.literal("")),
   /**

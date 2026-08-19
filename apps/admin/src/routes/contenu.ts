@@ -19,6 +19,8 @@ import {
   sectionAvis,
   sectionPrestations,
   sectionOccasions,
+  sectionCarte,
+  sectionPlanning,
   sectionLivraison,
   sectionDeuil,
   sectionAbonnements,
@@ -42,6 +44,8 @@ const TITRES: Record<string, string> = {
   presentation: "Le commerce",
   horaires: "Horaires",
   occasions: "Occasions",
+  carte: "La carte",
+  planning: "Le planning",
   galerie: "Galerie",
   deroule: "Le déroulé",
   equipe: "Équipe",
@@ -62,6 +66,8 @@ const TITRES: Record<string, string> = {
  */
 const SECTIONS_DU_METIER: Record<string, string> = {
   occasions: "occasions",
+  carte: "carte",
+  planning: "planning",
   livraison: "livraison",
   deuil: "deuil",
   abonnements: "abonnement",
@@ -120,6 +126,8 @@ ${bandeau}
 ${sectionAccueil(slug, site, defaut)}
 ${sectionPresentation(slug, site, defaut)}
 ${sectionHoraires(slug, site, formatSlots as (c: unknown) => string)}
+${montre("carte") ? sectionCarte(slug, site, defaut) : ""}
+${montre("planning") ? sectionPlanning(slug, site, defaut) : ""}
 ${montre("occasions") ? sectionOccasions(slug, site, defaut) : ""}
 ${sectionGalerie(slug, site, defaut)}
 ${montre("deroule") ? sectionDeroule(slug, site, defaut) : ""}

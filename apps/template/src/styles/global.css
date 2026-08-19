@@ -2998,3 +2998,168 @@ body[data-glass="true"] .rdv {
   color: var(--c-accent);
   font-weight: 600;
 }
+
+/* -------------------------------------------------------------------------- */
+/* La carte                                                                   */
+/* -------------------------------------------------------------------------- */
+/*
+ * Une carte de restaurant se lit debout dans la rue, sur un téléphone, en
+ * quinze secondes. Trois conséquences : le prix reste sur la même ligne que le
+ * plat quoi qu'il arrive, la description passe en second plan, et rien ne
+ * bouge au survol — on ne fait pas défiler une carte, on la parcourt.
+ */
+
+.carte {
+  display: grid;
+  gap: clamp(2rem, 5vw, 3.2rem);
+}
+
+/* Deux colonnes dès qu'il y a plusieurs groupes et de la place : une carte en
+   une seule colonne sur grand écran fait défiler pour rien. */
+@media (min-width: 900px) {
+  .carte--colonnes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: clamp(2.5rem, 6vw, 5rem);
+  }
+}
+
+.carte__groupe-titre {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
+  text-transform: var(--display-transform);
+  font-size: var(--step-1);
+  margin: 0 0 0.2rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.carte__groupe-note {
+  margin: 0.5rem 0 0;
+  color: var(--c-muted);
+  font-size: var(--step--1);
+}
+
+.carte__liste {
+  list-style: none;
+  margin: 1.1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.plat__ligne {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.plat__nom {
+  font-weight: 600;
+}
+
+/* Les points de conduite. Purement décoratifs — et masqués aux lecteurs
+   d'écran, qui annonceraient sinon une ligne de points entre chaque plat et
+   son prix. */
+.plat__points {
+  flex: 1;
+  border-bottom: 1px dotted var(--c-border);
+  transform: translateY(-0.2em);
+}
+
+.plat__prix {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.plat__desc {
+  margin: 0.25rem 0 0;
+  color: var(--c-muted);
+  font-size: var(--step--1);
+  max-width: var(--measure);
+}
+
+.plat__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.4rem 0 0;
+}
+
+.plat__tag {
+  font-size: calc(var(--step--1) * 0.92);
+  letter-spacing: var(--ui-tracking);
+  text-transform: var(--ui-transform);
+  color: var(--c-muted);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 0.12rem 0.45rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Le planning des cours                                                      */
+/* -------------------------------------------------------------------------- */
+/*
+ * Une colonne par jour, et seulement pour les jours qui ont cours. Sur
+ * téléphone, les colonnes deviennent des blocs empilés : une grille de sept
+ * colonnes réduite à la largeur d'un pouce ne se lit pas, et c'est là qu'on
+ * la consulte.
+ */
+
+.planning {
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 2.5rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+}
+
+.planning__nom {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
+  text-transform: var(--display-transform);
+  font-size: var(--step-1);
+  margin: 0 0 0.6rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.planning__liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cours__heure {
+  margin: 0;
+  font-size: var(--step--1);
+  letter-spacing: var(--ui-tracking);
+  text-transform: var(--ui-transform);
+  color: var(--c-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cours__nom {
+  margin: 0.1rem 0 0;
+  font-weight: 600;
+}
+
+.cours__meta {
+  margin: 0.15rem 0 0;
+  color: var(--c-muted);
+  font-size: var(--step--1);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.5rem;
+}
+
+/* Le séparateur est posé en CSS plutôt qu'écrit dans le HTML : il ne doit être
+   ni lu à voix haute, ni copié avec le texte. */
+.cours__meta span + span::before {
+  content: "·";
+  margin-right: 0.5rem;
+  color: var(--c-border);
+}

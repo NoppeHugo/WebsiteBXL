@@ -1,0 +1,151 @@
+---
+import type { Language } from "@bxl/schema";
+import { site, path } from "../lib/client.ts";
+import { ui } from "../lib/i18n.ts";
+import { apiEndpoint } from "../lib/api.ts";
+
+/**
+ * Demande de table.
+ *
+ * La même machinerie que la demande de commande — même route, même table en
+ * base, même page « Mes commandes » côté commerçant — avec deux champs de
+ * plus et deux de moins : il faut une heure et un nombre de couverts, il ne
+ * faut ni occasion, ni adresse de livraison.
+ *
+ * Ce n'est **pas** un agenda de salle, et c'est délibéré. Un restaurant sait
+ * combien de couverts il peut prendre à 20 h un samedi ; un formulaire ne le
+ * sait pas. Une table confirmée d'office qui n'existe pas coûte plus cher au
+ * restaurant qu'un rappel — elle lui coûte le client, et l'avis qui suit.
+ *
+ * D'où le mot qui suit le titre : la demande part, le restaurant confirme.
+ *
+ * Les créneaux proposés ne sont pas ceux des horaires d'ouverture : un
+ * restaurant ouvert de 12 h à 23 h ne sert pas à 16 h. Une liste par demi-
+ * heures depuis midi laisse le client dire ce qu'il veut, et le restaurant
+ * corriger — ce qu'il fait de toute façon au téléphone.
+ */
+
+interface Props {
+  lang: Language;
+}
+const { lang } = Astro.props;
+
+const endpoint = site.tenantId ? apiEndpoint("/v1/orders") : undefined;
+const returnUrl = Astro.site ? new URL(path(lang), Astro.site).href : undefined;
+
+/** De 11 h 30 à 22 h 30, par demi-heures. */
+const heures = Array.from({ length: 23 }, (_, i) => {
+  const minutes = 11 * 60 + 30 + i * 30;
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+});
+
+const couverts = [1, 2, 3, 4, 5, 6, 7, 8, 10, 12];
+
+// Aujourd'hui, à Bruxelles : une demande pour hier n'a pas de sens, et le
+// navigateur sait refuser la saisie si on le lui dit.
+const aujourdhui = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Brussels" });
+---
+
+{
+  endpoint && (
+    <section class="section section--commande" id="table">
+      <div class="wrap">
+        <div class="section__head">
+          <h2 class="section__title">{ui(lang, "table_title")}</h2>
+          <p class="section__intro">{ui(lang, "table_intro")}</p>
+        </div>
+
+        <form
+          class="commande"
+          method="post"
+          action={endpoint}
+          data-async-form
+          data-label-sending={ui(lang, "form_sending")}
+          data-label-ok={ui(lang, "table_ok")}
+          data-label-error={ui(lang, "table_ko")}
+          data-label-incomplete={ui(lang, "form_incomplete")}
+          data-label-send={ui(lang, "table_send")}
+        >
+          <input type="hidden" name="tenantId" value={site.tenantId} />
+          <input type="hidden" name="locale" value={lang} />
+          <input type="hidden" name="mode" value="table" />
+          {returnUrl && <input type="hidden" name="redirectTo" value={returnUrl} />}
+
+          {/* Piège à robots, identique aux autres formulaires du site : un
+              seul mécanisme à maintenir, un seul à vérifier. */}
+          <input
+            type="text"
+            name="_company"
+            tabindex="-1"
+            autocomplete="off"
+            aria-hidden="true"
+            class="honeypot"
+          />
+
+          <div class="commande__paire">
+            <label class="commande__champ">
+              {ui(lang, "table_date")}
+              <input type="date" name="wantedDate" required min={aujourdhui} />
+            </label>
+
+            <label class="commande__champ">
+              {ui(lang, "table_time")}
+              <select name="wantedTime" required>
+                {heures.map((h) => (
+                  <option value={h} selected={h === "19:30"}>
+                    {h}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <label class="commande__champ">
+            {ui(lang, "table_party")}
+            <select name="partySize" required>
+              {couverts.map((n) => (
+                <option value={String(n)} selected={n === 2}>
+                  {n} {n === 1 ? ui(lang, "table_person") : ui(lang, "table_persons")}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div class="commande__paire">
+            <label class="commande__champ">
+              {ui(lang, "form_name")}
+              <input type="text" name="name" required autocomplete="name" />
+            </label>
+            <label class="commande__champ">
+              {ui(lang, "form_email")}
+              <input type="email" name="email" required autocomplete="email" />
+            </label>
+          </div>
+
+          {/*
+            Le téléphone compte plus ici que partout ailleurs : c'est par lui
+            que le restaurant confirme, et le soir même s'il est complet.
+          */}
+          <label class="commande__champ">
+            {ui(lang, "form_phone")}
+            <input type="tel" name="phone" autocomplete="tel" />
+          </label>
+
+          <label class="commande__champ">
+            {ui(lang, "table_note")}
+            <textarea name="note" rows="2" maxlength="500" />
+            <span class="commande__aide">{ui(lang, "table_note_help")}</span>
+          </label>
+
+          <label class="consent">
+            <input type="checkbox" name="consent" required />
+            <span>{ui(lang, "form_consent")}</span>
+          </label>
+
+          <p class="form-status" role="status" aria-live="polite" />
+          <button type="submit">{ui(lang, "table_send")}</button>
+        </form>
+      </div>
+    </section>
+  )
+}

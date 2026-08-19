@@ -37,6 +37,9 @@ const siteComplet = () => ({
   // Les blocs propres au fleuriste. Le squelette les porte pour que les tests
   // décrivent le même objet que celui qu'un vrai site.json contient.
   occasions: [] as Array<Record<string, unknown>>,
+  menu: [] as Array<Record<string, unknown>>,
+  menuNote: undefined as Record<string, string> | undefined,
+  courses: [] as Array<Record<string, unknown>>,
   subscriptions: [] as Array<Record<string, unknown>>,
   delivery: undefined as Record<string, unknown> | undefined,
   mourning: undefined as Record<string, unknown> | undefined,
@@ -587,5 +590,138 @@ describe("abonnements", () => {
       rhythm: { fr: "Chaque semaine" },
       price: 32,
     });
+  });
+});
+
+describe("carte", () => {
+  const plat = (i: number, champs: Record<string, string>) =>
+    Object.fromEntries(Object.entries(champs).map(([k, v]) => [`carte.${i}.${k}`, v]));
+
+  it("range les plats en groupes, dans l'ordre de leur première apparition", () => {
+    const raw = siteComplet();
+    appliquerSection(raw, "carte", {
+      ...plat(0, { "group.fr": "Entrées", "name.fr": "Croquettes", price: "12" }),
+      ...plat(1, { "group.fr": "Plats", "name.fr": "Carbonnades", price: "22,50" }),
+      ...plat(2, { "group.fr": "Entrées", "name.fr": "Soupe", price: "" }),
+    });
+
+    const menu = raw.menu as Array<Record<string, unknown>>;
+    expect(menu.map((g) => g.id)).toEqual(["entrees", "plats"]);
+    expect((menu[0]!.items as unknown[]).length).toBe(2);
+    // Prix vide = « selon arrivage », pas gratuit ; virgule décimale acceptée.
+    expect((menu[1]!.items as Array<Record<string, unknown>>)[0]!.price).toBe(22.5);
+    expect((menu[0]!.items as Array<Record<string, unknown>>)[1]!.price).toBeNull();
+  });
+
+  it("reprend le groupe de la ligne précédente quand il est laissé vide", () => {
+    /*
+     * On recopie une carte de haut en bas. Retaper « Entrées » sur chaque
+     * ligne est la corvée qui fait renoncer à tenir sa carte à jour — c'est-
+     * à-dire à l'argument de vente du site.
+     */
+    const raw = siteComplet();
+    appliquerSection(raw, "carte", {
+      ...plat(0, { "group.fr": "Desserts", "name.fr": "Dame blanche", price: "9" }),
+      ...plat(1, { "group.fr": "", "name.fr": "Tarte du jour", price: "7" }),
+    });
+
+    const menu = raw.menu as Array<Record<string, unknown>>;
+    expect(menu).toHaveLength(1);
+    expect((menu[0]!.items as unknown[]).length).toBe(2);
+  });
+
+  it("garde la note d'un groupe que le formulaire n'expose pas", () => {
+    // Le formulaire ne montre pas la note du groupe. La régénérer à partir du
+    // seul titre l'effacerait sans que rien ne le signale.
+    const raw = siteComplet();
+    raw.menu = [
+      {
+        id: "midi",
+        title: { fr: "Formule du midi" },
+        note: { fr: "En semaine, de 12 h à 14 h" },
+        items: [],
+      },
+    ];
+    appliquerSection(raw, "carte", plat(0, { "group.fr": "Formule du midi", "name.fr": "Plat + café", price: "17" }));
+
+    const menu = raw.menu as Array<Record<string, unknown>>;
+    expect(menu[0]!.note).toEqual({ fr: "En semaine, de 12 h à 14 h" });
+    expect(menu[0]!.id).toBe("midi");
+  });
+
+  it("retient les régimes cochés et ignore une ligne sans nom", () => {
+    const raw = siteComplet();
+    appliquerSection(raw, "carte", {
+      ...plat(0, { "group.fr": "Plats", "name.fr": "Stoemp", "tags.vegetarien": "on", "tags.maison": "on" }),
+      ...plat(1, { "group.fr": "Plats", "name.fr": "" }),
+    });
+
+    const items = (raw.menu as Array<Record<string, unknown>>)[0]!.items as Array<
+      Record<string, unknown>
+    >;
+    expect(items).toHaveLength(1);
+    expect(items[0]!.tags).toEqual(["vegetarien", "maison"]);
+  });
+
+  it("enregistre le mot au-dessus de la carte, et le retire quand il est vidé", () => {
+    const raw = siteComplet();
+    appliquerSection(raw, "carte", {
+      "menuNote.fr": "La carte change chaque semaine",
+      ...plat(0, { "group.fr": "Plats", "name.fr": "Vol-au-vent", price: "21" }),
+    });
+    expect(raw.menuNote).toEqual({ fr: "La carte change chaque semaine" });
+
+    appliquerSection(raw, "carte", plat(0, { "group.fr": "Plats", "name.fr": "Vol-au-vent" }));
+    expect(raw.menuNote).toBeUndefined();
+  });
+});
+
+describe("planning", () => {
+  const cours = (i: number, champs: Record<string, string>) =>
+    Object.fromEntries(Object.entries(champs).map(([k, v]) => [`courses.${i}.${k}`, v]));
+
+  it("crée un cours avec un identifiant dérivé de son nom", () => {
+    const raw = siteComplet();
+    appliquerSection(raw, "planning", {
+      ...cours(0, {
+        id: "",
+        "name.fr": "Yoga doux",
+        day: "tuesday",
+        start: "19:00",
+        end: "20:00",
+        coach: "Inès",
+        capacity: "14",
+      }),
+    });
+    expect(raw.courses).toHaveLength(1);
+    expect(raw.courses[0]).toMatchObject({
+      id: "yoga-doux",
+      day: "tuesday",
+      start: "19:00",
+      end: "20:00",
+      coach: "Inès",
+      capacity: 14,
+    });
+  });
+
+  it("rattrape une fin qui précède le début plutôt que d'échouer", () => {
+    /*
+     * Le schéma refuse un cours qui finit avant de commencer, et le message
+     * qui en sort ne veut rien dire pour un gérant de salle. Une heure de plus
+     * garde le cours visible et se corrige d'un clic.
+     */
+    const raw = siteComplet();
+    appliquerSection(raw, "planning", cours(0, { id: "", "name.fr": "Pilates", start: "18:30", end: "17:00" }));
+    expect(raw.courses[0]).toMatchObject({ start: "18:30", end: "19:30" });
+  });
+
+  it("refuse un jour inventé et ignore une ligne sans nom", () => {
+    const raw = siteComplet();
+    appliquerSection(raw, "planning", {
+      ...cours(0, { id: "", "name.fr": "Renfo", day: "octidi" }),
+      ...cours(1, { id: "", "name.fr": "" }),
+    });
+    expect(raw.courses).toHaveLength(1);
+    expect(raw.courses[0]!.day).toBe("monday");
   });
 });

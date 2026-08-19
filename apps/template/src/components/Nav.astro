@@ -17,6 +17,8 @@ const booking = bookingTarget(lang);
 const home = path(lang);
 
 const links = [
+  site.menu.length > 0 && { href: `${home}#carte`, label: ui(lang, "nav_menu") },
+  site.courses.length > 0 && { href: `${home}#planning`, label: ui(lang, "nav_schedule") },
   site.services.length > 0 && { href: `${home}#services`, label: ui(lang, "nav_services") },
   site.gallery.length > 0 && { href: `${home}#galerie`, label: ui(lang, "nav_gallery") },
   site.team.length > 0 && { href: `${home}#equipe`, label: ui(lang, "nav_team") },

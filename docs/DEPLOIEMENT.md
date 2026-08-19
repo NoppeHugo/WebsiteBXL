@@ -311,6 +311,74 @@ git config user.name "Interface BXL"
 
 **Vérifier :** `git -C /srv/repo push --dry-run` réussit.
 
+### 6.1 bis Trois copies du dépôt, et laquelle écrit
+
+Il n'y a pas un dépôt et sa copie, il y en a **trois**, et deux d'entre elles
+écrivent :
+
+| Où | Qui y écrit | Quoi |
+|---|---|---|
+| `/home/hugo/WebsiteBXL` | vous | le code |
+| `/srv/repo` | la console | un commit à **chaque** enregistrement du commerçant : contenu, photos, apparence |
+| GitHub (`origin`) | la console, en poussant | le point de rencontre des deux |
+
+C'est la ligne du milieu qui surprend. `/srv/repo` n'est pas une copie de
+déploiement : c'est là que vit le travail du commerçant, écrit pendant que
+vous codez ailleurs. Les deux histoires divergent donc dès que quelqu'un
+enregistre une photo pendant que vous corrigez un fichier — ce qui, un jour
+de démonstration, arrive à peu près toujours.
+
+Le script de déploiement pousse votre code vers `/srv/repo` en
+`fast-forward` seulement. Divergence, et il s'arrête :
+
+```
+fatal: Not possible to fast-forward, aborting.
+```
+
+**Ce refus est le bon comportement.** Il protège des commits qui n'existent
+qu'à cet endroit tant que la console ne les a pas poussés. La réponse n'est
+jamais `--force`, ni un `reset` côté serveur : c'est de récupérer d'abord ce
+que la console a écrit, dans votre dépôt, sous votre compte.
+
+```bash
+cd /home/hugo/WebsiteBXL
+git pull --rebase origin claude/brussels-showcase-sites-strategy-821fen
+```
+
+Votre commit se replace au-dessus de ceux de la console — ils ne touchent que
+`clients/`, vous ne touchez que le code, un conflit serait anormal. Le
+déploiement peut alors reprendre son `fast-forward`.
+
+Si GitHub est en retard parce que la console n'a pas pu pousser, la copie du
+serveur fait foi :
+
+```bash
+git fetch /srv/repo claude/brussels-showcase-sites-strategy-821fen
+git rebase FETCH_HEAD
+```
+
+> Lire `/srv/repo` depuis votre compte demande une exception, ce dépôt
+> appartenant à `deploy` :
+> `git config --global --add safe.directory /srv/repo/.git`.
+> L'option `-c safe.directory=…` en ligne de commande ne suffit pas : git
+> l'ignore volontairement pour ce réglage.
+
+### 6.1 ter Node 22 sur le serveur
+
+Le `node` du système est trop ancien pour ce dépôt — `--experimental-strip-types`
+n'existe pas avant Node 22, et les scripts `pnpm` s'arrêtent dessus. Node 22 et
+pnpm sont installés à part :
+
+```bash
+export PATH="/opt/node22/bin:$PATH"
+pnpm check          # contrôle des clients
+pnpm build <slug>   # construction d'un site
+pnpm typecheck
+```
+
+C'est ce que fait `scripts/publier.sh`, pour la même raison : une session ssh
+non interactive ne lit pas `.bashrc` et tomberait sur le node du système.
+
 ### 6.2 Renseigner les secrets
 
 ```bash
@@ -1009,6 +1077,8 @@ point **en vérifiant le résultat réel**, pas en supposant.
 | Aucun courriel | domaine vérifié chez Resend ? `EMAIL_DRIVER=resend` ? `docker compose logs api \| grep -i mail` |
 | Aucune donnée d'audience | ouvrir la console du navigateur sur le site : une erreur d'origine y apparaîtrait |
 | Site à moitié cassé après déploiement | revenir à la release précédente : `ln -sfn /srv/sites/<slug>/releases/<précédente> /srv/sites/<slug>/current` |
+| `Not possible to fast-forward` au déploiement | la console a écrit dans `/srv/repo` — récupérer ses commits avant de repousser le code, voir §6.1 bis. Jamais `--force` |
+| `--experimental-strip-types` inconnu, `pnpm` introuvable | le node du système répond à la place de Node 22 : `export PATH="/opt/node22/bin:$PATH"`, voir §6.1 ter |
 
 **Règle générale :** ne pas contourner un garde-fou pour faire passer une
 étape. Ils refusent tous quelque chose de précis, et pour une raison écrite
@@ -1081,3 +1151,14 @@ mise en ligne rapide.
 | 2026-08-18 | 7 ter | Le choix de quelle fermeture est en cours se fait **dans le navigateur**, jamais au build. | Le site est statique : figer « aujourd'hui » à la construction produirait un encadré périmé dès le lendemain. Le projet s'est déjà fait prendre par là — la date du jour de l'agenda était gelée au build, et le calendrier se vidait tout seul à mesure que la publication s'éloignait. Le jour est celui du commerce et non du visiteur, ce qui corrige au passage le surlignage du jour courant, qui suivait le fuseau du lecteur. |
 | 2026-08-18 | 7 ter | Le commerçant ne pouvait pas changer son style ni ses couleurs — réservés à l'exploitant. Choix revu à la demande. | Page « Mon style » dans l'espace, avec les **mêmes vignettes** que la console : une seule liste de styles, donc aucune chance qu'un style ajouté n'apparaisse que d'un côté. Filtrée par métier — un fleuriste ne peut pas prendre « Nuit », et le serveur le revérifie pour une requête qui ne passerait pas par la grille. Confirmation avant envoi : c'est la seule page de cet espace où un appui distrait change l'allure de toutes les pages à la fois. |
 | 2026-08-18 | — | Défaut attrapé par le typage : un commentaire citant un fichier entre accents graves, à l'intérieur du littéral de gabarit des styles de la console — ce qui referme le littéral. | Le template avait ce test depuis longtemps, la console non. Il couvre désormais `views.ts` et `views-client.ts`. |
+| 2026-08-18 | 7 quater | ⚠️ **Le fleuriste avait un formulaire de commande, et aucun bouton pour y descendre.** `bookingTarget()` ne raisonnait que sur `booking.mode` : un fleuriste déclare `none`, et le bouton disparaissait du menu, du hero et de la barre d'action. Le seul moyen de commander était de dérouler tout le site. | Le métier passe avant le mode : un commerce en mode commande renvoie vers `#commande`, et les trois emplacements se rallument d'un coup. Les cartes d'occasion y descendent **avec l'occasion déjà choisie**. Le bouton n'apparaît que si le formulaire est là — même condition que `Commande.astro`, `tenantId` **et** `PUBLIC_API_URL` : sans cela on affichait « Commander » au-dessus d'une ancre inexistante. |
+| 2026-08-18 | 7 quater | Les commandes n'étaient comptées nulle part : le mouchard connaissait `#reservation` et `/v1/booking-requests`, pas `#commande` ni `/v1/orders`. Le rapport mensuel d'un fleuriste aurait annoncé zéro demande le mois où il en aurait honoré trente — or c'est ce rapport qui le retient. | Type d'événement `order`, distinct de `booking` (un rendez-vous occupe un créneau, une commande ouvre une conversation) et migration 009 pour la contrainte de `page_events.kind`. Plus un accusé de réception au client, qui lui relit le mot de sa carte : la demande de rendez-vous en avait un depuis le début, la commande non. |
+| 2026-08-18 | 6.1 bis | ⚠️ **Le déploiement s'est arrêté sur `Not possible to fast-forward`.** `/srv/repo` n'est pas une copie : la console y écrit un commit à chaque enregistrement du commerçant. Dix commits de contenu y attendaient, écrits pendant que le code avançait ici. | Refus conservé tel quel — il protège du travail qui n'existe qu'à cet endroit — mais expliqué : §6.1 bis dit les trois copies et laquelle écrit, et `go21.sh` compte les commits manquants et donne la commande à taper au lieu du message de git. Jamais `--force` : la réponse est de rebaser son code au-dessus de celui de la console, qui ne touche que `clients/`. |
+| 2026-08-18 | 6.1 ter | Le `node` du système est en 18 : les scripts du dépôt s'arrêtent sur `--experimental-strip-types`, ce qui fait chercher longtemps. | §6.1 ter : Node 22 et pnpm vivent dans `/opt/node22/bin`. `export PATH="/opt/node22/bin:$PATH"` avant tout `pnpm build`, `pnpm check` ou `pnpm typecheck`. C'est déjà ce que fait `scripts/publier.sh`. |
+| 2026-08-19 | 7 quater | **Seize métiers ouverts d'un coup**, contre trois. 27 types de commerce rangés en métiers, quatre mécaniques : rendez-vous, commande, table, planning. Le vocabulaire, les sections, les styles et les motifs de remplacement suivent le métier — un restaurant ne parle plus de « prestations », un café ne montre plus une galerie de salon. | Quatre garde-fous au test, parce qu'aucune de ces divergences ne se voit à l'écran : tout type du schéma est rangé dans un métier (et réciproquement), tout type est proposé au formulaire de création, la liste des styles d'un métier et celle des métiers d'un style disent la même chose, et aucun métier ne remplace une clé d'interface qui n'existe pas. |
+| 2026-08-19 | 7 quater | **La carte** (restaurants, cafés, boulangeries) et **le planning des cours** (salles, studios) n'existaient pas. C'était le seul obstacle réel aux deux plus gros gisements de Bruxelles — ~2 900 restaurants et ~1 700 cafés. | Section `carte` : des groupes découpés par le commerce, un prix qui peut manquer (« selon arrivage » est une réponse), cinq régimes traduits. Section `planning` : les cours de la semaine, **affichés et non réservables** — un cours n'est pas un rendez-vous, il a une capacité partagée, et un agenda faux vaut moins qu'un horaire juste. |
+| 2026-08-19 | 7 quater | Une carte que le restaurateur ne peut pas modifier lui-même est une carte qui ne changera jamais, et un abonnement résilié au bout de trois mois. | Page **« Ma carte »** dans l'espace commerçant : une ligne par plat, le groupe à côté du nom, et le groupe laissé vide reprend celui de la ligne du dessus — on recopie une carte de haut en bas. Même chose pour « Mon planning ». Les cases de régime figurent aussi dans l'espace : absentes, le premier enregistrement du commerçant aurait effacé en silence celles posées depuis la console. |
+| 2026-08-19 | 7 quater | **La demande de table** partage la route, la table `orders` et la page « Mes commandes » de la demande de commande : c'est la même chose — une intention datée que le commerce rappelle. | Migration **010** : `mode` admet `table`, deux colonnes (`wanted_time`, `party_size`), et une contrainte qui refuse une table sans jour, sans heure ou sans couverts. Le mot qui compte est écrit trois fois — page, courriel au client, courriel au restaurant : **rien n'est retenu** tant que le restaurant n'a pas répondu. Une table confirmée d'office qui n'existe pas lui coûte le client et l'avis qui suit. |
+| 2026-08-19 | 7 quater | L'accusé de réception disait « le fleuriste vous recontacte », dans les trois langues. Juste tant qu'un seul métier commandait ; faux le jour où une boucherie, un traiteur et un restaurant ont utilisé la même route. | Formulation neutre, et un test qui refuse le mot « fleuriste » dans un courriel qui sert à tous. |
+| 2026-08-19 | 7 quater | `pnpm check` réclamait des prestations à un restaurant — qui n'en a pas, il a une carte. Un avertissement hors sujet apprend à ignorer les avertissements. | Les contrôles suivent le métier : carte manquante chez qui doit en avoir une, planning vide chez une salle, et surtout **commerce sans `tenantId`** en mode commande ou table — ni bouton ni formulaire, la panne qu'on ne voit qu'en démonstration. |
+| 2026-08-19 | 7.0 | Quatre sites de démonstration de plus : `demo-restaurant`, `demo-cafe`, `demo-patisserie`, `demo-salle`. C'est l'outil de vente, et le vrai coût d'un métier. | ⚠️ Trois choses avant de les montrer : **DNS** pour `resto`, `cafe`, `gateaux` et `salle` `.hairbxl.be` ; **`pnpm tenant demo-restaurant`** et `demo-patisserie` (sans commerce en base, le bouton principal ne s'affiche pas) ; et le rappel de `docs/METIERS.md` §7 — montrer un restaurant depuis un domaine qui s'appelle `hairbxl.be` coûte de la crédibilité à chaque rendez-vous. |

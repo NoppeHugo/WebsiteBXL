@@ -1,5 +1,5 @@
 import type { Language } from "@bxl/schema";
-import { metierDe } from "@bxl/schema/metiers";
+import { metierDe, prendCommandes } from "@bxl/schema/metiers";
 import { site, path } from "./client.ts";
 import { apiConfigured } from "./api.ts";
 
@@ -31,20 +31,24 @@ export interface BookingTarget {
  * et c'est là que le commerce veut envoyer ses clients.
  */
 export function bookingTarget(lang: Language): BookingTarget {
-  if (
-    site.booking.mode !== "external" &&
-    metierDe(site.business.type).commande === "commande"
-  ) {
+  if (site.booking.mode !== "external" && prendCommandes(site.business.type)) {
+    /*
+     * Deux formulaires, deux ancres : un restaurant descend vers « Réserver
+     * une table », un fleuriste vers « Commander ». Le libellé du bouton, lui,
+     * vient du vocabulaire du métier (i18n.ts) — il n'est pas décidé ici.
+     */
+    const ancre = metierDe(site.business.type).commande === "table" ? "table" : "commande";
     return {
       /*
-       * Exactement la condition du formulaire lui-même (voir Commande.astro) :
+       * Exactement la condition du formulaire lui-même (voir Commande.astro
+       * et Table.astro) :
        * toute la section disparaît sans `tenantId` ou sans `PUBLIC_API_URL`,
        * contrairement à la réservation dont le bloc reste, avec son téléphone.
        * Un bouton qui pointe vers une ancre absente ne fait rien du tout, et
        * c'est la panne qu'on ne remarque qu'en démonstration.
        */
       enabled: Boolean(site.tenantId) && apiConfigured,
-      href: `${path(lang)}#commande`,
+      href: `${path(lang)}#${ancre}`,
       external: false,
       widget: false,
     };

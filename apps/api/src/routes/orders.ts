@@ -6,7 +6,12 @@ import { orderToBusiness, orderToCustomer, type OrderMailData } from "../templat
 import { ok, rejected, returnTo } from "../respond.ts";
 
 /**
- * Demande de commande.
+ * Demande de commande, et demande de table.
+ *
+ * Les deux passent par ici, parce que ce sont la même chose : une intention
+ * datée, rien d'encaissé, rien de réservé d'office, le commerce rappelle. Une
+ * table apporte une heure et un nombre de couverts ; une commande apporte une
+ * occasion, un budget et une adresse.
  *
  * Même forme que le formulaire de contact — même piège à robots, même
  * vérification d'origine, même refus silencieux — mais elle enregistre une
@@ -46,6 +51,16 @@ export function orderRoutes(app: FastifyInstance): void {
     }
 
     /*
+     * Une table sans jour, sans heure ou sans nombre de couverts n'est pas une
+     * table : c'est un appel que le restaurant devra passer pour poser les
+     * trois questions. La base le refuse également — ce contrôle-ci existe
+     * pour que le refus soit lisible plutôt qu'une erreur 500.
+     */
+    if (input.mode === "table" && (!input.wantedDate || !input.wantedTime || !input.partySize)) {
+      return rejected(request, reply, 400, "jour, heure et nombre de couverts requis");
+    }
+
+    /*
      * Une date passée est refusée, un horizon d'un an accepté : c'est le
      * commerçant qui juge de ce qu'il peut tenir, pas le formulaire. Une date
      * vide reste valable — « dès que possible » est une réponse.
@@ -59,6 +74,7 @@ export function orderRoutes(app: FastifyInstance): void {
     const [row] = await sql<{ id: string }[]>`
       insert into orders (
         tenant_id, occasion_id, occasion_name, budget_cents, wanted_day,
+        wanted_time, party_size,
         mode, address, card_message,
         customer_name, customer_email, customer_phone, note, locale
       ) values (
@@ -67,6 +83,8 @@ export function orderRoutes(app: FastifyInstance): void {
         ${input.occasionName || null},
         ${input.budget === undefined ? null : Math.round(input.budget * 100)},
         ${input.wantedDate || null},
+        ${input.wantedTime || null},
+        ${input.partySize ?? null},
         ${input.mode},
         ${input.address?.trim() || null},
         ${input.card?.trim() || null},
@@ -84,6 +102,8 @@ export function orderRoutes(app: FastifyInstance): void {
       occasion: input.occasionName || undefined,
       budget: input.budget,
       wantedDate: input.wantedDate || undefined,
+      wantedTime: input.wantedTime || undefined,
+      partySize: input.partySize,
       mode: input.mode,
       address: input.address?.trim() || undefined,
       card: input.card?.trim() || undefined,
