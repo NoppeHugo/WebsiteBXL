@@ -790,13 +790,20 @@ l'expiration de son jeton douze heures plus tard.
 
 Trois barrières indépendantes, et chacune suffirait seule :
 
-1. **Le rôle.** `admin_users.tenant_slug` vide désigne l'exploitant, renseigné
-   un commerçant. Un commerçant n'atteint que `/espace`.
-2. **Le nom d'hôte.** Le portail ne sert que l'espace ; la console refuse
-   `/espace`.
+1. **Le rôle**, calculé au seul endroit qui en décide,
+   `apps/admin/src/acces.ts`. Quatre rôles depuis l'espace de cours :
+   l'exploitant, le commerçant (`tenant_slug`), le responsable d'école
+   (`ecole_id`) et l'élève, qui vient d'une autre table. Chacun a une zone et
+   une seule — `/espace`, `/cours`, `/eleve` — et n'atteint pas les autres.
+   ⚠️ Le rôle **ne se lit plus** dans la nullité de `tenant_slug` : un compte
+   d'école n'a pas de commerce non plus, et l'inscription à l'espace de cours
+   est libre. Le confondre avec l'exploitant donnerait la console des trente
+   sites à qui remplit un formulaire.
+2. **Le nom d'hôte.** Le portail ne sert que les espaces clients ; la console
+   les refuse, et lui renvoie l'inscription et les invitations.
 3. **L'absence d'identifiant dans les URL.** Aucune page de l'espace ne prend
-   de `slug` : il vient de la session. Il n'y a rien à falsifier, parce qu'il
-   n'y a rien à écrire.
+   de `slug` ni d'identifiant d'école : ils viennent de la session. Il n'y a
+   rien à falsifier, parce qu'il n'y a rien à écrire.
 
 Les lectures et l'annulation de rendez-vous portent le `slug` **dans la clause
 `where`**, pas dans une vérification préalable : un identifiant appartenant à un
@@ -1165,3 +1172,7 @@ mise en ligne rapide.
 | 2026-08-19 | 7 quater | **Six métiers de plus, aucune mécanique neuve** : friterie/snack/food truck (carte), épicerie fine/fromagerie/primeur/torréfaction (commande + abonnement), boutique de détail, pressing/cordonnerie/retouches, écoles (auto, langues, musique — planning), photographe/imprimeur (devis). 54 types de commerce au total, 22 métiers. Le caviste accueille la brasserie artisanale, le sport la danse et l'escalade. | Rien à déployer de particulier : c'est de la donnée. Les quatre garde-fous ont fait leur travail à l'écriture — un type oublié dans la console, un style déclaré d'un seul côté, une clé de vocabulaire mal orthographiée, chacun a été refusé au test avant d'atteindre un site. |
 | 2026-08-19 | — | ⚠️ **Défaut trouvé en chemin : les motifs des visuels étaient décrits deux fois**, dans `metiers.ts` et dans le script qui les dessine, et les deux listes avaient déjà divergé sans que rien ne le signale — un motif inconnu ne casse pas une construction, il sort un dégradé nu. Douze métiers sur vingt-deux ne dessinaient pas ce qu'ils déclaraient. | `metiers.ts` décide seul : hero, six motifs de galerie, portrait. Le script les lit. Cinq tests verrouillent l'accord, dont celui qui exige que les portraits d'équipe restent des silhouettes — un visage dessiné donnerait une identité, donc une question. |
 | 2026-08-19 | — | Le motif du photographe était un diaphragme : cercle et six lamelles. À l'opacité des visuels de remplacement, les lamelles se croisent au centre et la figure se lit comme une **étoile à six branches inscrite dans un cercle**. | Remplacé par un appareil photo de face, qui ne prête à rien. Relu à l'œil sur le rendu, pas seulement dans le code : c'est le seul moyen de voir ce genre de chose. |
+| 2026-08-31 | 7 quinquies | **Espace de cours.** Une école (auto-école, langues, musique) achète un site qui la vend, mais rien ne la fait tourner : le suivi des élèves vit dans un tableur partagé, ou nulle part. C'est une deuxième raison de payer l'abonnement, et la seule qu'un concurrent à 300 € ne copie pas en une soirée. | Migration 011 : `ecoles`, `eleves`, `exercices`, `travaux`, `devoirs`. Le responsable ouvre son compte lui-même sur `/inscription` — un compte d'école ne donne accès à aucun site, aucun client, aucune facture — invite ses élèves, publie ses exercices et pose des devoirs. **Aucun parcours imposé** : l'élève ouvre l'exercice qu'il veut, dans l'ordre qu'il veut ; le seul ordre est celui des devoirs. Parcours vérifié de bout en bout contre une vraie base : inscription, exercice, publication, invitation, acceptation, brouillon, remise, correction, seconde version, devoir en retard, retrait d'élève, fermeture d'école en cascade. |
+| 2026-08-31 | 7 quinquies | ⚠️ **Le rôle ne pouvait plus se lire dans la nullité de `tenant_slug`.** Un responsable d'école n'a pas de commerce attaché, exactement comme l'exploitant — et l'inscription est libre. En l'état, n'importe qui ouvrait un compte d'école et se retrouvait avec la console qui met les trente sites hors ligne. | `acces.ts` calcule un `role` explicite parmi quatre, et `estExploitant` n'est plus un cas par défaut mais ce qui reste après avoir écarté les autres. Une contrainte `admin_users_un_seul_role` interdit en base qu'un compte porte à la fois un commerce et une école — vérifiée par un `update` refusé. Deux tests portent précisément là-dessus. |
+| 2026-08-31 | 7 quinquies | Les élèves ne pouvaient pas être rangés dans `admin_users` : une école de langues compte cent élèves, donc cent lignes qu'une requête « sans `tenant_slug` » lirait comme autant d'exploitants. | Table `eleves` distincte, et la session porte désormais `qui` — la table où relire le compte. Un jeton sans ce champ vaut « console », ce qu'étaient tous les comptes jusque-là : les sessions en cours survivent au déploiement. Un `qui` inconnu n'ouvre rien plutôt que de retomber sur le monde le plus large. |
+| 2026-08-31 | 7 quinquies | Le lien d'un exercice devient un `href` sous les yeux d'élèves parfois mineurs. Un `javascript:` collé là s'exécuterait dans leur navigateur, avec leur session. | `lienPresentable()` n'accepte que `http:` et `https:`, et le formulaire **refuse** le reste au lieu de l'effacer en silence — un lien effacé sans le dire ferait croire au professeur que la vidéo est donnée. L'invitation d'un élève suit la même prudence : 24 octets tirés au sort, périmée à quatorze jours, consommée à la première acceptation, et limitée en débit. |

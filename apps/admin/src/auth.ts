@@ -129,9 +129,24 @@ export function totpUri(secret: string, email: string, issuer = "WebsiteBXL"): s
 /* Sessions                                                                   */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Deux populations, deux tables, un seul cookie.
+ *
+ * `qui` dit dans quelle table relire le compte à chaque requête : les élèves
+ * ont la leur (voir la migration 011). Sans ce champ, l'identifiant 7 d'un
+ * élève désignerait le compte 7 de la console — qui peut mettre trente sites
+ * hors ligne.
+ *
+ * Absent des jetons émis avant l'espace de cours, il vaut « admin » : c'est ce
+ * qu'étaient tous les comptes jusque-là, et les sessions en cours restent
+ * valables au déploiement.
+ */
+export type QuiSession = "admin" | "eleve";
+
 export interface Session {
   userId: number;
   expiresAt: number;
+  qui?: QuiSession;
 }
 
 /**
@@ -167,6 +182,14 @@ export function readSession(
       Buffer.from(payload, "base64url").toString("utf8"),
     ) as Session;
     if (typeof session.userId !== "number" || session.expiresAt < Date.now()) {
+      return undefined;
+    }
+    /*
+     * Un `qui` inconnu — jeton forgé par quelqu'un qui connaîtrait le secret,
+     * ou format d'une version future relu par une version ancienne — n'ouvre
+     * rien plutôt que d'ouvrir le monde le plus large.
+     */
+    if (session.qui !== undefined && session.qui !== "admin" && session.qui !== "eleve") {
       return undefined;
     }
     return session;

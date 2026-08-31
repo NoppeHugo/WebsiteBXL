@@ -693,6 +693,53 @@ Formulaires de contact et confirmations de réservation passent par un
 prestataire (Resend ou Postmark). **Ne jamais auto-héberger de SMTP :**
 délivrabilité catastrophique et maintenance permanente.
 
+### 3.15 L'espace de cours — un compte responsable, ses élèves, ses devoirs
+
+**Décision :** les écoles (auto-écoles, écoles de langues, écoles de musique —
+`driving_school`, `language_school`, `music_school` dans
+[docs/METIERS.md](docs/METIERS.md)) disposent d'un espace où le responsable
+invite ses élèves, publie ses exercices, suit l'avancement de chacun et pose
+des devoirs. L'élève a son propre accès, sur le portail.
+
+**Pourquoi, alors que ce projet vend des sites vitrines.** Un site vend une
+école ; il ne la fait pas tourner. Ce qui la fait tourner — savoir qui a fait
+quoi, et donner du travail à celui qui a pris du retard — se passe aujourd'hui
+dans un tableur partagé, ou nulle part. C'est une deuxième raison de payer
+l'abonnement, et la seule que le concurrent qui livre un site à 300 € ne sait
+pas copier en une soirée. C'est aussi ce que le §6 appelle une réponse au
+churn : on ne résilie pas l'outil où vivent les copies de ses cent élèves.
+
+**Aucun parcours imposé.** L'élève ouvre l'exercice qu'il veut, dans l'ordre
+qu'il veut, sans avoir à terminer les précédents. Ce n'est pas une
+simplification : quelqu'un qui révise son code de la route trois soirs par
+semaine retravaille ce qu'il a raté, pas ce qui vient après. Le seul ordre qui
+existe est celui que le responsable impose explicitement, en posant un devoir —
+qui remonte alors en tête de la liste de l'élève, avec sa date.
+
+**Inscription libre, contrairement aux comptes commerçants.** Un accès
+commerçant est ouvert à la main par l'exploitant : il donne sur un site qu'on a
+vendu, installé et facturé. Un compte d'école ne donne accès à rien de tout
+cela — ni site, ni client, ni facture — seulement à ses propres élèves et à ses
+propres exercices, créés depuis zéro. D'où `/inscription`, limitée en débit, et
+une page `/ecoles` côté console pour voir qui est entré et fermer un compte.
+
+**Quatre rôles, un seul endroit qui les distingue.** `apps/admin/src/acces.ts`
+calcule le rôle une fois et le reste du programme le lit. C'est la correction
+qui compte : le rôle se lisait jusqu'ici dans la nullité de `tenant_slug` —
+vide, l'exploitant. Un responsable d'école n'a pas de commerce non plus, et
+l'inscription est libre : sans ce départage, n'importe qui ouvrait un compte
+d'école et se retrouvait avec la console qui met les trente sites hors ligne.
+
+**Les élèves ont leur propre table**, et non une colonne de plus sur
+`admin_users`, pour cette raison exacte : une école de langues compte cent
+élèves, donc cent occasions que la confusion se produise. La session porte
+désormais la table où relire le compte (`qui`), et chaque zone — `/espace`,
+`/cours`, `/eleve` — est fermée aux trois autres rôles par le crochet global.
+
+**Ce que l'exploitant ne voit pas :** ni les exercices, ni les réponses, ni les
+corrections. Ce ne sont pas ses données mais celles d'une école sur ses élèves,
+dont certains sont mineurs. Il voit de quoi facturer et de quoi fermer.
+
 ---
 
 ## 4. Architecture
@@ -1006,6 +1053,9 @@ PUBLIC_API_URL=https://api.exemple.be pnpm build salon-marie
   Rien de tout cela n'a encore tourné sur une vraie machine. La procédure
   complète, pas à pas, est dans **`docs/DEPLOIEMENT.md`** — avec la liste de ce
   qui n'a jamais été essayé et qu'il faut vérifier ce jour-là.
+- ✅ Espace de cours pour les écoles (§3.15) : inscription libre du
+  responsable, invitation des élèves, exercices ouverts dans n'importe quel
+  ordre, devoirs et corrections.
 - Deuxième niche (métiers de bouche) avec ses propres variantes de template.
 - Envisager un CMS git-based si le volume le justifie.
 
@@ -1078,6 +1128,13 @@ que le DNS du client pointe vers le serveur. Aucune intervention ensuite.
   évolution commence là.
 - **Le site lui-même** : `apps/template/src/`. Une modification ici touche tous
   les clients au prochain build — c'est voulu.
+- **Qui a le droit de voir quoi** : `apps/admin/src/acces.ts`. Quatre rôles,
+  une seule fonction qui les distingue. Rien de cette question ne doit être
+  décidé ailleurs.
+- **L'espace de cours** (§3.15) : `apps/admin/src/ecole.ts` pour les règles
+  (avancement, retard, invitation, validation), `db-ecole.ts` pour les
+  requêtes, `routes/cours.ts` pour le responsable et `routes/eleve.ts` pour
+  l'élève. Le schéma est dans `apps/api/migrations/011_ecole.sql`.
 
 ## 9. Indicateurs à suivre
 

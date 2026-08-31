@@ -122,6 +122,35 @@ describe("sessions", () => {
     expect(readSession("a.b.c", SECRET)).toBeUndefined();
   });
 
+  it("porte la table où relire le compte", () => {
+    /*
+     * L'identifiant seul ne suffit plus : les élèves ont leur propre table.
+     * Sans ce champ, la session de l'élève numéro 7 rouvrirait le compte de
+     * console numéro 7 — celui qui met trente sites hors ligne.
+     */
+    const token = signSession(
+      { userId: 7, expiresAt: Date.now() + 60_000, qui: "eleve" },
+      SECRET,
+    );
+    expect(readSession(token, SECRET)?.qui).toBe("eleve");
+  });
+
+  it("lit les jetons émis avant l'espace de cours comme des comptes de console", () => {
+    // Les sessions en cours au moment du déploiement n'ont pas ce champ, et
+    // déconnecter tout le monde pour une migration serait gratuit.
+    const token = signSession({ userId: 7, expiresAt: Date.now() + 60_000 }, SECRET);
+    expect(readSession(token, SECRET)?.qui).toBeUndefined();
+  });
+
+  it("refuse un rôle de session inconnu", () => {
+    // Plutôt que de retomber sur « admin », qui est le monde le plus large.
+    const payload = Buffer.from(
+      JSON.stringify({ userId: 7, expiresAt: Date.now() + 60_000, qui: "exploitant" }),
+    ).toString("base64url");
+    const mac = createHmac("sha256", SECRET).update(payload).digest("base64url");
+    expect(readSession(`${payload}.${mac}`, SECRET)).toBeUndefined();
+  });
+
   it("refuse un identifiant qui n'est pas un nombre", () => {
     // Le pilote Postgres renvoie les bigserial en chaîne : une session portant
     // « 1 » au lieu de 1 doit être rejetée plutôt que silencieusement acceptée.

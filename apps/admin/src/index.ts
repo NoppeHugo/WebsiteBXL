@@ -6,7 +6,8 @@ import rateLimit from "@fastify/rate-limit";
 import { config, isProduction } from "./config.ts";
 import { readSession } from "./auth.ts";
 import { sql, findAdminById } from "./db.ts";
-import { utilisateurDe } from "./acces.ts";
+import { eleveParId } from "./db-ecole.ts";
+import { utilisateurDe, utilisateurEleve, type Utilisateur } from "./acces.ts";
 import { authRoutes, SESSION_COOKIE } from "./routes/auth.ts";
 import { clientRoutes } from "./routes/clients.ts";
 import { nouveauRoutes } from "./routes/nouveau.ts";
@@ -19,6 +20,10 @@ import { billingRoutes } from "./routes/billing.ts";
 import { agendaRoutes } from "./routes/agenda.ts";
 import { espaceRoutes } from "./routes/espace.ts";
 import { comptesRoutes } from "./routes/comptes.ts";
+import { inscriptionRoutes } from "./routes/inscription.ts";
+import { coursRoutes } from "./routes/cours.ts";
+import { eleveRoutes } from "./routes/eleve.ts";
+import { ecolesRoutes } from "./routes/ecoles.ts";
 
 const app = Fastify({
   logger: { level: isProduction ? "info" : "debug" },
@@ -47,21 +52,41 @@ const PUBLIC_PATHS = new Set([
   "/health",
   "/assets/editeur.js",
   "/assets/espace.js",
+  // Ouverture d'une école : le responsable n'a, par définition, pas encore de
+  // compte. La route est limitée en débit et ne crée qu'un rôle sans accès à
+  // aucun site (voir `routes/inscription.ts`).
+  "/inscription",
 ]);
 
 /**
- * Authentification, puis séparation des deux mondes.
+ * Une invitation d'élève porte son autorisation dans son adresse.
+ *
+ * Le jeton est tiré au sort, à usage unique et périmé au bout de deux
+ * semaines : c'est lui qui prouve que le porteur est bien celui que le
+ * professeur a invité, puisqu'il n'a encore aucun mot de passe à donner.
+ */
+const PUBLIC_PREFIXES = ["/invitation/"];
+
+/** Ce qui n'a rien à faire sur l'adresse de la console (voir le crochet). */
+const PORTAIL_SEUL = ["/inscription", "/invitation/"];
+
+/**
+ * Authentification, puis séparation des mondes.
  *
  * Trois barrières, et chacune suffirait seule. C'est délibéré : ce crochet est
- * le seul endroit qui empêche un commerçant d'ouvrir le site d'un autre, et
- * une seule ligne de défense sur une question pareille se franchit le jour où
- * quelqu'un la modifie sans en comprendre le rôle.
+ * le seul endroit qui empêche un commerçant d'ouvrir le site d'un autre, ou un
+ * élève les copies de sa classe, et une seule ligne de défense sur une question
+ * pareille se franchit le jour où quelqu'un la modifie sans en comprendre le
+ * rôle.
  *
- *  1. Le rôle. Un commerçant n'atteint que `/espace`, l'exploitant n'y va pas.
+ *  1. Le rôle. Chacun a une zone et une seule — `/espace` pour le commerçant,
+ *     `/cours` pour le responsable d'école, `/eleve` pour l'élève — et
+ *     l'exploitant n'entre dans aucune des trois.
  *  2. Le nom d'hôte. Le portail répond sur son propre domaine et n'y sert que
- *     l'espace client ; la console de l'exploitant, sur le sien.
- *  3. Le site. Aucune route de l'espace ne prend d'identifiant de commerce :
- *     il vient de la session (voir `acces.ts`). Il n'y a rien à falsifier.
+ *     les espaces clients ; la console de l'exploitant, sur le sien.
+ *  3. L'identité de l'objet ouvert. Aucune route de ces zones ne prend
+ *     d'identifiant de commerce ni d'école : il vient de la session (voir
+ *     `acces.ts`). Il n'y a rien à falsifier.
  */
 app.addHook("onRequest", async (request, reply) => {
   const chemin = request.url.split("?")[0]!;
@@ -71,45 +96,86 @@ app.addHook("onRequest", async (request, reply) => {
     config.PORTAL_HOST !== "" &&
     request.hostname.toLowerCase().split(":")[0] === config.PORTAL_HOST.toLowerCase();
 
+  /*
+   * Un domaine, un usage. L'inscription d'une école et l'invitation d'un élève
+   * sont des pages de clients : elles vivent sur le portail, et non sur
+   * l'adresse de la console — que l'on veut pouvoir restreindre un jour à
+   * quelques adresses IP sans fermer la porte aux écoles.
+   *
+   * Seules les visites sont redirigées : une redirection sur un envoi de
+   * formulaire le transformerait en simple visite et perdrait la saisie. Le
+   * cas ne se présente pas, puisque le formulaire est servi par la page que
+   * cette même règle a déjà déplacée.
+   */
+  const reserveAuPortail =
+    PORTAIL_SEUL.some((p) => chemin === p || chemin.startsWith(p));
+  if (config.PORTAL_HOST && !surLePortail && reserveAuPortail && request.method === "GET") {
+    return reply.redirect(`https://${config.PORTAL_HOST}${request.url}`, 303);
+  }
+
   if (PUBLIC_PATHS.has(chemin)) return;
+  if (PUBLIC_PREFIXES.some((prefixe) => chemin.startsWith(prefixe))) return;
 
   const session = readSession(request.cookies[SESSION_COOKIE], config.SESSION_SECRET);
   if (!session) {
     return reply.redirect("/login", 303);
   }
 
-  // Relu en base à chaque requête : un accès retiré doit cesser tout de suite,
-  // pas à l'expiration du jeton (voir `findAdminById`).
-  const compte = await findAdminById(session.userId);
-  if (!compte) {
+  /*
+   * Relu en base à chaque requête, dans la table que désigne la session : un
+   * accès retiré doit cesser tout de suite, pas à l'expiration du jeton (voir
+   * `findAdminById`). Un élève supprimé par son professeur perd sa page à la
+   * requête suivante, comme un commerçant qui n'est plus client.
+   */
+  let u: Utilisateur | undefined;
+  if (session.qui === "eleve") {
+    const eleve = await eleveParId(session.userId);
+    if (eleve) u = utilisateurEleve(eleve);
+  } else {
+    const compte = await findAdminById(session.userId);
+    if (compte) u = utilisateurDe(compte);
+  }
+  if (!u) {
     return reply.clearCookie(SESSION_COOKIE, { path: "/" }).redirect("/login", 303);
   }
 
-  const u = utilisateurDe(compte);
   (request as typeof request & { adminId: number }).adminId = u.id;
-  (request as typeof request & { utilisateur: typeof u }).utilisateur = u;
+  (request as typeof request & { utilisateur: Utilisateur }).utilisateur = u;
 
-  const dansLEspace = chemin === "/espace" || chemin.startsWith("/espace/");
+  /*
+   * Chaque rôle a une zone, et une seule. La table dit tout : ajouter un rôle,
+   * c'est ajouter une ligne, et non retrouver quinze conditions éparpillées.
+   */
+  const ZONES = {
+    commercant: "/espace",
+    responsable: "/cours",
+    eleve: "/eleve",
+  } as const;
 
-  if (u.slug !== null) {
+  const dansUneZone = (zone: string) =>
+    chemin === zone || chemin.startsWith(`${zone}/`);
+
+  if (u.role !== "exploitant") {
+    const zone = ZONES[u.role];
+
     /*
-     * Commerçant. Il est ramené sur le portail s'il arrive par l'adresse de la
-     * console — un lien gardé en signet, une adresse dictée de travers — puis
-     * sur son accueil s'il demande autre chose que son espace. Des
-     * redirections plutôt que des refus : il n'a rien fait de mal.
+     * Il est ramené sur le portail s'il arrive par l'adresse de la console —
+     * un lien gardé en signet, une adresse dictée de travers — puis sur son
+     * accueil s'il demande autre chose que sa zone. Des redirections plutôt
+     * que des refus : il n'a rien fait de mal.
      */
     if (config.PORTAL_HOST && !surLePortail) {
-      return reply.redirect(`https://${config.PORTAL_HOST}/espace`, 303);
+      return reply.redirect(`https://${config.PORTAL_HOST}${zone}`, 303);
     }
-    if (!dansLEspace) return reply.redirect("/espace", 303);
+    if (!dansUneZone(zone)) return reply.redirect(zone, 303);
 
     /*
      * Tant que le mot de passe remis n'a pas été remplacé, une seule page est
      * accessible. Un mot de passe dicté au comptoir a été entendu par au moins
      * deux personnes ; le laisser en place revient à ne pas en avoir.
      */
-    if (u.motDePasseAChanger && chemin !== "/espace/mot-de-passe") {
-      return reply.redirect("/espace/mot-de-passe", 303);
+    if (u.motDePasseAChanger && chemin !== `${zone}/mot-de-passe`) {
+      return reply.redirect(`${zone}/mot-de-passe`, 303);
     }
     return;
   }
@@ -128,8 +194,10 @@ app.addHook("onRequest", async (request, reply) => {
   }
 
   // La liste des clients est servie à la racine, pas sur « /clients » — qui
-  // n'existe pas et renverrait un 404 à l'exploitant venu par curiosité.
-  if (dansLEspace) return reply.redirect("/", 303);
+  // n'existe pas et renverrait un 404 à l'exploitant venu par curiosité. Les
+  // zones des autres rôles le ramènent au même endroit : elles ne lui
+  // montreraient rien, faute de commerce ou d'école attachée.
+  if (Object.values(ZONES).some(dansUneZone)) return reply.redirect("/", 303);
 });
 
 // En-têtes de sécurité : la console n'affiche que ses propres pages, sans
@@ -176,7 +244,11 @@ reportRoutes(app);
 billingRoutes(app);
 agendaRoutes(app);
 comptesRoutes(app);
+ecolesRoutes(app);
 espaceRoutes(app);
+inscriptionRoutes(app);
+coursRoutes(app);
+eleveRoutes(app);
 
 await app.listen({ port: config.PORT, host: config.HOST });
 

@@ -125,6 +125,20 @@ export function domaineDeService(): string {
   }
 }
 
+/**
+ * L'adresse à laquelle on renvoie quelqu'un qui n'est pas encore connecté —
+ * dans un courriel d'invitation, par exemple.
+ *
+ * Le portail d'abord : c'est là que vivent les espaces clients. À défaut,
+ * l'adresse publique de la console, qui les sert aussi quand `PORTAL_HOST`
+ * n'est pas renseigné. Vide, l'appelant se rabat sur l'hôte de la requête —
+ * juste en développement, faute de mieux.
+ */
+export function adresseDuPortail(): string {
+  if (config.PORTAL_HOST) return `https://${config.PORTAL_HOST}`;
+  return config.PUBLIC_ADMIN_URL.replace(/\/+$/, "");
+}
+
 if (config.EMAIL_DRIVER === "resend" && !config.RESEND_API_KEY) {
   throw new Error("EMAIL_DRIVER=resend nécessite RESEND_API_KEY");
 }
