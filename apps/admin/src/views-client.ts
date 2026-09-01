@@ -200,6 +200,7 @@ button.danger { background: transparent; color: var(--ko); border: 1px solid var
   background: var(--carte); border: 1px dashed var(--bord); border-radius: 14px;
 }
 
+
 /* --- Horaires ----------------------------------------------------------- */
 /* Une ligne par jour : le nom, un interrupteur ouvert/fermé, deux heures.
    Quatorze champs horaires côte à côte sur un téléphone sont inutilisables. */

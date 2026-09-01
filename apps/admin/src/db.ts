@@ -28,6 +28,14 @@ export interface AdminUser {
    * Renseigné : un commerçant, qui ne voit que le sien.
    */
   tenant_slug: string | null;
+  /**
+   * Renseigné : le responsable d'une école, qui ne voit que ses élèves et ses
+   * exercices — et aucun site.
+   *
+   * Un compte porte l'un ou l'autre, jamais les deux : la base l'interdit
+   * (`admin_users_un_seul_role`), et `acces.ts` en tire le rôle.
+   */
+  ecole_id: string | null;
   must_change_password: boolean;
 }
 
@@ -35,7 +43,8 @@ export async function findAdminByEmail(
   email: string,
 ): Promise<AdminUser | undefined> {
   const rows = await sql<AdminUser[]>`
-    select id, email, password_hash, totp_secret, tenant_slug, must_change_password
+    select id, email, password_hash, totp_secret, tenant_slug, ecole_id,
+           must_change_password
     from admin_users
     where email = ${email.toLowerCase()}
   `;
@@ -54,7 +63,8 @@ export async function findAdminByEmail(
  */
 export async function findAdminById(id: number): Promise<AdminUser | undefined> {
   const rows = await sql<AdminUser[]>`
-    select id, email, password_hash, totp_secret, tenant_slug, must_change_password
+    select id, email, password_hash, totp_secret, tenant_slug, ecole_id,
+           must_change_password
     from admin_users
     where id = ${id}
   `;
@@ -107,16 +117,20 @@ export async function poserAccesClient(
 ): Promise<{ ok: true } | { ok: false; raison: string }> {
   const normalise = email.trim().toLowerCase();
 
-  const existant = await sql<Array<{ id: string; tenant_slug: string | null }>>`
-    select id, tenant_slug from admin_users where email = ${normalise}
+  const existant = await sql<
+    Array<{ id: string; tenant_slug: string | null; ecole_id: string | null }>
+  >`
+    select id, tenant_slug, ecole_id from admin_users where email = ${normalise}
   `;
   if (existant[0] && existant[0].tenant_slug !== slug) {
     return {
       ok: false,
       raison:
-        existant[0].tenant_slug === null
-          ? "Cette adresse est celle d'un compte d'exploitation, pas d'un commerçant."
-          : `Cette adresse sert déjà au commerce « ${existant[0].tenant_slug} ».`,
+        existant[0].ecole_id !== null
+          ? "Cette adresse est celle du responsable d'une école."
+          : existant[0].tenant_slug === null
+            ? "Cette adresse est celle d'un compte d'exploitation, pas d'un commerçant."
+            : `Cette adresse sert déjà au commerce « ${existant[0].tenant_slug} ».`,
     };
   }
 

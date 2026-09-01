@@ -1,4 +1,4 @@
-# Bloc nginx de l'espace commerçant.
+# Bloc nginx du portail : l'espace commerçant, et l'espace de cours des écoles.
 #
 # Usage :
 #   sed 's/@@PORTAIL@@/mon.hairbxl.be/g' portail.conf.modele \
@@ -13,10 +13,14 @@
 # ─── Pourquoi un domaine séparé pour la même application ───────────────────
 #
 # C'est le même processus qui répond ici et sur admin. : le nom d'hôte lui dit
-# laquelle des deux interfaces servir (PORTAL_HOST). Un domaine par usage —
-# l'adresse remise au coiffeur ne mène jamais à la console qui gouverne les
-# trente sites, et le jour où l'on voudra restreindre la console par adresse IP,
-# l'espace commerçant restera joignable de partout.
+# quelle interface servir (PORTAL_HOST). Un domaine par usage — l'adresse
+# remise au coiffeur ne mène jamais à la console qui gouverne les trente sites,
+# et le jour où l'on voudra restreindre la console par adresse IP, les espaces
+# clients resteront joignables de partout.
+#
+# Ce domaine sert donc aussi `/inscription` et `/invitation/…`, les deux seules
+# pages publiques de l'espace de cours (README §3.15) : la console y renvoie
+# quiconque les demande chez elle.
 
 server {
     server_name @@PORTAIL@@;

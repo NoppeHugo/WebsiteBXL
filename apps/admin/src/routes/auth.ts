@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { config, isProduction } from "../config.ts";
 import { findAdminByEmail, touchLogin } from "../db.ts";
+import { eleveParEmail, touchLoginEleve } from "../db-ecole.ts";
 import { verifyPassword, verifyTotp, signSession } from "../auth.ts";
 import { layout, flash, escape } from "../views.ts";
 
@@ -23,7 +24,11 @@ ${error ? flash("error", error) : ""}
            pattern="[0-9]{6}" placeholder="123456">
   </label>
   <div class="actions"><button type="submit">Se connecter</button></div>
-</form>`,
+</form>
+<p style="margin-top:1.6rem;font-size:0.92rem">
+  Vous dirigez une école, un cours, une formation ?
+  <a href="/inscription">Ouvrez votre espace de cours</a>.
+</p>`,
   );
 }
 
@@ -44,22 +49,39 @@ export function authRoutes(app: FastifyInstance): void {
     async (request, reply) => {
       const { email = "", password = "", code = "" } = request.body ?? {};
 
+      /*
+       * Deux tables, un seul formulaire.
+       *
+       * Les élèves ont la leur (migration 011), mais rien ne le laisse voir
+       * ici : personne ne devrait avoir à savoir dans quelle table il est rangé
+       * pour se connecter. La table des comptes de console d'abord, celle des
+       * élèves ensuite — les adresses ne peuvent pas être dans les deux, la
+       * création l'interdit des deux côtés.
+       */
       const user = await findAdminByEmail(email);
+      const eleve = user ? undefined : await eleveParEmail(email);
 
       /*
        * Même message et même chemin de code quel que soit l'échec : identifiant
        * inconnu, mot de passe faux ou code invalide sont indiscernables, sinon
-       * la page devient un outil pour découvrir les comptes existants.
+       * la page devient un outil pour découvrir les comptes existants. Un élève
+       * invité mais qui n'a pas encore choisi son mot de passe n'en a pas : il
+       * tombe dans le même cas que l'inconnu, et son invitation reste la seule
+       * porte.
        */
-      const passwordOk = user
-        ? await verifyPassword(password, user.password_hash)
+      const identifiants = user
+        ? { hash: user.password_hash, totp: user.totp_secret }
+        : eleve?.password_hash
+          ? { hash: eleve.password_hash, totp: null }
+          : undefined;
+
+      const passwordOk = identifiants
+        ? await verifyPassword(password, identifiants.hash)
         : false;
 
-      const totpOk = user?.totp_secret
-        ? verifyTotp(user.totp_secret, code)
-        : true;
+      const totpOk = identifiants?.totp ? verifyTotp(identifiants.totp, code) : true;
 
-      if (!user || !passwordOk || !totpOk) {
+      if (!identifiants || !passwordOk || !totpOk) {
         request.log.warn({ email, ip: request.ip }, "connexion refusée");
         return reply
           .code(401)
@@ -67,22 +89,32 @@ export function authRoutes(app: FastifyInstance): void {
           .send(loginPage("Identifiants refusés.", email));
       }
 
-      await touchLogin(user.id);
+      /*
+       * Chacun chez soi. Le commerçant tombe sur son espace, le responsable sur
+       * ses élèves, l'élève sur ses exercices, l'exploitant sur sa console. Le
+       * crochet global le ferait de toute façon, mais une redirection de plus au
+       * premier écran donne l'impression d'un outil qui hésite.
+       */
+      const arrivee = user
+        ? user.ecole_id
+          ? "/cours"
+          : user.tenant_slug
+            ? "/espace"
+            : "/"
+        : "/eleve";
+
+      if (user) await touchLogin(user.id);
+      else await touchLoginEleve(eleve!.id);
 
       const token = signSession(
         {
-          userId: Number(user.id),
+          userId: Number(user ? user.id : eleve!.id),
           expiresAt: Date.now() + config.SESSION_HOURS * 3600_000,
+          qui: user ? "admin" : "eleve",
         },
         config.SESSION_SECRET,
       );
 
-      /*
-       * Chacun chez soi. Le commerçant tombe sur son espace, l'exploitant sur
-       * sa console. Le crochet global le ferait de toute façon, mais une
-       * redirection de plus au premier écran donne l'impression d'un outil qui
-       * hésite.
-       */
       return reply
         .setCookie(COOKIE, token, {
           httpOnly: true,
@@ -91,7 +123,7 @@ export function authRoutes(app: FastifyInstance): void {
           path: "/",
           maxAge: config.SESSION_HOURS * 3600,
         })
-        .redirect(user.tenant_slug ? "/espace" : "/", 303);
+        .redirect(arrivee, 303);
     },
   );
 
