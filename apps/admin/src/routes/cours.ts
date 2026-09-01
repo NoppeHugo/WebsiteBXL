@@ -25,6 +25,8 @@ import {
   devoirsDeLEleve,
   poserDevoir,
   retirerDevoir,
+  jourCourant,
+  basculerClassement,
 } from "../db-ecole.ts";
 import {
   avancement,
@@ -37,15 +39,19 @@ import {
   type Exercice,
 } from "../ecole.ts";
 import { escape } from "../views.ts";
-import { message } from "../views-client.ts";
+import { niveauDe, points, semaine, serie } from "../jeu.ts";
 import {
   layoutEcole,
+  message,
   carte,
   copie,
   depuisLisible,
-  etiquette,
-  etiquetteRetard,
-  jauge,
+  puce,
+  puceEcheance,
+  puceEtat,
+  anneau,
+  friseSerie,
+  tuile,
 } from "../views-ecole.ts";
 
 /**
@@ -150,14 +156,24 @@ async function pageAccueil(ecoleId: number, flash?: Flash): Promise<string> {
     nom,
     `${flash ? message(flash.ton, flash.texte) : ""}
 <h1>Bonjour</h1>
-<p class="chapeau">
-  ${eleves.length} élève${eleves.length > 1 ? "s" : ""},
-  ${publies} exercice${publies > 1 ? "s" : ""} publié${publies > 1 ? "s" : ""}${
-    exercices.length > publies
-      ? ` et ${exercices.length - publies} en brouillon`
-      : ""
-  }.
-</p>
+<p class="chapeau">Votre classe en un coup d'œil.</p>
+
+<div class="tuiles">
+  ${tuile({ valeur: eleves.length, libelle: eleves.length > 1 ? "élèves" : "élève", href: "/cours/eleves" })}
+  ${tuile({ valeur: publies, libelle: "exercices publiés", href: "/cours/exercices" })}
+  ${tuile({
+    valeur: aCorriger,
+    libelle: "à corriger",
+    href: "/cours/eleves",
+    ton: aCorriger > 0 ? "alerte" : undefined,
+  })}
+  ${tuile({
+    valeur: retards,
+    libelle: "devoirs en retard",
+    href: "/cours/eleves",
+    ton: retards > 0 ? "alerte" : undefined,
+  })}
+</div>
 
 ${bandeau}
 
@@ -209,7 +225,7 @@ function ficheExercice(x: Exercice): string {
   </div>
   ${x.matiere ? `<div class="fiche__detail">${escape(x.matiere)}</div>` : ""}
   <div style="margin-top:0.5rem">
-    <span class="etiquette" data-brouillon="${x.publie ? "non" : "oui"}">${
+    <span class="puce"${x.publie ? "" : ' data-ton="brouillon"'}>${
       x.publie ? "Publié" : "Brouillon"
     }</span>
   </div>
@@ -335,33 +351,57 @@ async function pageEleves(
   flash?: Flash,
   invitation?: { nom: string; lien: string },
 ): Promise<string> {
-  const [ecole, eleves, exercices] = await Promise.all([
+  const [ecole, eleves, exercices, jour] = await Promise.all([
     lireEcole(ecoleId),
     resumeDesEleves(ecoleId),
     exercicesDeLEcole(ecoleId),
+    jourCourant(),
   ]);
   const total = exercices.filter((x) => x.publie).length;
 
+  /*
+   * Une fiche par élève, l'anneau à gauche.
+   *
+   * Ce que le professeur cherche en ouvrant cette page n'est pas la moyenne de
+   * la classe : c'est **qui décroche**. D'où trois choses côte à côte —
+   * l'avancement, le niveau, et la série, qui est le seul indicateur qui
+   * bouge avant que le retard n'apparaisse. Un élève qui passait tous les
+   * soirs et n'est pas venu depuis dix jours se voit ici avant de se voir
+   * dans les devoirs en retard.
+   */
   const lignes = eleves
     .map((e) => {
-      const av = avancement(
-        // La base a compté les rendus ; la barre n'a besoin que de deux
-        // nombres, pas des quarante lignes de travaux.
-        Array.from({ length: total }, (_, i) => (i < e.rendus ? "rendu" : "a-faire")),
-      );
-      const details = [
-        e.actif_le ? `Vu ${depuisLisible(e.last_login_at)}` : "Jamais connecté",
-        e.a_corriger > 0 ? `${e.a_corriger} à corriger` : "",
-        e.retards > 0 ? `${e.retards} en retard` : "",
-      ].filter(Boolean);
+      const pts = points({ rendus: e.rendus, acquis: e.acquis, aLHeure: e.a_lheure });
+      const niveau = niveauDe(pts);
+      const enCours = serie(e.jours ?? [], jour);
+      const pourcentage = total === 0 ? 0 : Math.round((e.rendus / total) * 100);
 
       return `<div class="fiche">
-  <div class="fiche__titre">
-    <a href="/cours/eleves/${escape(e.id)}">${escape(nomComplet(e))}</a>
-    ${e.a_corriger > 0 ? `<span class="marque-neuf">à corriger</span>` : ""}
+  <div style="display:flex;align-items:center;gap:0.9rem">
+    ${anneau(
+      pourcentage,
+      `${e.rendus}/${total}`,
+      "rendus",
+      `${e.rendus} exercice(s) rendu(s) sur ${total}`,
+    )}
+    <div style="min-width:0;flex:1">
+      <div class="fiche__titre">
+        <a href="/cours/eleves/${escape(e.id)}">${escape(nomComplet(e))}</a>
+      </div>
+      <div class="fiche__detail">${escape(
+        `${niveau.nom} · ${pts} point${pts > 1 ? "s" : ""} · ${
+          e.actif_le && e.last_login_at
+            ? `vu ${depuisLisible(e.last_login_at)}`
+            : "jamais connecté"
+        }`,
+      )}</div>
+      <div class="fiche__puces">
+        ${enCours > 0 ? puce(`🔥 ${enCours} jour${enCours > 1 ? "s" : ""}`) : ""}
+        ${e.a_corriger > 0 ? puce(`${e.a_corriger} à corriger`, "retard") : ""}
+        ${e.retards > 0 ? puce(`${e.retards} en retard`, "retard") : ""}
+      </div>
+    </div>
   </div>
-  <div class="fiche__detail">${escape(details.join(" · "))}</div>
-  ${jauge(av)}
 </div>`;
     })
     .join("");
@@ -419,10 +459,28 @@ async function pageEleve(
   ]);
   if (!eleve) return undefined;
 
-  const [travaux, devoirs] = await Promise.all([
+  const [travaux, devoirs, resumes, jour] = await Promise.all([
     travauxDeLEleve(eleve.id),
     devoirsDeLEleve(eleve.id),
+    resumeDesEleves(ecoleId),
+    jourCourant(),
   ]);
+
+  /*
+   * Les comptes du jeu viennent du même relevé que la liste des élèves, et non
+   * d'un second calcul fait ici : deux calculs finiraient par afficher deux
+   * niveaux différents pour le même élève sur deux pages voisines, et c'est le
+   * professeur qui recevrait la question.
+   */
+  const resume = resumes.find((r) => String(r.id) === String(eleve.id));
+  const pts = points({
+    rendus: resume?.rendus ?? 0,
+    acquis: resume?.acquis ?? 0,
+    aLHeure: resume?.a_lheure ?? 0,
+  });
+  const niveau = niveauDe(pts);
+  const jours = resume?.jours ?? [];
+  const enCours = serie(jours, jour);
 
   const parExercice = new Map(travaux.map((t) => [String(t.exercice_id), t]));
   const devoirDe = new Map(devoirs.map((d) => [String(d.exercice_id), d]));
@@ -436,11 +494,11 @@ async function pageEleve(
 
     return `<div class="fiche">
   <div class="fiche__titre">${escape(x.titre)}${
-    x.publie ? "" : ` <span class="etiquette" data-brouillon="oui">Brouillon</span>`
+    x.publie ? "" : ` ${puce("Brouillon", "brouillon")}`
   }</div>
   <div style="margin:0.4rem 0 0.2rem">
-    ${etiquette(etat)}
-    ${devoir ? etiquetteRetard(devoir.du_le, enRetard(devoir.du_le, etat)) : ""}
+    ${puceEtat(etat)}
+    ${devoir ? puceEcheance(devoir.du_le, enRetard(devoir.du_le, etat)) : ""}
   </div>
   ${
     travail && travail.reponse.trim() !== ""
@@ -502,14 +560,22 @@ async function pageEleve(
 <h1>${escape(nomComplet(eleve))}</h1>
 <p class="chapeau">${escape(eleve.email)}</p>
 
-<div class="etat">
-  <b>${
-    eleve.actif_le
-      ? `Dernière visite : ${escape(depuisLisible(eleve.last_login_at))}`
-      : "N'a jamais ouvert son espace"
-  }</b>
-  ${jauge(av)}
-</div>
+<section class="tableau">
+  <div class="tableau__haut">
+    ${anneau(av.pourcentage, `${av.rendus}/${av.total}`, "rendus", `${av.rendus} sur ${av.total}`)}
+    <div class="tableau__texte">
+      <div class="tableau__niveau">${escape(niveau.nom)}<span class="tableau__rang">Niveau ${
+        niveau.rang
+      }</span></div>
+      <div class="tableau__points">${pts} point${pts > 1 ? "s" : ""} · ${
+        eleve.actif_le && eleve.last_login_at
+          ? `vu ${escape(depuisLisible(eleve.last_login_at))}`
+          : "n'a jamais ouvert son espace"
+      }</div>
+    </div>
+  </div>
+  ${friseSerie(semaine(jours, jour), enCours)}
+</section>
 
 ${
   invitation
@@ -602,6 +668,31 @@ async function pageCompte(ecoleId: number, flash?: Flash): Promise<string> {
     <input type="text" name="nom" required maxlength="120" value="${escape(ecole?.nom ?? "")}">
   </label>
   <div class="actions"><button type="submit">Enregistrer</button></div>
+</form>
+
+<h2>Le classement de la classe</h2>
+<p class="chapeau">
+  Un classement motive une partie d'une classe et démoralise l'autre, et
+  personne ne sait laquelle avant de l'avoir allumé. Vous connaissez vos
+  élèves : à vous de décider. Éteint, vos élèves ne savent pas qu'il existe.
+</p>
+<form method="post" action="/cours/classement">
+  <input type="hidden" name="actif" value="${ecole?.classement ? "non" : "oui"}">
+  <div class="fiche">
+    <div class="fiche__titre">${
+      ecole?.classement ? "Visible par vos élèves" : "Éteint"
+    }</div>
+    <div class="fiche__detail">
+      ${
+        ecole?.classement
+          ? "Chacun voit les prénoms de la classe, leur niveau et leurs points."
+          : "Chaque élève ne voit que sa propre progression."
+      }
+    </div>
+    <button type="submit" class="second">${
+      ecole?.classement ? "Éteindre le classement" : "Allumer le classement"
+    }</button>
+  </div>
 </form>
 
 <h2>Mon mot de passe</h2>
@@ -909,6 +1000,20 @@ export function coursRoutes(app: FastifyInstance): void {
   app.get("/cours/mot-de-passe", async (request, reply) =>
     reply.type("text/html").send(await pageCompte(ecoleDe(request))),
   );
+
+  app.post<{ Body: { actif?: string } }>("/cours/classement", async (request, reply) => {
+    const ecoleId = ecoleDe(request);
+    const actif = request.body?.actif === "oui";
+    await basculerClassement(ecoleId, actif);
+    return reply.type("text/html").send(
+      await pageCompte(ecoleId, {
+        ton: "ok",
+        texte: actif
+          ? "Classement allumé. Vos élèves le voient dès leur prochaine page."
+          : "Classement éteint.",
+      }),
+    );
+  });
 
   app.post<{ Body: { nom?: string } }>("/cours/nom", async (request, reply) => {
     const ecoleId = ecoleDe(request);

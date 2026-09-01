@@ -200,49 +200,6 @@ button.danger { background: transparent; color: var(--ko); border: 1px solid var
   background: var(--carte); border: 1px dashed var(--bord); border-radius: 14px;
 }
 
-/* --- Espace de cours ---------------------------------------------------- */
-/*
- * Une barre plutôt qu'un pourcentage seul. « 7 sur 12 » se lit, mais c'est la
- * longueur du trait qu'on retient en parcourant vingt élèves : le responsable
- * cherche celui qui décroche, pas un chiffre exact.
- */
-.jauge {
-  height: 0.5rem; border-radius: 980px; background: var(--bord);
-  overflow: hidden; margin: 0.45rem 0 0.25rem;
-}
-.jauge__part { display: block; height: 100%; background: var(--accent); border-radius: 980px; }
-
-/* L'état d'un exercice, en un mot et une couleur. */
-.etiquette {
-  display: inline-block; font-size: 0.75rem; font-weight: 600;
-  letter-spacing: 0.03em; text-transform: uppercase;
-  border: 1px solid var(--bord); border-radius: 980px; padding: 0.15em 0.7em;
-  background: var(--carte); color: var(--doux);
-}
-.etiquette[data-etat="rendu"] { background: var(--accent); color: var(--accent-texte); border-color: var(--accent); }
-.etiquette[data-etat="acquis"] { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
-.etiquette[data-etat="a-revoir"] { color: var(--ko); border-color: color-mix(in srgb, var(--ko) 45%, transparent); }
-.etiquette[data-retard="oui"] { background: var(--ko); color: #fff; border-color: var(--ko); }
-.etiquette[data-brouillon="oui"] { border-style: dashed; }
-
-/*
- * Le lien d'invitation, à recopier ou à envoyer soi-même quand le courriel
- * n'arrive pas. Coupé n'importe où plutôt que débordant : sur un téléphone,
- * une adresse longue pousse toute la page de travers.
- */
-.copiable {
-  display: block; word-break: break-all; margin: 0.6rem 0 0;
-  background: var(--fond); border-radius: 10px; padding: 0.6rem 0.7rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem;
-}
-
-/* La réponse d'un élève, recopiée telle qu'il l'a tapée — retours à la ligne
-   compris, sinon un raisonnement en trois points devient un pavé. */
-.copie {
-  margin: 0.7rem 0 0; padding: 0.75rem 0.9rem; background: var(--fond);
-  border-radius: 10px; white-space: pre-wrap; font-size: 0.95rem; line-height: 1.5;
-}
-.copie[data-de="professeur"] { background: #eef2ef; }
 
 /* --- Horaires ----------------------------------------------------------- */
 /* Une ligne par jour : le nom, un interrupteur ouvert/fermé, deux heures.

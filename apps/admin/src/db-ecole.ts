@@ -18,6 +18,16 @@ import type { Ecole, Eleve, Exercice, Travail, Devoir, ChampsExercice } from "./
  * enfant de la curiosité du voisin.
  */
 
+/**
+ * La date d'aujourd'hui, à Bruxelles.
+ *
+ * `current_date` répondrait en UTC, fuseau du serveur. Un élève qui rend un
+ * exercice à 00 h 30 un mardi compterait pour lundi, et un devoir dû lundi
+ * serait annoncé en retard pendant deux heures avant de l'être. Une série
+ * cassée par un fuseau horaire est une série à laquelle on ne croit plus.
+ */
+const aujourdhui = () => sql`(now() at time zone 'Europe/Brussels')::date`;
+
 /* -------------------------------------------------------------------------- */
 /* L'école et son responsable                                                 */
 /* -------------------------------------------------------------------------- */
@@ -66,7 +76,7 @@ export async function creerEcole(
 
 export async function ecole(id: number): Promise<Ecole | undefined> {
   const rows = await sql<Ecole[]>`
-    select id, nom, created_at from ecoles where id = ${id}
+    select id, nom, classement, created_at from ecoles where id = ${id}
   `;
   return rows[0];
 }
@@ -227,7 +237,10 @@ export async function activerEleve(id: string, passwordHash: string): Promise<vo
        set password_hash = ${passwordHash},
            invitation = null,
            invitation_fin = null,
-           actif_le = now()
+           actif_le = now(),
+           -- Il est connecté dans la foulée : sans cette ligne, son professeur
+           -- lisait « jamais connecté » sur un élève qui venait d'entrer.
+           last_login_at = now()
      where id = ${id}
   `;
 }
@@ -262,9 +275,20 @@ export interface EleveResume {
   invitation: string | null;
   invitation_fin: Date | null;
   rendus: number;
+  acquis: number;
+  a_lheure: number;
   a_corriger: number;
   retards: number;
   derniere_activite: Date | null;
+  /**
+   * Les jours travaillés récemment, en AAAA-MM-JJ, pour la série.
+   *
+   * Bornés à six semaines : au-delà, la série est de toute façon rompue, et
+   * une classe de cent élèves n'a pas à traîner deux ans d'historique à chaque
+   * ouverture de page. Rendus en texte plutôt qu'en dates — le calcul de série
+   * compare des jours, pas des instants.
+   */
+  jours: string[];
 }
 
 /**
@@ -284,17 +308,34 @@ export async function resumeDesEleves(ecoleId: number): Promise<EleveResume[]> {
            (select count(*) from travaux t
               join exercices x on x.id = t.exercice_id
              where t.eleve_id = e.id and x.publie
+               and t.statut = 'rendu' and t.appreciation = 'acquis'
+               and t.corrige_le is not null)::int as acquis,
+           (select count(*) from devoirs d
+              join exercices x on x.id = d.exercice_id
+              join travaux t on t.exercice_id = d.exercice_id and t.eleve_id = e.id
+             where d.eleve_id = e.id and x.publie
+               and d.du_le is not null and t.statut = 'rendu'
+               and (t.rendu_le at time zone 'Europe/Brussels')::date <= d.du_le)::int
+             as a_lheure,
+           (select count(*) from travaux t
+              join exercices x on x.id = t.exercice_id
+             where t.eleve_id = e.id and x.publie
                and t.statut = 'rendu' and t.corrige_le is null)::int as a_corriger,
            (select count(*) from devoirs d
               join exercices x on x.id = d.exercice_id
              where d.eleve_id = e.id and x.publie
-               and d.du_le is not null and d.du_le < current_date
+               and d.du_le is not null and d.du_le < ${aujourdhui()}
                and not exists (
                  select 1 from travaux t
                   where t.eleve_id = e.id and t.exercice_id = d.exercice_id
                     and t.statut = 'rendu'))::int as retards,
            (select max(t.updated_at) from travaux t where t.eleve_id = e.id)
-             as derniere_activite
+             as derniere_activite,
+           coalesce(
+             (select array_agg(to_char(j.jour, 'YYYY-MM-DD'))
+                from jours_actifs j
+               where j.eleve_id = e.id and j.jour > ${aujourdhui()} - 42),
+             '{}') as jours
       from eleves e
      where e.ecole_id = ${ecoleId}
      order by e.prenom, e.nom
@@ -474,7 +515,32 @@ export async function enregistrerTravail(
       updated_at   = now()
     returning id
   `;
-  return rows.length > 0;
+  if (rows.length === 0) return false;
+
+  /*
+   * Le jour n'est marqué que sur une **remise**, jamais sur un brouillon.
+   *
+   * Une série qui s'entretiendrait en enregistrant un champ vide ne mesurerait
+   * plus rien, et l'élève le sait avant nous : ce serait la première chose
+   * qu'il trouverait. Rendre quelque chose reste le seul geste qui compte.
+   */
+  if (rendre) await marquerJourTravaille(eleve.id);
+  return true;
+}
+
+/**
+ * Retient qu'un élève a travaillé aujourd'hui.
+ *
+ * Écrit une fois par jour et par élève, jamais réécrit : c'est cette mémoire
+ * qui permet à une série de survivre à un vieil exercice repris, alors que
+ * `travaux.rendu_le` ne garde que la dernière remise (voir la migration 012).
+ */
+export async function marquerJourTravaille(eleveId: number): Promise<void> {
+  await sql`
+    insert into jours_actifs (eleve_id, jour, rendus)
+    values (${eleveId}, ${aujourdhui()}, 1)
+    on conflict (eleve_id, jour) do update set rendus = jours_actifs.rendus + 1
+  `;
 }
 
 /**
@@ -516,6 +582,82 @@ export async function travauxACorriger(ecoleId: number): Promise<number> {
        and t.statut = 'rendu' and t.corrige_le is null
   `;
   return rows[0]?.n ?? 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Ce que l'élève a gagné                                                     */
+/* -------------------------------------------------------------------------- */
+
+export interface StatsBrutes {
+  rendus: number;
+  acquis: number;
+  aLHeure: number;
+  total: number;
+  jours: string[];
+}
+
+/**
+ * Les quatre comptes et la liste des jours, en une requête.
+ *
+ * Comptés par la base plutôt qu'en parcourant les travaux : la page d'accueil
+ * de l'élève les affiche à chaque ouverture, et quarante exercices ramenés
+ * pour en compter trois seraient quarante de trop. Les points, le niveau et
+ * les hauts faits s'en déduisent dans `jeu.ts` — la base compte, elle ne juge
+ * pas.
+ */
+export async function statsDeLEleve(
+  eleveId: number,
+  ecoleId: string,
+): Promise<StatsBrutes> {
+  const rows = await sql<
+    Array<{ rendus: number; acquis: number; a_lheure: number; total: number; jours: string[] }>
+  >`
+    select
+      (select count(*) from travaux t
+         join exercices x on x.id = t.exercice_id
+        where t.eleve_id = ${eleveId} and x.publie and t.statut = 'rendu')::int as rendus,
+      (select count(*) from travaux t
+         join exercices x on x.id = t.exercice_id
+        where t.eleve_id = ${eleveId} and x.publie and t.statut = 'rendu'
+          and t.appreciation = 'acquis' and t.corrige_le is not null)::int as acquis,
+      (select count(*) from devoirs d
+         join exercices x on x.id = d.exercice_id
+         join travaux t on t.exercice_id = d.exercice_id and t.eleve_id = d.eleve_id
+        where d.eleve_id = ${eleveId} and x.publie
+          and d.du_le is not null and t.statut = 'rendu'
+          and (t.rendu_le at time zone 'Europe/Brussels')::date <= d.du_le)::int as a_lheure,
+      (select count(*) from exercices x
+        where x.ecole_id = ${ecoleId} and x.publie)::int as total,
+      coalesce(
+        (select array_agg(to_char(j.jour, 'YYYY-MM-DD'))
+           from jours_actifs j
+          where j.eleve_id = ${eleveId} and j.jour > ${aujourdhui()} - 42),
+        '{}') as jours
+  `;
+  const r = rows[0];
+  return {
+    rendus: r?.rendus ?? 0,
+    acquis: r?.acquis ?? 0,
+    aLHeure: r?.a_lheure ?? 0,
+    total: r?.total ?? 0,
+    jours: r?.jours ?? [],
+  };
+}
+
+/** La date du jour telle que la base la voit, pour que les deux s'accordent. */
+export async function jourCourant(): Promise<string> {
+  const rows = await sql<Array<{ jour: string }>>`
+    select to_char(${aujourdhui()}, 'YYYY-MM-DD') as jour
+  `;
+  return rows[0]!.jour;
+}
+
+/** Le classement est-il allumé dans cette école ? */
+export async function basculerClassement(
+  ecoleId: number,
+  actif: boolean,
+): Promise<void> {
+  await sql`update ecoles set classement = ${actif} where id = ${ecoleId}`;
 }
 
 /* -------------------------------------------------------------------------- */

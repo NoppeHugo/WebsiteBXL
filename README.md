@@ -740,6 +740,63 @@ désormais la table où relire le compte (`qui`), et chaque zone — `/espace`,
 corrections. Ce ne sont pas ses données mais celles d'une école sur ses élèves,
 dont certains sont mineurs. Il voit de quoi facturer et de quoi fermer.
 
+### 3.16 Le jeu — points, niveau, série, hauts faits
+
+**Le problème que ça résout :** un élève invité en septembre ouvre son espace
+trois fois, puis plus jamais. Ce n'est pas un problème de contenu — les
+exercices sont là — c'est qu'il n'y a aucune raison d'ouvrir l'application un
+mercredi soir quand personne ne l'a demandé. Un abonnement se résilie sur cette
+constatation-là : « mes élèves ne s'en servent pas ».
+
+**Trois gestes rapportent des points, et ce sont ceux qu'un professeur
+citerait :** rendre un exercice (+10), l'avoir juste (+5), l'avoir rendu avant
+la date (+5). Rien pour s'être connecté, rien pour avoir ouvert un exercice,
+rien pour la vitesse. Un jeu qui récompense la présence apprend à venir sans
+travailler, et le professeur se retrouve avec vingt élèves au niveau maximum
+qui ne savent toujours pas se garer. Le barème est affiché en clair à l'élève :
+un barème secret transforme chaque total en discussion, et c'est le professeur
+qui reçoit la question.
+
+**Sept paliers**, d'un vocabulaire qui vaut pour une auto-école comme pour un
+conservatoire, avec un écart croissant : les premiers arrivent vite, parce que
+c'est au début qu'on abandonne.
+
+**La série** compte les jours travaillés d'affilée, et survit à la journée en
+cours : elle part d'aujourd'hui si l'élève a déjà rendu quelque chose, sinon
+d'hier. Une série qui tomberait à minuit obligerait à ouvrir l'application
+chaque matin pour ne pas « perdre » — c'est ce qui rend les applications de
+langues détestables, et ça produit du passage, pas du travail.
+
+**Huit hauts faits, tous affichés**, obtenus ou non, avec le compte de ce qui
+manque. Un haut fait secret ne se découvre qu'une fois décroché, c'est-à-dire
+quand il ne sert plus à rien ; « 3 sur 5 » est une invitation, un cadenas n'en
+est pas une.
+
+**Le classement de la classe est éteint par défaut**, et c'est le responsable
+qui l'allume. Un classement motive une partie d'une classe et démoralise
+l'autre, et personne ne sait laquelle avant de l'avoir allumé — ce n'est donc
+pas au logiciel d'en décider. Éteint, la page n'existe pas : un élève n'a pas à
+découvrir qu'un classement existe et lui est refusé.
+
+**Tout est calculé, rien n'est stocké** — sauf les jours. Points, niveau et
+hauts faits sont une lecture des travaux : changer le barème ne demande aucune
+migration, et le total ne peut pas contredire la liste juste en dessous. La
+série fait exception, parce que `travaux.rendu_le` ne garde que la **dernière**
+remise : un élève qui reprend un vieil exercice verrait sa série de douze jours
+fondre pour avoir travaillé. D'où `jours_actifs`, une ligne par jour, écrite une
+fois (migration 012).
+
+**Le jeu ne décide de rien.** Aucun exercice ne s'ouvre parce qu'on a assez de
+points ; tout reste ouvert tout le temps (§3.15). Le professeur garde la main
+sur ce qui compte : ce qui est publié, ce qui est dû, ce qui est acquis.
+
+**L'espace de cours a sa propre feuille de style**, distincte de celle du
+commerçant, et un mode sombre. Les contraintes ne sont pas les mêmes : un
+commerçant ouvre son espace trois fois par an, debout, une main occupée ; un
+élève y passe vingt minutes, assis, trois soirs par semaine — souvent le soir,
+lampe éteinte. Aucune ligne de JavaScript : l'anneau de progression est un
+cercle SVG dont la longueur est calculée sur le serveur.
+
 ---
 
 ## 4. Architecture
@@ -1056,6 +1113,9 @@ PUBLIC_API_URL=https://api.exemple.be pnpm build salon-marie
 - ✅ Espace de cours pour les écoles (§3.15) : inscription libre du
   responsable, invitation des élèves, exercices ouverts dans n'importe quel
   ordre, devoirs et corrections.
+- ✅ Points, niveaux, série et hauts faits (§3.16), avec sa propre identité
+  visuelle et un mode sombre. Ce qui manquait n'était pas le contenu mais une
+  raison de revenir un mercredi soir.
 - Deuxième niche (métiers de bouche) avec ses propres variantes de template.
 - Envisager un CMS git-based si le volume le justifie.
 
@@ -1135,6 +1195,9 @@ que le DNS du client pointe vers le serveur. Aucune intervention ensuite.
   (avancement, retard, invitation, validation), `db-ecole.ts` pour les
   requêtes, `routes/cours.ts` pour le responsable et `routes/eleve.ts` pour
   l'élève. Le schéma est dans `apps/api/migrations/011_ecole.sql`.
+- **Le jeu** (§3.16) : `apps/admin/src/jeu.ts` — barème, paliers, série et
+  hauts faits, en fonctions pures. Changer le barème se fait là, et nulle part
+  ailleurs. L'habillage de l'espace de cours est dans `views-ecole.ts`.
 
 ## 9. Indicateurs à suivre
 

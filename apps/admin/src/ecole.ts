@@ -14,6 +14,8 @@
 export interface Ecole {
   id: string;
   nom: string;
+  /** Le classement de la classe est-il visible des élèves ? Éteint par défaut. */
+  classement: boolean;
   created_at: Date;
 }
 
@@ -74,7 +76,9 @@ export type EtatTravail = "a-faire" | "commence" | "rendu" | "acquis" | "a-revoi
 export const MOT_ETAT: Record<EtatTravail, string> = {
   "a-faire": "Pas commencé",
   commence: "Commencé",
-  rendu: "Rendu, en attente de correction",
+  // Court : ce mot vit dans une pastille, sur une carte de téléphone.
+  // « Rendu, en attente de correction » y passait à la ligne tout seul.
+  rendu: "Rendu",
   acquis: "Acquis",
   "a-revoir": "À revoir",
 };
